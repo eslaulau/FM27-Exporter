@@ -1,0 +1,47 @@
+name: Export public FM27 saves
+
+on:
+  workflow_dispatch:
+    inputs:
+      save_set:
+        description: Which public save files to export
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - save1
+          - save2
+          - save3
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fm27-public-save-export
+  cancel-in-progress: false
+
+jobs:
+  export:
+    name: Export public saves and publish public reports
+    runs-on: windows-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout exporter
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          architecture: x64
+
+      - name: Run public export
+        shell: pwsh
+        env:
+          GH_TOKEN: \${{ github.token }}
+          SAVE_SET: \${{ inputs.save_set }}
+        run: |
+          ./scripts/Invoke-PublicExport.ps1 -SaveSet $env:SAVE_SET
