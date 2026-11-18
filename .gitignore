@@ -1,11 +1,10 @@
-# Private FM27 data — never commit
+# FM27 source saves are stored as Release assets, not Git objects.
 *.fm
-FM27_PlayerIdentityCache_Formal_v1.1.json
-FM27_PlayerIdentityCache_Formal_v1.1_learned.json
+
+# Local exporter outputs and runtime caches
 FM27_PlayerMatchHistoryArchives/
 FM27_Analysis_*/
 FM27_Analysis_*.zip
-private-packages/
-runner-logs/
 *.zip
+_public-runtime/
 _private-runtime/
