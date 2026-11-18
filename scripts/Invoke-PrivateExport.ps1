@@ -32,14 +32,15 @@ switch ($SaveSet) {
 if ([string]::IsNullOrWhiteSpace($env:GH_TOKEN)) { throw 'Missing FM27_ACCESS_TOKEN repository secret.' }
 if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP) -or [string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID)) { throw 'This script must run inside GitHub Actions.' }
 
-$gh = Get-Command gh -ErrorAction Stop
+$ghPath = (Get-Command gh -ErrorAction Stop).Path
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $exporterPath = Join-Path $repoRoot 'Run_FM27_Formal_Season_Export_v1.4.5.ps1'
 if (-not (Test-Path -LiteralPath $exporterPath -PathType Leaf)) { throw 'Exporter main script is missing.' }
 
 $runRoot = Join-Path $env:RUNNER_TEMP ('FM27-PrivateExport-' + $env:GITHUB_RUN_ID)
 $downloadRoot = Join-Path $runRoot 'downloads'
-$saveRoot = Join-Path $runRoot 'saves'
+if ([string]::IsNullOrWhiteSpace($env:GITHUB_WORKSPACE)) { throw 'Missing GitHub workspace path.' }
+$saveRoot = Join-Path $env:GITHUB_WORKSPACE '_private-runtime\saves'
 $historyCacheRoot = Join-Path $runRoot 'history-cache'
 $packageRoot = Join-Path $runRoot 'private-packages'
 $logRoot = Join-Path $runRoot 'runner-logs'
@@ -54,7 +55,7 @@ $uploadFiles = New-Object System.Collections.Generic.List[string]
 
 try {
     # Validate access to the private source release without printing private metadata.
-    $releaseJson = & $gh.Source api $sourceReleaseApi 2>$null
+    $releaseJson = & $ghPath api $sourceReleaseApi 2>$null
     if ($LASTEXITCODE -ne 0) { throw 'Cannot read the private FM27 source release.' }
     $sourceRelease = ($releaseJson -join '') | ConvertFrom-Json
     $availableAssets = @($sourceRelease.assets | ForEach-Object { $_.name })
@@ -64,7 +65,7 @@ try {
 
     # Retrieve the player-specific identity cache at runtime only. It is never committed publicly.
     $cacheApi = "repos/$privateRepo/contents/$privateCachePath" + "?ref=$privateCacheRef"
-    $cacheJson = & $gh.Source api $cacheApi 2>$null
+    $cacheJson = & $ghPath api $cacheApi 2>$null
     if ($LASTEXITCODE -ne 0) { throw 'Cannot retrieve the private player-identity cache.' }
     $cacheObject = ($cacheJson -join '') | ConvertFrom-Json
     if ($cacheObject.sha -ne $expectedCacheBlobSha -or [string]::IsNullOrWhiteSpace($cacheObject.content)) { throw 'Private player-identity cache version mismatch.' }
@@ -72,10 +73,10 @@ try {
     [System.IO.File]::WriteAllBytes($privateCacheFile, $cacheBytes)
 
     # Restore persistent history from the private results release, if available.
-    & $gh.Source release view $resultsTag --repo $privateRepo *> $null
+    & $ghPath release view $resultsTag --repo $privateRepo *> $null
     $resultsReleaseExists = ($LASTEXITCODE -eq 0)
     if ($resultsReleaseExists) {
-        & $gh.Source release download $resultsTag --repo $privateRepo --pattern $cacheAssetName --dir $downloadRoot --clobber *> $null
+        & $ghPath release download $resultsTag --repo $privateRepo --pattern $cacheAssetName --dir $downloadRoot --clobber *> $null
         if ($LASTEXITCODE -eq 0) { Expand-Archive -LiteralPath (Join-Path $downloadRoot $cacheAssetName) -DestinationPath $historyCacheRoot -Force }
     }
 
@@ -89,7 +90,7 @@ try {
         $cachedArchivePath = Join-Path $priorSlotCache 'FM27_PlayerMatchHistoryArchives'
         if (Test-Path -LiteralPath $cachedArchivePath -PathType Container) { Copy-Item -LiteralPath $cachedArchivePath -Destination $slotFolder -Recurse -Force }
 
-        & $gh.Source release download $sourceTag --repo $privateRepo --pattern $item.Asset --dir $downloadRoot --clobber *> $null
+        & $ghPath release download $sourceTag --repo $privateRepo --pattern $item.Asset --dir $downloadRoot --clobber *> $null
         if ($LASTEXITCODE -ne 0) { throw 'A selected private save could not be downloaded.' }
         $downloadedSave = Join-Path $downloadRoot $item.Asset
         if (-not (Test-Path -LiteralPath $downloadedSave -PathType Leaf)) { throw 'A selected private save download is missing.' }
@@ -181,12 +182,12 @@ try {
     $uploadFiles.Add($summaryPath)
 
     if (-not $resultsReleaseExists) {
-        & $gh.Source release create $resultsTag --repo $privateRepo --title 'FM27 Private Export Results' --notes 'Private storage for FM27 first-team export packages and persistent player-match-history archives.' *> $null
+        & $ghPath release create $resultsTag --repo $privateRepo --title 'FM27 Private Export Results' --notes 'Private storage for FM27 first-team export packages and persistent player-match-history archives.' *> $null
         if ($LASTEXITCODE -ne 0) { throw 'Could not create the private results release.' }
     }
     if ($uploadFiles.Count -gt 0) {
         $uploadArgs = @('release', 'upload', $resultsTag) + @($uploadFiles.ToArray()) + @('--repo', $privateRepo, '--clobber')
-        & $gh.Source @uploadArgs *> $null
+        & $ghPath @uploadArgs *> $null
         if ($LASTEXITCODE -ne 0) { throw 'Could not upload report packages to the private FM27 release.' }
     }
 
