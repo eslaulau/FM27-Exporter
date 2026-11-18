@@ -20,8 +20,8 @@ jobs:
       - name: Copy save assets from the old repository
         shell: pwsh
         env:
-          SOURCE_TOKEN: \${{ secrets.FM27_ACCESS_TOKEN }}
-          PUBLIC_TOKEN: \${{ github.token }}
+          SOURCE_TOKEN: ${{ secrets.FM27_ACCESS_TOKEN }}
+          PUBLIC_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
           $sourceRepo = 'eslaulau/FM27'
