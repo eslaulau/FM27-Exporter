@@ -14,9 +14,9 @@ You can ask ChatGPT to export a save. ChatGPT posts an owner-authenticated comma
 
 Supported commands:
 - `/export all`
-- `/export save1`
-- `/export save2`
-- `/export save3`
+- `/export tactic1`
+- `/export tactic2`
+- (a third tactic group can be added when present)
 
 You can also start the [Export public FM27 saves](https://github.com/eslaulau/FM27-Exporter/actions/workflows/export-public-saves.yml) workflow manually. Choose `all`, `save1`, `save2`, or `save3`.
 
