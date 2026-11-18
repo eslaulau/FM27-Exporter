@@ -1,0 +1,10 @@
+# Private FM27 data — never commit
+*.fm
+FM27_PlayerIdentityCache_Formal_v1.1.json
+FM27_PlayerIdentityCache_Formal_v1.1_learned.json
+FM27_PlayerMatchHistoryArchives/
+FM27_Analysis_*/
+FM27_Analysis_*.zip
+private-packages/
+runner-logs/
+*.zip

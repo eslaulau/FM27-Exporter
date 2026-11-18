@@ -1,0 +1,47 @@
+name: Export private FM27 saves
+
+on:
+  workflow_dispatch:
+    inputs:
+      save_set:
+        description: Which private save files to export
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - save1
+          - save2
+          - save3
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fm27-private-save-export
+  cancel-in-progress: false
+
+jobs:
+  export:
+    name: Read private saves and publish private reports
+    runs-on: windows-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout public exporter code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          architecture: x64
+
+      - name: Run private export
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.FM27_ACCESS_TOKEN }}
+          SAVE_SET: ${{ inputs.save_set }}
+        run: |
+          ./scripts/Invoke-PrivateExport.ps1 -SaveSet $env:SAVE_SET
