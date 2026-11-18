@@ -41,7 +41,7 @@ jobs:
       - name: Run public export
         shell: pwsh
         env:
-          GH_TOKEN: \${{ github.token }}
-          SAVE_SET: \${{ inputs.save_set }}
+          GH_TOKEN: ${{ github.token }}
+          SAVE_SET: ${{ inputs.save_set }}
         run: |
           ./scripts/Invoke-PublicExport.ps1 -SaveSet $env:SAVE_SET
