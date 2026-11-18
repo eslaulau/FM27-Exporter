@@ -13,9 +13,12 @@ on:
           - save1
           - save2
           - save3
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: fm27-public-save-export
@@ -23,6 +26,14 @@ concurrency:
 
 jobs:
   export:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.title == 'FM27 Export Control' &&
+        github.event.comment.user.login == github.repository_owner &&
+        startsWith(github.event.comment.body, '/export ')
+      )
     name: Export public saves and publish public reports
     runs-on: windows-latest
     timeout-minutes: 180
@@ -38,10 +49,37 @@ jobs:
           python-version: '3.12'
           architecture: x64
 
-      - name: Run public export
+      - name: Resolve command and run exporter
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
-          SAVE_SET: ${{ inputs.save_set }}
+          GH_TOKEN: \${{ github.token }}
+          EVENT_NAME: \${{ github.event_name }}
+          INPUT_SAVE_SET: \${{ github.event.inputs.save_set }}
+          COMMENT_BODY: \${{ github.event.comment.body }}
         run: |
-          ./scripts/Invoke-PublicExport.ps1 -SaveSet $env:SAVE_SET
+          $saveSet = $env:INPUT_SAVE_SET
+          if ($env:EVENT_NAME -eq 'issue_comment') {
+            $command = $env:COMMENT_BODY.Trim()
+            if ($command -notmatch '^/export\s+(all|save1|save2|save3)$') {
+              throw 'Invalid export command. Use /export all, save1, save2 or save3.'
+            }
+            $saveSet = $Matches[1].ToLowerInvariant()
+          }
+          if ($saveSet -notin @('all', 'save1', 'save2', 'save3')) {
+            throw 'Invalid save selection.'
+          }
+          Write-Host ('Starting public FM27 export: ' + $saveSet)
+          ./scripts/Invoke-PublicExport.ps1 -SaveSet $saveSet
+
+      - name: Report result to control issue
+        if: \${{ always() && github.event_name == 'issue_comment' }}
+        shell: pwsh
+        env:
+          GH_TOKEN: \${{ github.token }}
+          ISSUE_NUMBER: \${{ github.event.issue.number }}
+          JOB_STATUS: \${{ job.status }}
+          RUN_ID: \${{ github.run_id }}
+          REPOSITORY: \${{ github.repository }}
+        run: |
+          $body = "FM27 export run $($env:RUN_ID) finished with status: **$($env:JOB_STATUS)**.$([Environment]::NewLine)$([Environment]::NewLine)Run: https://github.com/$($env:REPOSITORY)/actions/runs/$($env:RUN_ID)$([Environment]::NewLine)Reports: https://github.com/$($env:REPOSITORY)/releases/tag/fm27-exports"
+          gh issue comment $env:ISSUE_NUMBER --repo $env:REPOSITORY --body $body
