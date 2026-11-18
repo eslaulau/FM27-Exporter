@@ -6,9 +6,9 @@ You can ask ChatGPT to start an export directly. It sends an owner-authenticated
 
 Commands:
 - `/export all` — export all three saves
-- `/export save1` — export save 1
-- `/export save2` — export save 2
-- `/export save3` — export save 3
+- `/export tactic1` — export the first tactic group
+- `/export tactic2` — export the second tactic group
+- (new tactic groups can be added to the release)
 
 The workflow posts the run result and links back to the control issue. Only comments authored by the repository owner are accepted as commands.
 
