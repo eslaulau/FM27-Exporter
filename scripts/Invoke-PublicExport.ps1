@@ -261,8 +261,8 @@ try {
         repository = $repo
         source_release = $sourceTag
         selected_save_set = $SaveSet
-        test_saves = @($statuses)
-        tactic_names = @($tacticNames)
+        test_saves = [object[]]$statuses.ToArray()
+        tactic_names = [string[]]$tacticNames
         comparison_zip_name = [System.IO.Path]::GetFileName($comparisonZip)
         notes = @(
             'The -1, -2 and -3 saves are treated as three independent full-season simulation trials for each tactic.',
@@ -272,7 +272,7 @@ try {
         )
     }
     $summaryPath = Join-Path $runRoot ('FM27_Tactic_Comparison_' + $env:GITHUB_RUN_ID + '_summary.json')
-    $summary | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
+    ConvertTo-Json -InputObject $summary -Depth 10 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
     $uploadFiles.Add($summaryPath)
 
     $stage = 'Upload public comparison packages'
