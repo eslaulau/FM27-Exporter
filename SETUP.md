@@ -1,49 +1,28 @@
-# Private save export setup
+# Public FM27 exporter setup
 
-## Step 1 — create a fine-grained token
+## One-time migration
 
-Open https://github.com/settings/personal-access-tokens/new and create a Fine-grained personal access token.
+The three source saves currently live in the old `eslaulau/FM27` repository. The migration workflow copies them into this public repository's Release tagged `fm27-saves`.
 
-- Resource owner: eslaulau
-- Repository access: Only select repositories
-- Select only the private repository FM27
-- Repository permissions: Contents = Read and write
-- No Actions, Administration, Workflows or other permissions are needed
-- Prefer a 30- or 90-day expiry
+1. Open the [one-time migration workflow](https://github.com/eslaulau/FM27-Exporter/actions/workflows/migrate-saves-to-public.yml).
+2. Click **Run workflow**. It uses the existing `FM27_ACCESS_TOKEN` secret only to read the old source Release; upload to this repository uses GitHub's automatically provided token.
+3. Wait for a green **Success** result. Confirm that [Release fm27-saves](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-saves) contains all three `.fm` files.
+4. Then delete the `FM27_ACCESS_TOKEN` secret from [Actions secrets](https://github.com/eslaulau/FM27-Exporter/settings/secrets/actions), and remove `.github/workflows/migrate-saves-to-public.yml` from the repository. The old private repository is no longer used.
 
-This token downloads source saves and the private player identity cache, and uploads reports to a private Release in FM27. It is never stored in this repository.
+If the migration fails, inspect the Actions log. The source save files are checked against their recorded sizes and SHA256 hashes before they are uploaded.
 
-## Step 2 — add the token as an Actions secret
+## Routine exports
 
-Open https://github.com/eslaulau/FM27-Exporter/settings/secrets/actions and create a repository secret:
+1. Open [Export public FM27 saves](https://github.com/eslaulau/FM27-Exporter/actions/workflows/export-public-saves.yml).
+2. Click **Run workflow** and choose `all`, `save1`, `save2`, or `save3`.
+3. Reports, summary JSON, diagnostics and persistent player-match-history archives are uploaded to the public [Release fm27-exports](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-exports).
 
-- Name: FM27_ACCESS_TOKEN
-- Secret: paste the fine-grained token
+No personal access token or private repository is required for routine exports.
 
-Do not paste the token into source code, an Issue, a workflow input, or chat.
+## Public-data notice
 
-## Step 3 — run the workflow
+The source `.fm` career saves, player identity mappings, reports, runner logs and history archives are intentionally public. Anyone can download them. The exporter only reads source saves; it does not modify the original files.
 
-Open https://github.com/eslaulau/FM27-Exporter/actions/workflows/export-private-saves.yml and click Run workflow.
+## Runner
 
-- all: export all three saves currently stored in the private FM27 Release tagged fm
-- save1, save2, save3: export only that save
-
-Results, runner logs, the run summary and the persistent player-match-history archive are uploaded only to the private FM27 Release tagged fm27-exports. No save or report is uploaded as an artifact to this public repository.
-If a run fails, a diagnostic ZIP containing the failure stage, exception details and available exporter stdout/stderr logs is also uploaded to that same private Release. The diagnostic ZIP excludes the source .fm files and the private identity cache.
-
-## Security boundaries
-
-- The public repository contains exporter code and generic catalog data only.
-- The source .fm files are downloaded from private Release fm and checked against pinned size and SHA256 values.
-- FM27_PlayerIdentityCache_Formal_v1.1.json contains save-specific player identity data. It is fetched from a pinned private commit only at runtime and deleted from the workspace at the end of the run; it is not committed here.
-- Export ZIPs and persistent history remain in private Release fm27-exports.
-- The workflow is manual-dispatch only. It does not run on Pull Requests and does not expose its private token to PR jobs.
-- Only trusted accounts should have write access to this public repository because write access permits manually starting the workflow.
-- When the token expires, create a replacement and update the FM27_ACCESS_TOKEN secret.
-
-## Runner cost
-
-This workflow uses the standard GitHub-hosted windows-latest runner. GitHub states that standard GitHub-hosted runner usage in public repositories is free. Larger runners are not used.
-
-Official billing reference: https://docs.github.com/en/actions/concepts/billing-and-usage
+The workflow uses the standard GitHub-hosted `windows-latest` runner and Python 3.12.
