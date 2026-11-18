@@ -141,7 +141,13 @@ jobs:
         run: |
           if ($env:EVENT_NAME -eq 'issue_comment') {
             $command = $env:COMMENT_BODY.Trim()
-            if ($command -match '^/analyze\s+(\d+)
+            if ($command -match '^/analyze\s+(\d+)$') {
+              $sourceRunId = $Matches[1]
+              Write-Host ('Preparing in-depth analysis inputs from run ' + $sourceRunId)
+              ./scripts/Prepare-AnalysisArtifact.ps1 -SourceRunId $sourceRunId
+              exit 0
+            }
+            if ($command -match '^/recover\s+(\d+)$') {
               $sourceRunId = $Matches[1]
               Write-Host ('Recovering preserved trial exports from run ' + $sourceRunId)
               ./scripts/Recover-PublicComparison.ps1 -SourceRunId $sourceRunId
@@ -160,7 +166,6 @@ jobs:
           }
           Write-Host ('Starting public FM27 tactic comparison: ' + $saveSet)
           ./scripts/Invoke-PublicExport.ps1 -SaveSet $saveSet
-
       - name: Upload six-trial analysis inputs
         if: ${{success() && github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/analyze ')}}
         uses: actions/upload-artifact@v4
