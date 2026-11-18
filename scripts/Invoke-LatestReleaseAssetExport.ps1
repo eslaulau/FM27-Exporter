@@ -140,6 +140,8 @@ foreach ($asset in $latestSaves) {
     $exportSaveInfo = Get-Content -LiteralPath $saveInfoPath -Raw -Encoding UTF8 | ConvertFrom-Json
     $validationPath = Join-Path $candidate.FullName 'validation.json'
     $validation = Get-Content -LiteralPath $validationPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $validationStatus = 'validation.json present'
+    if ($validation.PSObject.Properties.Name -contains 'status') { $validationStatus = [string]$validation.status }
 
     $packageSlot = Join-Path $packageRoot $safeName
     $exportFolder = Join-Path $packageSlot $candidate.Name
@@ -167,7 +169,7 @@ foreach ($asset in $latestSaves) {
         game_date = [string]$exportSaveInfo.game_date
         first_team_scope_verified = $true
         required_export_files = $requiredOutputs
-        validation_status = [string]$validation.status
+        validation_status = $validationStatus
         package = [System.IO.Path]::GetFileName($packageZip)
     })
     Write-Host ('Validated and packaged season report: ' + $assetName)
