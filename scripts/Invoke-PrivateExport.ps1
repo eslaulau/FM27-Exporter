@@ -182,7 +182,7 @@ try {
     $uploadFiles.Add($summaryPath)
 
     if (-not $resultsReleaseExists) {
-        & $ghPath release create $resultsTag --repo $privateRepo --title 'FM27 Private Export Results' --notes 'Private storage for FM27 first-team export packages and persistent player-match-history archives.' *> $null
+        & $ghPath release create $resultsTag --repo $privateRepo --target main --title 'FM27 Private Export Results' --notes 'Private storage for FM27 first-team export packages and persistent player-match-history archives.' *> $null
         if ($LASTEXITCODE -ne 0) { throw 'Could not create the private results release.' }
     }
     if ($uploadFiles.Count -gt 0) {
