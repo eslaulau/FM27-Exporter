@@ -209,7 +209,7 @@ def analyze_trial(item: dict[str, Any], team_id: int) -> tuple[dict[str, Any], l
             "opponent_team_id": opponent_id, "opponent": opponent_name,
             "team_goals": team_goals, "opponent_goals": opponent_goals,
             "result": result, "points": points,
-            "fixture_key": match_key(comp, fixture.get("stage_id"), fixture.get("round"), opponent_id, is_home, fixture.get("date")),
+            "fixture_key": match_key(comp, None, fixture.get("round"), opponent_id, is_home, fixture.get("date")),
         }
         matches.append(row)
 
@@ -222,7 +222,7 @@ def analyze_trial(item: dict[str, Any], team_id: int) -> tuple[dict[str, Any], l
         home_away = str(row.get("home_away") or "")
         is_home = home_away in {"主场", "Home", "home", "H"}
         key = match_key(
-            comp, row.get("stage_id"), row.get("round"),
+            comp, None, row.get("round"),
             row.get("opponent_team_id"), is_home, row.get("date"),
         )
         match_groups[key].append(row)
@@ -528,7 +528,7 @@ def main() -> int:
         "tactic_deltas_first_minus_second": tactic_deltas,
         "fixture_set_counts": fixture_counts,
         "common_fixtures_across_three_trials_by_tactic": common_same_tactic,
-        "loss_draw_matches": len({(x["tactic_name"], x["trial"], x["date"], x["competition_name"], x["opponent"]) for x in all_loss_draw_rows}),
+        "loss_draw_matches": sum(1 for x in all_matches if x["result"] in {"L", "D"}),
         "loss_draw_player_rows": len(all_loss_draw_rows),
         "notes": [
             "Each -1, -2 and -3 save is treated as an independent full-season simulation trial.",
