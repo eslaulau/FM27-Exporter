@@ -30,6 +30,7 @@ Open https://github.com/eslaulau/FM27-Exporter/actions/workflows/export-private-
 - save1, save2, save3: export only that save
 
 Results, runner logs, the run summary and the persistent player-match-history archive are uploaded only to the private FM27 Release tagged fm27-exports. No save or report is uploaded as an artifact to this public repository.
+If a run fails, a diagnostic ZIP containing the failure stage, exception details and available exporter stdout/stderr logs is also uploaded to that same private Release. The diagnostic ZIP excludes the source .fm files and the private identity cache.
 
 ## Security boundaries
 
