@@ -74,20 +74,28 @@ foreach ($sourcePackage in $sourcePackages) {
     }
 
     $candidateDirs = @(Get-ChildItem -LiteralPath $exportContainer -Directory -Filter 'FM27_Analysis_*')
-    if ($candidateDirs.Count -ne 1) { throw ('Expected one FM27_Analysis folder in ' + $sourcePackage.Name + '; found ' + $candidateDirs.Count + '.') }
-    $candidate = $candidateDirs[0]
+    if ($candidateDirs.Count -eq 1) {
+        $candidatePath = $candidateDirs[0].FullName
+        $candidateName = $candidateDirs[0].Name
+    } elseif ($candidateDirs.Count -eq 0 -and (Test-Path -LiteralPath (Join-Path $exportContainer 'save-info.json') -PathType Leaf)) {
+        # The original package copy flattened the analysis directory into Export.
+        $candidatePath = $exportContainer
+        $candidateName = 'FM27_Analysis_Recovered'
+    } else {
+        throw ('Expected a nested FM27_Analysis folder or flattened export files in ' + $sourcePackage.Name + '.')
+    }
     $missingOutputs = @()
     foreach ($requiredName in $requiredOutputs) {
-        if (-not (Test-Path -LiteralPath (Join-Path $candidate.FullName $requiredName) -PathType Leaf)) { $missingOutputs += $requiredName }
+        if (-not (Test-Path -LiteralPath (Join-Path $candidatePath $requiredName) -PathType Leaf)) { $missingOutputs += $requiredName }
     }
     $scopeCheck = $false
-    $scopePath = Join-Path $candidate.FullName 'first-team-scope.json'
+    $scopePath = Join-Path $candidatePath 'first-team-scope.json'
     if (Test-Path -LiteralPath $scopePath -PathType Leaf) {
         $scope = Get-Content -LiteralPath $scopePath -Raw -Encoding UTF8 | ConvertFrom-Json
         $scopeCheck = ([int]$scope.team_id -eq $teamId -and [int]$scope.club_uid -eq $clubUid)
     }
     $gameDate = ''
-    $saveInfoPath = Join-Path $candidate.FullName 'save-info.json'
+    $saveInfoPath = Join-Path $candidatePath 'save-info.json'
     if (Test-Path -LiteralPath $saveInfoPath -PathType Leaf) {
         $saveInfo = Get-Content -LiteralPath $saveInfoPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $gameDate = [string]$saveInfo.game_date
@@ -99,12 +107,19 @@ foreach ($sourcePackage in $sourcePackages) {
     $slotFolder = Join-Path $saveRoot $sourcePackage.Name
     $null = New-Item -ItemType Directory -Path $slotFolder -Force
     Copy-Item -LiteralPath $manifestPath -Destination $slotFolder -Force
-    Copy-Item -LiteralPath $candidate.FullName -Destination $slotFolder -Recurse -Force
+    $slotAnalysisFolder = Join-Path $slotFolder $candidateName
+    $null = New-Item -ItemType Directory -Path $slotAnalysisFolder -Force
+    Get-ChildItem -LiteralPath $candidatePath -Force | ForEach-Object {
+        Copy-Item -LiteralPath $_.FullName -Destination $slotAnalysisFolder -Recurse -Force
+    }
 
     $packageSlot = Join-Path $packageRoot $sourcePackage.Name
     $packageExportRoot = Join-Path $packageSlot 'Export'
-    $null = New-Item -ItemType Directory -Path $packageExportRoot -Force
-    Copy-Item -LiteralPath $candidate.FullName -Destination $packageExportRoot -Recurse -Force
+    $packageAnalysisFolder = Join-Path $packageExportRoot $candidateName
+    $null = New-Item -ItemType Directory -Path $packageAnalysisFolder -Force
+    Get-ChildItem -LiteralPath $candidatePath -Force | ForEach-Object {
+        Copy-Item -LiteralPath $_.FullName -Destination $packageAnalysisFolder -Recurse -Force
+    }
     Copy-Item -LiteralPath $manifestPath -Destination $packageSlot -Force
     $sourceLogs = Join-Path $sourcePackage.FullName 'RunnerLogs'
     if (Test-Path -LiteralPath $sourceLogs -PathType Container) {
