@@ -57,7 +57,7 @@ jobs:
           python -m py_compile FM27_Tactic_Trial_Comparison_v1.0.py
           if ($LASTEXITCODE -ne 0) { throw 'Python comparison script syntax validation failed.' }
 
-          foreach ($path in @('./scripts/Invoke-PublicExport.ps1', './scripts/Recover-PublicComparison.ps1', './scripts/Prepare-AnalysisArtifact.ps1')) {
+          foreach ($path in @('./scripts/Invoke-PublicExport.ps1', './scripts/Recover-PublicComparison.ps1', './scripts/Prepare-AnalysisArtifact.ps1', './scripts/Invoke-LatestReleaseAssetExport.ps1')) {
             $tokens = $null
             $parseErrors = $null
             [System.Management.Automation.Language.Parser]::ParseFile(
@@ -146,7 +146,7 @@ jobs:
         run: |
           if ($env:EVENT_NAME -eq 'issue_comment') {
             $command = $env:COMMENT_BODY.Trim()
-          } elseif ($env:EVENT_NAME -eq 'push' -and $env:HEAD_COMMIT_MESSAGE -match '\[fm27-analysis\]\s*(/analyze\s+\d+)') {
+          } elseif ($env:EVENT_NAME -eq 'push' -and $env:HEAD_COMMIT_MESSAGE -match '\[fm27-analysis\]\s*(/analyze\s+\d+|/export-latest-two)') {
             $command = $Matches[1]
           } elseif ($env:EVENT_NAME -eq 'workflow_dispatch') {
             $saveSet = $env:INPUT_SAVE_SET
@@ -163,10 +163,52 @@ jobs:
             ./scripts/Prepare-AnalysisArtifact.ps1 -SourceRunId $sourceRunId
             exit 0
           }
-          if ($command -match '^/recover\s+(\d+)$') {
+          if ($command -match '^/recover\s+(\d+)          if ($command -notmatch '^/export\s+(all|tactic1|tactic2)$') {
+            throw 'Invalid command. Use /export all, /export tactic1, /export tactic2, /recover RUN_ID or /analyze RUN_ID.'
+          }
+          $saveSet = $Matches[1].ToLowerInvariant()
+          Write-Host ('Starting public FM27 tactic comparison: ' + $saveSet)
+          ./scripts/Invoke-PublicExport.ps1 -SaveSet $saveSet
+
+      - name: Upload six-trial analysis inputs
+        if: ${{success() && ((github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/analyze ')) || (github.event_name == 'push' && contains(github.event.head_commit.message, '/analyze ')))}}
+        uses: actions/upload-artifact@v4
+        with:
+          name: FM27-analysis-inputs-${{github.run_id}}
+          path: _analysis-artifact/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload latest-two season reports
+        if: ${{success() && github.event_name == 'push' && contains(github.event.head_commit.message, '/export-latest-two')}}
+        uses: actions/upload-artifact@v4
+        with:
+          name: FM27-latest-two-season-reports-${{github.run_id}}
+          path: _latest-two-export/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Report result to control issue
+        if: ${{always() && github.event_name == 'issue_comment'}}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{github.token}}
+          ISSUE_NUMBER: ${{github.event.issue.number}}
+          JOB_STATUS: ${{job.status}}
+          RUN_ID: ${{github.run_id}}
+          REPOSITORY: ${{github.repository}}
+        run: |
+          $body = "FM27 report job run $($env:RUN_ID) finished with status: **$($env:JOB_STATUS)**.$([Environment]::NewLine)$([Environment]::NewLine)Run: https://github.com/$($env:REPOSITORY)/actions/runs/$($env:RUN_ID)$([Environment]::NewLine)Reports: https://github.com/$($env:REPOSITORY)/releases/tag/fm27-exports"
+          gh issue comment $env:ISSUE_NUMBER --repo $env:REPOSITORY --body $body
+) {
             $sourceRunId = $Matches[1]
             Write-Host ('Recovering preserved trial exports from run ' + $sourceRunId)
             ./scripts/Recover-PublicComparison.ps1 -SourceRunId $sourceRunId
+            exit 0
+          }
+          if ($command -eq '/export-latest-two') {
+            Write-Host 'Exporting the two newest .fm save assets from Release fm27-exports.'
+            ./scripts/Invoke-LatestReleaseAssetExport.ps1
             exit 0
           }
           if ($command -notmatch '^/export\s+(all|tactic1|tactic2)$') {
