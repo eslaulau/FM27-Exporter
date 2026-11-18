@@ -1,18 +1,26 @@
 # Public FM27 exporter setup
 
-## Routine exports
+## Chat-driven export
 
-The three source career saves have already been migrated to the public `fm27-saves` Release.
+You can ask ChatGPT to start an export directly. It sends an owner-authenticated command to the [FM27 Export Control issue](https://github.com/eslaulau/FM27-Exporter/issues/1), and GitHub Actions starts automatically.
 
-1. Open [Export public FM27 saves](https://github.com/eslaulau/FM27-Exporter/actions/workflows/export-public-saves.yml).
-2. Click **Run workflow** and choose `all`, `save1`, `save2`, or `save3`.
-3. Reports, summary JSON, diagnostics and persistent player-match-history archives are uploaded to the public [Release fm27-exports](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-exports).
+Commands:
+- `/export all` — export all three saves
+- `/export save1` — export save 1
+- `/export save2` — export save 2
+- `/export save3` — export save 3
+
+The workflow posts the run result and links back to the control issue. Only comments authored by the repository owner are accepted as commands.
+
+## Manual fallback
+
+Open [Export public FM27 saves](https://github.com/eslaulau/FM27-Exporter/actions/workflows/export-public-saves.yml), click **Run workflow**, and choose a save set.
+
+## Results and source files
+
+The three source career saves are stored in the public [Release fm27-saves](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-saves). Reports, summary JSON, diagnostics and persistent player-match-history archives are uploaded to the public [Release fm27-exports](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-exports).
 
 No personal access token or private repository is required for routine exports.
-
-## Public source saves
-
-The three validated source files are stored in [Release fm27-saves](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-saves). Their recorded sizes and SHA256 hashes are checked before export.
 
 ## Public-data notice
 
