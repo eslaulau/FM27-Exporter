@@ -31,7 +31,7 @@ jobs:
         github.event_name == 'issue_comment' &&
         github.event.issue.title == 'FM27 Export Control' &&
         github.event.comment.user.login == github.repository_owner &&
-        (startsWith(github.event.comment.body, '/export ') || github.event.comment.body == '/validate')
+        (startsWith(github.event.comment.body, '/export ') || startsWith(github.event.comment.body, '/recover ') || github.event.comment.body == '/validate')
       )
     name: Validate exporter scripts and six-save manifest
     runs-on: windows-latest
@@ -48,32 +48,44 @@ jobs:
           python-version: '3.12'
           architecture: x64
 
-      - name: Validate Python and PowerShell syntax
+      - name: Validate Python, PowerShell syntax and summary serialization
         shell: pwsh
         run: |
           python -m py_compile FM27_Tactic_Trial_Comparison_v1.0.py
           if ($LASTEXITCODE -ne 0) { throw 'Python comparison script syntax validation failed.' }
 
-          $tokens = $null
-          $parseErrors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile(
-            (Resolve-Path './scripts/Invoke-PublicExport.ps1').Path,
-            [ref]$tokens,
-            [ref]$parseErrors
-          ) | Out-Null
-          if ($parseErrors.Count -gt 0) {
-            $parseErrors | ForEach-Object { Write-Error $_.Message }
-            throw 'PowerShell export runner syntax validation failed.'
+          foreach ($path in @('./scripts/Invoke-PublicExport.ps1', './scripts/Recover-PublicComparison.ps1')) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $path).Path,
+              [ref]$tokens,
+              [ref]$parseErrors
+            ) | Out-Null
+            if ($parseErrors.Count -gt 0) {
+              $parseErrors | ForEach-Object { Write-Error $_.Message }
+              throw "PowerShell syntax validation failed: $path"
+            }
           }
+
+          $sampleList = New-Object System.Collections.Generic.List[object]
+          [void]$sampleList.Add([pscustomobject]@{ tactic_name = 'sample'; trial = 1 })
+          $sampleSummary = [ordered]@{
+            test_saves = [object[]]$sampleList.ToArray()
+            tactic_names = [string[]]@('sample-a', 'sample-b')
+          }
+          $sampleJson = ConvertTo-Json -InputObject $sampleSummary -Depth 10
+          $sampleDecoded = $sampleJson | ConvertFrom-Json
+          if (@($sampleDecoded.test_saves).Count -ne 1) { throw 'Summary array serialization self-test failed.' }
 
           $cache = Get-Content './FM27_PlayerIdentityCache_Formal_v1.1.json' -Raw | ConvertFrom-Json
           if ([int]$cache.team_id -ne 539) { throw 'Player identity cache team_id mismatch.' }
-          Write-Host 'Python, PowerShell and identity-cache validation passed.'
+          Write-Host 'Python, PowerShell, summary serialization and identity-cache validation passed.'
 
       - name: Validate six public source save assets
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${ github.token }
         run: |
           $gh = (Get-Command gh -ErrorAction Stop).Source
           $repo = $env:GITHUB_REPOSITORY
@@ -99,9 +111,9 @@ jobs:
         github.event_name == 'issue_comment' &&
         github.event.issue.title == 'FM27 Export Control' &&
         github.event.comment.user.login == github.repository_owner &&
-        startsWith(github.event.comment.body, '/export ')
+        (startsWith(github.event.comment.body, '/export ') || startsWith(github.event.comment.body, '/recover '))
       )
-    name: Export public saves and publish tactic comparison
+    name: Export or recover FM27 trial reports
     runs-on: windows-latest
     timeout-minutes: 240
     permissions:
@@ -119,22 +131,30 @@ jobs:
           python-version: '3.12'
           architecture: x64
 
-      - name: Resolve command and run six-trial comparison
+      - name: Resolve command and export or recover comparison
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
-          EVENT_NAME: ${{ github.event_name }}
-          INPUT_SAVE_SET: ${{ github.event.inputs.save_set }}
-          COMMENT_BODY: ${{ github.event.comment.body }}
+          GH_TOKEN: ${ github.token }
+          EVENT_NAME: ${ github.event_name }
+          INPUT_SAVE_SET: ${ github.event.inputs.save_set }
+          COMMENT_BODY: ${ github.event.comment.body }
         run: |
-          $saveSet = $env:INPUT_SAVE_SET
           if ($env:EVENT_NAME -eq 'issue_comment') {
             $command = $env:COMMENT_BODY.Trim()
+            if ($command -match '^/recover\s+(\d+)$') {
+              $sourceRunId = $Matches[1]
+              Write-Host ('Recovering preserved trial exports from run ' + $sourceRunId)
+              ./scripts/Recover-PublicComparison.ps1 -SourceRunId $sourceRunId
+              exit 0
+            }
             if ($command -notmatch '^/export\s+(all|tactic1|tactic2)$') {
-              throw 'Invalid export command. Use /export all, /export tactic1 or /export tactic2.'
+              throw 'Invalid command. Use /export all, /export tactic1, /export tactic2 or /recover RUN_ID.'
             }
             $saveSet = $Matches[1].ToLowerInvariant()
+          } else {
+            $saveSet = $env:INPUT_SAVE_SET
           }
+
           if ($saveSet -notin @('all', 'tactic1', 'tactic2')) {
             throw 'Invalid save selection.'
           }
@@ -142,14 +162,14 @@ jobs:
           ./scripts/Invoke-PublicExport.ps1 -SaveSet $saveSet
 
       - name: Report result to control issue
-        if: ${{ always() && github.event_name == 'issue_comment' }}
+        if: ${ always() && github.event_name == 'issue_comment' }
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          JOB_STATUS: ${{ job.status }}
-          RUN_ID: ${{ github.run_id }}
-          REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${ github.token }
+          ISSUE_NUMBER: ${ github.event.issue.number }
+          JOB_STATUS: ${ job.status }
+          RUN_ID: ${ github.run_id }
+          REPOSITORY: ${ github.repository }
         run: |
-          $body = "FM27 six-trial tactic comparison run $($env:RUN_ID) finished with status: **$($env:JOB_STATUS)**.$([Environment]::NewLine)$([Environment]::NewLine)Run: https://github.com/$($env:REPOSITORY)/actions/runs/$($env:RUN_ID)$([Environment]::NewLine)Reports: https://github.com/$($env:REPOSITORY)/releases/tag/fm27-exports"
+          $body = "FM27 report job run $($env:RUN_ID) finished with status: **$($env:JOB_STATUS)**.$([Environment]::NewLine)$([Environment]::NewLine)Run: https://github.com/$($env:REPOSITORY)/actions/runs/$($env:RUN_ID)$([Environment]::NewLine)Reports: https://github.com/$($env:REPOSITORY)/releases/tag/fm27-exports"
           gh issue comment $env:ISSUE_NUMBER --repo $env:REPOSITORY --body $body
