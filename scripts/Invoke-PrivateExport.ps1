@@ -47,6 +47,9 @@ $logRoot = Join-Path $runRoot 'runner-logs'
 $privateCacheFile = Join-Path $repoRoot 'FM27_PlayerIdentityCache_Formal_v1.1.json'
 $sourceReleaseApi = "repos/$privateRepo/releases/tags/$sourceTag"
 $resultsReleaseUrl = "https://github.com/$privateRepo/releases/tag/$resultsTag"
+$stage = 'Initialize'
+$resultsReleaseExists = $false
+$ghPath = $null
 
 foreach ($dir in @($downloadRoot, $saveRoot, $historyCacheRoot, $packageRoot, $logRoot)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
 
@@ -54,6 +57,8 @@ $statuses = New-Object System.Collections.Generic.List[object]
 $uploadFiles = New-Object System.Collections.Generic.List[string]
 
 try {
+    $stage = 'Read private source release'
+    Write-Host 'Stage: validate private source release access'
     # Validate access to the private source release without printing private metadata.
     $releaseJson = & $ghPath api $sourceReleaseApi 2>$null
     if ($LASTEXITCODE -ne 0) { throw 'Cannot read the private FM27 source release.' }
@@ -63,7 +68,21 @@ try {
         if ($availableAssets -notcontains $item.Asset) { throw 'A selected source save asset is missing.' }
     }
 
+    # Create or confirm the private destination early, so failures during parsing can still
+    # publish diagnostics to the private repository rather than losing them with the runner.
+    $stage = 'Prepare private results release'
+    Write-Host 'Stage: prepare private results storage'
+    & $ghPath release view $resultsTag --repo $privateRepo *> $null
+    $resultsReleaseExists = ($LASTEXITCODE -eq 0)
+    if (-not $resultsReleaseExists) {
+        & $ghPath release create $resultsTag --repo $privateRepo --target main --title 'FM27 Private Export Results' --notes 'Private storage for FM27 first-team export packages, persistent player-match-history archives and private runner diagnostics.' *> $null
+        if ($LASTEXITCODE -ne 0) { throw 'Could not create the private results release.' }
+        $resultsReleaseExists = $true
+    }
+
     # Retrieve the player-specific identity cache at runtime only. It is never committed publicly.
+    $stage = 'Retrieve private player identity cache'
+    Write-Host 'Stage: retrieve private player-identity cache'
     $cacheApi = "repos/$privateRepo/contents/$privateCachePath" + "?ref=$privateCacheRef"
     $cacheJson = & $ghPath api $cacheApi 2>$null
     if ($LASTEXITCODE -ne 0) { throw 'Cannot retrieve the private player-identity cache.' }
@@ -73,8 +92,8 @@ try {
     [System.IO.File]::WriteAllBytes($privateCacheFile, $cacheBytes)
 
     # Restore persistent history from the private results release, if available.
-    & $ghPath release view $resultsTag --repo $privateRepo *> $null
-    $resultsReleaseExists = ($LASTEXITCODE -eq 0)
+    $stage = 'Restore previous private history archive'
+    Write-Host 'Stage: restore previous history archive if present'
     if ($resultsReleaseExists) {
         & $ghPath release download $resultsTag --repo $privateRepo --pattern $cacheAssetName --dir $downloadRoot --clobber *> $null
         if ($LASTEXITCODE -eq 0) { Expand-Archive -LiteralPath (Join-Path $downloadRoot $cacheAssetName) -DestinationPath $historyCacheRoot -Force }
@@ -82,6 +101,8 @@ try {
 
     $powershellExe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
     foreach ($item in $selected) {
+        $stage = 'Download and verify save slot ' + $item.Slot
+        Write-Host ('Stage: download and verify save slot ' + $item.Slot)
         $slotFolder = Join-Path $saveRoot ('slot-' + $item.Slot)
         New-Item -ItemType Directory -Path $slotFolder -Force | Out-Null
 
@@ -101,6 +122,8 @@ try {
 
         $savePath = Join-Path $slotFolder $item.Asset
         Copy-Item -LiteralPath $downloadedSave -Destination $savePath -Force
+        $stage = 'Run exporter for save slot ' + $item.Slot
+        Write-Host ('Stage: run exporter for save slot ' + $item.Slot)
         $stdoutPath = Join-Path $logRoot ('slot-' + $item.Slot + '.stdout.txt')
         $stderrPath = Join-Path $logRoot ('slot-' + $item.Slot + '.stderr.txt')
         $argumentLine = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $exporterPath + '" -SavePath "' + $savePath + '"'
@@ -114,6 +137,8 @@ try {
         New-Item -ItemType Directory -Path $runnerLogFolder -Force | Out-Null
         foreach ($logFile in @($stdoutPath, $stderrPath)) { if (Test-Path -LiteralPath $logFile -PathType Leaf) { Copy-Item -LiteralPath $logFile -Destination $runnerLogFolder -Force } }
 
+        $stage = 'Validate and package save slot ' + $item.Slot
+        Write-Host ('Stage: validate and package save slot ' + $item.Slot)
         $requiredOutputs = @('save-info.json', 'validation.json', 'first-team-scope.json', 'fixtures.json', 'players.json')
         $missingOutputs = @()
         if ($candidate) {
@@ -145,6 +170,8 @@ try {
         })
     }
 
+    $stage = 'Persist player match history archives'
+    Write-Host 'Stage: persist player match-history archives'
     # Persist updated per-save history archives. ZipFile includes the hidden .routes folder.
     foreach ($item in $manifest) {
         $slotFolder = Join-Path $saveRoot ('slot-' + $item.Slot)
@@ -164,6 +191,8 @@ try {
         $uploadFiles.Add($historyZip)
     }
 
+    $stage = 'Build export summary'
+    Write-Host 'Stage: build export summary'
     $summary = [ordered]@{
         exporter_version = '1.4.5'
         parser_version = 'fmsave==0.12.4'
@@ -181,10 +210,8 @@ try {
     $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
     $uploadFiles.Add($summaryPath)
 
-    if (-not $resultsReleaseExists) {
-        & $ghPath release create $resultsTag --repo $privateRepo --target main --title 'FM27 Private Export Results' --notes 'Private storage for FM27 first-team export packages and persistent player-match-history archives.' *> $null
-        if ($LASTEXITCODE -ne 0) { throw 'Could not create the private results release.' }
-    }
+    $stage = 'Upload private reports'
+    Write-Host 'Stage: upload reports to private FM27 repository'
     if ($uploadFiles.Count -gt 0) {
         $uploadArgs = @('release', 'upload', $resultsTag) + @($uploadFiles.ToArray()) + @('--repo', $privateRepo, '--clobber')
         & $ghPath @uploadArgs *> $null
@@ -198,8 +225,45 @@ try {
 }
 catch {
     # Keep private filenames, paths and parser output out of public Actions logs.
-    Write-Host 'Private export stopped. Check the token configuration and inspect the private FM27 results release if one was created.' -ForegroundColor Red
-    throw 'Private export failed. Detailed diagnostics must remain in private storage.'
+    $caughtError = $_
+    $diagnosticsUploaded = $false
+    try {
+        if ($ghPath -and $resultsReleaseExists) {
+            $diagnosticRoot = Join-Path $runRoot 'failure-diagnostics'
+            New-Item -ItemType Directory -Path $diagnosticRoot -Force | Out-Null
+            if (Test-Path -LiteralPath $logRoot -PathType Container) {
+                Copy-Item -LiteralPath $logRoot -Destination (Join-Path $diagnosticRoot 'RunnerLogs') -Recurse -Force
+            }
+            if (Test-Path -LiteralPath $packageRoot -PathType Container) {
+                Copy-Item -LiteralPath $packageRoot -Destination (Join-Path $diagnosticRoot 'PartialPackages') -Recurse -Force
+            }
+            $failureRecord = [ordered]@{
+                run_id = $env:GITHUB_RUN_ID
+                failed_stage = $stage
+                occurred_at_utc = [DateTime]::UtcNow.ToString('o')
+                exception_message = [string]$caughtError.Exception.Message
+                script_stack_trace = [string]$caughtError.ScriptStackTrace
+                selected_save_slots = @($selected | ForEach-Object { $_.Slot })
+                note = 'Private diagnostics only. Source .fm files and the private identity cache are excluded.'
+            }
+            $failureRecord | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $diagnosticRoot 'failure.json') -Encoding UTF8
+            $diagnosticZip = Join-Path $runRoot ('FM27_PrivateExport_Diagnostics_' + $env:GITHUB_RUN_ID + '.zip')
+            [System.IO.Compression.ZipFile]::CreateFromDirectory($diagnosticRoot, $diagnosticZip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+            & $ghPath release upload $resultsTag $diagnosticZip --repo $privateRepo --clobber *> $null
+            $diagnosticsUploaded = ($LASTEXITCODE -eq 0)
+        }
+    }
+    catch {
+        $diagnosticsUploaded = $false
+    }
+    Write-Host ('Private export stopped at stage: ' + $stage + '.') -ForegroundColor Red
+    if ($diagnosticsUploaded) {
+        Write-Host 'Private diagnostic package uploaded to the FM27 results release.' -ForegroundColor Yellow
+    }
+    else {
+        Write-Host 'Private diagnostic package could not be uploaded; check private Release write permissions.' -ForegroundColor Yellow
+    }
+    throw ('Private export failed at stage: ' + $stage + '.')
 }
 finally {
     if (Test-Path -LiteralPath $privateCacheFile -PathType Leaf) { Remove-Item -LiteralPath $privateCacheFile -Force -ErrorAction SilentlyContinue }
