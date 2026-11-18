@@ -52,10 +52,10 @@ jobs:
       - name: Resolve command and run exporter
         shell: pwsh
         env:
-          GH_TOKEN: \${{ github.token }}
-          EVENT_NAME: \${{ github.event_name }}
-          INPUT_SAVE_SET: \${{ github.event.inputs.save_set }}
-          COMMENT_BODY: \${{ github.event.comment.body }}
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_SAVE_SET: ${{ github.event.inputs.save_set }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           $saveSet = $env:INPUT_SAVE_SET
           if ($env:EVENT_NAME -eq 'issue_comment') {
@@ -72,14 +72,14 @@ jobs:
           ./scripts/Invoke-PublicExport.ps1 -SaveSet $saveSet
 
       - name: Report result to control issue
-        if: \${{ always() && github.event_name == 'issue_comment' }}
+        if: ${{ always() && github.event_name == 'issue_comment' }}
         shell: pwsh
         env:
-          GH_TOKEN: \${{ github.token }}
-          ISSUE_NUMBER: \${{ github.event.issue.number }}
-          JOB_STATUS: \${{ job.status }}
-          RUN_ID: \${{ github.run_id }}
-          REPOSITORY: \${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_ID: ${{ github.run_id }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           $body = "FM27 export run $($env:RUN_ID) finished with status: **$($env:JOB_STATUS)**.$([Environment]::NewLine)$([Environment]::NewLine)Run: https://github.com/$($env:REPOSITORY)/actions/runs/$($env:RUN_ID)$([Environment]::NewLine)Reports: https://github.com/$($env:REPOSITORY)/releases/tag/fm27-exports"
           gh issue comment $env:ISSUE_NUMBER --repo $env:REPOSITORY --body $body
