@@ -1,0 +1,278 @@
+[CmdletBinding()]
+param(
+    [ValidateSet('all', 'save1', 'save2', 'save3')]
+    [string]$SaveSet = 'all'
+)
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+$repo = $env:GITHUB_REPOSITORY
+$sourceTag = 'fm27-saves'
+$resultsTag = 'fm27-exports'
+$historyAssetName = 'FM27_PlayerMatchHistoryArchives.zip'
+
+$manifest = @(
+    [pscustomobject]@{ Slot = '1'; Key = 'save1'; Asset = 'Vanco_4Back_Vertical_01_run31-1.fm'; Bytes = [int64]110859875; Sha256 = '307ebeb47dba47ee1e06722398d647d93efa6cadb3ce85665187e83237360aa3' },
+    [pscustomobject]@{ Slot = '2'; Key = 'save2'; Asset = 'Vanco_4Back_Vertical_01_run31-2.fm'; Bytes = [int64]111711774; Sha256 = '2afb1d78b1cde5d5beaa48d96df8f9a4a6c16cd651f95f9c003bf5922df6e1b6' },
+    [pscustomobject]@{ Slot = '3'; Key = 'save3'; Asset = 'Vanco_4Back_Vertical_01_run31-3.fm'; Bytes = [int64]111138678; Sha256 = '610eba7688e95047903e0a1d76aec149b3756404bd0fde4d424f1e64b0143ca4' }
+)
+
+switch ($SaveSet) {
+    'all'   { $selected = @($manifest) }
+    'save1' { $selected = @($manifest | Where-Object Key -eq 'save1') }
+    'save2' { $selected = @($manifest | Where-Object Key -eq 'save2') }
+    'save3' { $selected = @($manifest | Where-Object Key -eq 'save3') }
+}
+
+if ([string]::IsNullOrWhiteSpace($repo) -or
+    [string]::IsNullOrWhiteSpace($env:GH_TOKEN) -or
+    [string]::IsNullOrWhiteSpace($env:RUNNER_TEMP) -or
+    [string]::IsNullOrWhiteSpace($env:GITHUB_RUN_ID) -or
+    [string]::IsNullOrWhiteSpace($env:GITHUB_WORKSPACE)) {
+    throw 'Required GitHub Actions environment is missing.'
+}
+
+$ghPath = (Get-Command gh -ErrorAction Stop).Source
+$repoRoot = Split-Path -Parent $PSScriptRoot
+$exporterPath = Join-Path $repoRoot 'Run_FM27_Formal_Season_Export_v1.4.5.ps1'
+$identityCachePath = Join-Path $repoRoot 'FM27_PlayerIdentityCache_Formal_v1.1.json'
+if (-not (Test-Path -LiteralPath $exporterPath -PathType Leaf)) { throw 'Exporter main script is missing.' }
+if (-not (Test-Path -LiteralPath $identityCachePath -PathType Leaf)) { throw 'Public player-identity cache is missing.' }
+
+$runRoot = Join-Path $env:RUNNER_TEMP ('FM27-PublicExport-' + $env:GITHUB_RUN_ID)
+$downloadRoot = Join-Path $runRoot 'downloads'
+$saveRoot = Join-Path $env:GITHUB_WORKSPACE '_public-runtime\saves'
+$historyCacheRoot = Join-Path $runRoot 'history-cache'
+$packageRoot = Join-Path $runRoot 'packages'
+$logRoot = Join-Path $runRoot 'runner-logs'
+$resultsReleaseExists = $false
+$stage = 'Initialize'
+
+foreach ($dir in @($downloadRoot, $saveRoot, $historyCacheRoot, $packageRoot, $logRoot)) {
+    New-Item -ItemType Directory -Path $dir -Force | Out-Null
+}
+
+$statuses = New-Object System.Collections.Generic.List[object]
+$uploadFiles = New-Object System.Collections.Generic.List[string]
+
+try {
+    $stage = 'Prepare public results release'
+    Write-Host 'Preparing public report release.'
+    & $ghPath release view $resultsTag --repo $repo *> $null
+    $resultsReleaseExists = ($LASTEXITCODE -eq 0)
+    if (-not $resultsReleaseExists) {
+        & $ghPath release create $resultsTag --repo $repo --target main --title 'FM27 Public Export Results' --notes 'Public FM27 first-team export packages, persistent player-match-history archives, run summaries and diagnostics.' *> $null
+        if ($LASTEXITCODE -ne 0) { throw 'Could not create the public results release.' }
+        $resultsReleaseExists = $true
+    }
+
+    $stage = 'Validate public source release'
+    Write-Host 'Checking public source save release.'
+    $releaseJson = & $ghPath api ("repos/$repo/releases/tags/$sourceTag") 2>$null
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot read public source release fm27-saves.' }
+    $sourceRelease = ($releaseJson -join '') | ConvertFrom-Json
+    $availableAssets = @($sourceRelease.assets | ForEach-Object { $_.name })
+    foreach ($item in $selected) {
+        if ($availableAssets -notcontains $item.Asset) { throw ('Public source save is missing: ' + $item.Asset) }
+    }
+
+    $stage = 'Restore previous public history archive'
+    Write-Host 'Restoring previous public player-match-history archive, if present.'
+    & $ghPath release download $resultsTag --repo $repo --pattern $historyAssetName --dir $downloadRoot --clobber *> $null
+    if ($LASTEXITCODE -eq 0) {
+        Expand-Archive -LiteralPath (Join-Path $downloadRoot $historyAssetName) -DestinationPath $historyCacheRoot -Force
+    }
+
+    $powershellExe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    foreach ($item in $selected) {
+        $stage = 'Download and verify save slot ' + $item.Slot
+        Write-Host ('Downloading and verifying save slot ' + $item.Slot)
+        $slotFolder = Join-Path $saveRoot ('slot-' + $item.Slot)
+        New-Item -ItemType Directory -Path $slotFolder -Force | Out-Null
+
+        $priorSlotCache = Join-Path $historyCacheRoot ('slot-' + $item.Slot)
+        $cachedArchivePath = Join-Path $priorSlotCache 'FM27_PlayerMatchHistoryArchives'
+        if (Test-Path -LiteralPath $cachedArchivePath -PathType Container) {
+            Copy-Item -LiteralPath $cachedArchivePath -Destination $slotFolder -Recurse -Force
+        }
+
+        & $ghPath release download $sourceTag --repo $repo --pattern $item.Asset --dir $downloadRoot --clobber *> $null
+        if ($LASTEXITCODE -ne 0) { throw ('Could not download public save slot ' + $item.Slot + '.') }
+        $downloadedSave = Join-Path $downloadRoot $item.Asset
+        if (-not (Test-Path -LiteralPath $downloadedSave -PathType Leaf)) { throw ('Downloaded save slot ' + $item.Slot + ' is missing.') }
+
+        $saveInfo = Get-Item -LiteralPath $downloadedSave
+        if ($saveInfo.Length -ne $item.Bytes) { throw ('Save slot ' + $item.Slot + ' failed its file-size check.') }
+        $actualHash = (Get-FileHash -LiteralPath $downloadedSave -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($actualHash -ne $item.Sha256) { throw ('Save slot ' + $item.Slot + ' failed its SHA256 check.') }
+
+        $savePath = Join-Path $slotFolder $item.Asset
+        Copy-Item -LiteralPath $downloadedSave -Destination $savePath -Force
+
+        $stage = 'Run exporter for save slot ' + $item.Slot
+        Write-Host ('Running the exporter for save slot ' + $item.Slot)
+        $stdoutPath = Join-Path $logRoot ('slot-' + $item.Slot + '.stdout.txt')
+        $stderrPath = Join-Path $logRoot ('slot-' + $item.Slot + '.stderr.txt')
+        $argumentLine = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $exporterPath + '" -SavePath "' + $savePath + '"'
+        $proc = Start-Process -FilePath $powershellExe -ArgumentList $argumentLine -Wait -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+
+        $candidate = Get-ChildItem -LiteralPath $slotFolder -Directory -Filter 'FM27_Analysis_*' -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        $packageSlot = Join-Path $packageRoot ('slot-' + $item.Slot)
+        New-Item -ItemType Directory -Path $packageSlot -Force | Out-Null
+        if ($candidate) { Copy-Item -LiteralPath $candidate.FullName -Destination (Join-Path $packageSlot 'Export') -Recurse -Force }
+
+        $runnerLogFolder = Join-Path $packageSlot 'RunnerLogs'
+        New-Item -ItemType Directory -Path $runnerLogFolder -Force | Out-Null
+        foreach ($logFile in @($stdoutPath, $stderrPath)) {
+            if (Test-Path -LiteralPath $logFile -PathType Leaf) {
+                Copy-Item -LiteralPath $logFile -Destination $runnerLogFolder -Force
+            }
+        }
+
+        $stage = 'Validate and package save slot ' + $item.Slot
+        $requiredOutputs = @('save-info.json', 'validation.json', 'first-team-scope.json', 'fixtures.json', 'players.json')
+        $missingOutputs = @()
+        if ($candidate) {
+            foreach ($requiredName in $requiredOutputs) {
+                if (-not (Test-Path -LiteralPath (Join-Path $candidate.FullName $requiredName) -PathType Leaf)) {
+                    $missingOutputs += $requiredName
+                }
+            }
+        }
+        else {
+            $missingOutputs = $requiredOutputs
+        }
+
+        $scopeCheck = $false
+        if ($candidate -and (Test-Path -LiteralPath (Join-Path $candidate.FullName 'first-team-scope.json'))) {
+            try {
+                $scope = Get-Content -LiteralPath (Join-Path $candidate.FullName 'first-team-scope.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+                $scopeCheck = ([int]$scope.team_id -eq 539 -and [int]$scope.club_uid -eq 680)
+            }
+            catch {
+                $scopeCheck = $false
+            }
+        }
+
+        $status = if ($proc.ExitCode -eq 0 -and $missingOutputs.Count -eq 0 -and $scopeCheck) {
+            'exported'
+        }
+        else {
+            'partial_or_failed'
+        }
+
+        $packageZip = Join-Path $runRoot ('FM27_FirstTeam_Export_' + $env:GITHUB_RUN_ID + '_slot' + $item.Slot + '.zip')
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($packageSlot, $packageZip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+        $uploadFiles.Add($packageZip)
+        $statuses.Add([pscustomobject]@{
+            slot = $item.Slot
+            status = $status
+            process_exit_code = [int]$proc.ExitCode
+            output_directory_created = [bool]($null -ne $candidate)
+            required_output_files_missing = $missingOutputs
+            first_team_scope_check_passed = [bool]$scopeCheck
+            report_zip_name = [System.IO.Path]::GetFileName($packageZip)
+        })
+    }
+
+    $stage = 'Persist public player match history archives'
+    Write-Host 'Persisting public player-match-history archives.'
+    foreach ($item in $manifest) {
+        $slotFolder = Join-Path $saveRoot ('slot-' + $item.Slot)
+        $slotArchivePath = Join-Path $slotFolder 'FM27_PlayerMatchHistoryArchives'
+        if (Test-Path -LiteralPath $slotArchivePath -PathType Container) {
+            $targetSlotCache = Join-Path $historyCacheRoot ('slot-' + $item.Slot)
+            New-Item -ItemType Directory -Path $targetSlotCache -Force | Out-Null
+            $targetArchive = Join-Path $targetSlotCache 'FM27_PlayerMatchHistoryArchives'
+            if (Test-Path -LiteralPath $targetArchive) { Remove-Item -LiteralPath $targetArchive -Recurse -Force }
+            Copy-Item -LiteralPath $slotArchivePath -Destination $targetSlotCache -Recurse -Force
+        }
+    }
+
+    if ((Get-ChildItem -LiteralPath $historyCacheRoot -Force -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0) {
+        $historyZip = Join-Path $runRoot $historyAssetName
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($historyCacheRoot, $historyZip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+        $uploadFiles.Add($historyZip)
+    }
+
+    $stage = 'Build public export summary'
+    $summary = [ordered]@{
+        exporter_version = '1.4.5'
+        parser_version = 'fmsave==0.12.4'
+        run_id = $env:GITHUB_RUN_ID
+        created_at_utc = [DateTime]::UtcNow.ToString('o')
+        repository = $repo
+        selected_save_slots = @($selected | ForEach-Object { $_.Slot })
+        results = @($statuses)
+        notes = @(
+            'Source saves, player identity cache, reports and history archives are stored in this public repository.',
+            'Inspect validation.json, first-team-scope.json, player-report-identity-audit.json and any export-warnings.txt.',
+            'The FM27 27.0.1+2494687 team-match-stats compatibility path is experimental where labelled.'
+        )
+    }
+    $summaryPath = Join-Path $runRoot ('FM27_Export_' + $env:GITHUB_RUN_ID + '_summary.json')
+    $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
+    $uploadFiles.Add($summaryPath)
+
+    $stage = 'Upload public reports'
+    Write-Host 'Uploading report packages to the public fm27-exports release.'
+    if ($uploadFiles.Count -gt 0) {
+        $uploadArgs = @('release', 'upload', $resultsTag) + @($uploadFiles.ToArray()) + @('--repo', $repo, '--clobber')
+        & $ghPath @uploadArgs *> $null
+        if ($LASTEXITCODE -ne 0) { throw 'Could not upload report packages to the public results release.' }
+    }
+
+    $failedCount = @($statuses | Where-Object status -ne 'exported').Count
+    Write-Host ('Public export packages uploaded. Completed slots: ' + (@($statuses | Where-Object status -eq 'exported').Count) + '/' + $statuses.Count)
+    Write-Host ('https://github.com/' + $repo + '/releases/tag/' + $resultsTag)
+    if ($failedCount -gt 0) { throw 'One or more exports are partial or failed. Inspect the public report ZIP and summary JSON.' }
+}
+catch {
+    $caughtError = $_
+    $diagnosticsUploaded = $false
+    try {
+        $diagnosticRoot = Join-Path $runRoot 'failure-diagnostics'
+        New-Item -ItemType Directory -Path $diagnosticRoot -Force | Out-Null
+        if (Test-Path -LiteralPath $logRoot -PathType Container) {
+            Copy-Item -LiteralPath $logRoot -Destination (Join-Path $diagnosticRoot 'RunnerLogs') -Recurse -Force
+        }
+        if (Test-Path -LiteralPath $packageRoot -PathType Container) {
+            Copy-Item -LiteralPath $packageRoot -Destination (Join-Path $diagnosticRoot 'PartialPackages') -Recurse -Force
+        }
+        $failureRecord = [ordered]@{
+            run_id = $env:GITHUB_RUN_ID
+            failed_stage = $stage
+            occurred_at_utc = [DateTime]::UtcNow.ToString('o')
+            exception_message = [string]$caughtError.Exception.Message
+            script_stack_trace = [string]$caughtError.ScriptStackTrace
+            selected_save_slots = @($selected | ForEach-Object { $_.Slot })
+            note = 'Public diagnostics. Source save files are not copied into this diagnostic ZIP.'
+        }
+        $failureRecord | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $diagnosticRoot 'failure.json') -Encoding UTF8
+        $diagnosticZip = Join-Path $runRoot ('FM27_PublicExport_Diagnostics_' + $env:GITHUB_RUN_ID + '.zip')
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($diagnosticRoot, $diagnosticZip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+        if (-not $resultsReleaseExists) {
+            & $ghPath release create $resultsTag --repo $repo --target main --title 'FM27 Public Export Results' --notes 'Public FM27 export reports and diagnostics.' *> $null
+            $resultsReleaseExists = ($LASTEXITCODE -eq 0)
+        }
+        if ($resultsReleaseExists) {
+            & $ghPath release upload $resultsTag $diagnosticZip --repo $repo --clobber *> $null
+            $diagnosticsUploaded = ($LASTEXITCODE -eq 0)
+        }
+    }
+    catch {
+        $diagnosticsUploaded = $false
+    }
+    Write-Host ('Public export stopped at stage: ' + $stage + '.') -ForegroundColor Red
+    Write-Host ('Failure detail: ' + [string]$caughtError.Exception.Message) -ForegroundColor Red
+    if ($diagnosticsUploaded) {
+        Write-Host 'Public diagnostic package uploaded to the fm27-exports release.' -ForegroundColor Yellow
+    }
+    else {
+        Write-Host 'Public diagnostic package could not be uploaded.' -ForegroundColor Yellow
+    }
+    throw ('Public export failed at stage: ' + $stage + '. ' + [string]$caughtError.Exception.Message)
+}
