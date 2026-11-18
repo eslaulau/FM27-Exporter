@@ -16,9 +16,10 @@ Supported commands:
 - `/export all`
 - `/export tactic1`
 - `/export tactic2`
-- (a third tactic group can be added when present)
+- `/recover RUN_ID`：从失败运行的诊断包恢复已完成的报告，不重新解析 `.fm` 存档
+- `/validate`：只进行语法与存档清单预检
 
-You can also start the [Export public FM27 saves](https://github.com/eslaulau/FM27-Exporter/actions/workflows/export-public-saves.yml) workflow manually. Choose `all`, `save1`, `save2`, or `save3`.
+You can also start the [Export public FM27 saves](https://github.com/eslaulau/FM27-Exporter/actions/workflows/export-public-saves.yml) workflow manually. Choose `all`, `tactic1`, or `tactic2`.
 
 Reports are published to the public [Release fm27-exports](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-exports).
 
