@@ -27,7 +27,7 @@ If -SavePath is omitted, the script tries the standard FM27 save folder under th
 
 ## Cloud use
 
-Complete SETUP.md first. The workflow reads private saves on a standard Windows runner and uploads results only to private FM27 Release fm27-exports.
+Use the **Export public FM27 saves** GitHub Actions workflow. It reads save assets from the public `fm27-saves` Release and publishes reports to the public `fm27-exports` Release. Routine runs use only this repository's built-in GitHub Actions token.
 
 ## Validate results
 
