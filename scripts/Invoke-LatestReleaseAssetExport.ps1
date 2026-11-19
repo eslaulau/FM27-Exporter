@@ -100,6 +100,13 @@ foreach ($asset in $latestSaves) {
         throw ('Release asset byte count changed during download: ' + $assetName)
     }
     $sourceSha256 = (Get-FileHash -LiteralPath $downloadedSave -Algorithm SHA256).Hash.ToLowerInvariant()
+    if (-not [string]::IsNullOrWhiteSpace([string]$asset.digest)) {
+        $expectedDigest = ([string]$asset.digest -replace '^sha256:', '').ToLowerInvariant()
+        if ($sourceSha256 -ne $expectedDigest) {
+            throw ('Release SHA256 mismatch for ' + $assetName + '; expected ' + $expectedDigest + ', got ' + $sourceSha256)
+        }
+    }
+    Write-Host ('Verified source SHA256: ' + $sourceSha256)
     $savePath = Join-Path $slotFolder $assetName
     Copy-Item -LiteralPath $downloadedSave -Destination $savePath -Force
 
