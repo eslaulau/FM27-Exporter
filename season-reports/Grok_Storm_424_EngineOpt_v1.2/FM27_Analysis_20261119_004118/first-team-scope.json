@@ -1,0 +1,60 @@
+{
+  "scope_version": "1.2.2-strict-first-team",
+  "club_uid": 680,
+  "team_id": 539,
+  "policy": {
+    "player_profiles": "current first-team team_id only; no B/reserve/youth team profiles",
+    "historical_participants": "non-first-team-assigned players retained only on individual first-team match rows where they logged minutes; no full profile or reserve data",
+    "player_season_stats": "tracked players, first-team team_id rows only",
+    "player_match_stats": "all retained first-team roster match-sheet rows; non-first-team guests only on exact rows where they logged minutes",
+    "fixtures": "all first-team fixtures, including scheduled fixtures; opponent identity/date/venue/competition/score metadata only",
+    "team_match_stats": "only the managed first team's own team row",
+    "tactics_and_selections": "managed first team only",
+    "opponent_data": "identity and match context only; no opponent player profiles or opponent team-performance rows"
+  },
+  "counts": {
+    "fixtures_before": 144,
+    "first_team_fixtures": 67,
+    "played_first_team_fixtures": 67,
+    "player_profiles_before": 89,
+    "first_team_player_profiles": 27,
+    "current_first_team_selection": 20,
+    "players_with_first_team_minutes": 27,
+    "historical_guests_with_first_team_minutes": 4,
+    "historical_guest_nonappearance_rows_removed": 46,
+    "historical_appearance_players_without_current_first_team_profile": 4,
+    "tracked_player_uids": 31,
+    "player_season_stats_before": 328,
+    "player_season_stats_after": 177,
+    "player_match_stats_before": 2330,
+    "player_match_stats_after": 552,
+    "team_match_stats_before": 288,
+    "team_match_stats_after": 67,
+    "tactical_data": {
+      "tactics.json": {
+        "before": 3,
+        "after": 1
+      },
+      "set-pieces.json": {
+        "before": 60,
+        "after": 20
+      }
+    },
+    "history_fixture_keys": 26,
+    "fixtures_without_named_history": 41
+  },
+  "historical_appearance_uids_without_current_first_team_profile": [
+    2000256107,
+    2000280804,
+    2000392428,
+    2000401488
+  ],
+  "selection_uids_missing_from_first_team_profiles": [],
+  "notes": [
+    "players.json contains only records whose current team_id is the managed first-team ID.",
+    "Reserve/youth players who logged minutes remain identifiable only on those exact first-team match-history rows; their full profiles and reserve-team data are excluded.",
+    "Reserve/youth match-sheet rows without actual minutes are removed individually, even for a guest who appeared in another first-team match.",
+    "Opponent identity, venue, date, competition and score remain as match context.",
+    "The .fm save is never modified; only generated export files are filtered."
+  ]
+}

@@ -1,0 +1,190 @@
+﻿===== info stderr =====
+fmsave.exe : fmsave: warning: Grok_Storm_424_EngineOpt_v1.2.fm was saved by FM27 build 27.0.1+2494687, an 
+unverified build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for 
+each section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn 
+about failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 
+coverage: structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for 
+FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+===== validate stderr =====
+fmsave.exe : fmsave: warning: Grok_Storm_424_EngineOpt_v1.2.fm was saved by FM27 build 27.0.1+2494687, an 
+unverified build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for 
+each section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn 
+about failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 
+coverage: structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for 
+FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+===== export fixtures stderr =====
+fmsave.exe : fmsave: warning: Grok_Storm_424_EngineOpt_v1.2.fm was saved by FM27 build 27.0.1+2494687, an 
+unverified build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for 
+each section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn 
+about failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 
+coverage: structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for 
+FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+===== export team-match-stats stderr =====
+fmsave.exe : fmsave: warning: Grok_Storm_424_EngineOpt_v1.2.fm was saved by FM27 build 27.0.1+2494687, an 
+unverified build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for 
+each section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn 
+about failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 
+coverage: structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for 
+FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+===== export players stderr =====
+fmsave.exe : fmsave: warning: Grok_Storm_424_EngineOpt_v1.2.fm was saved by FM27 build 27.0.1+2494687, an 
+unverified build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for 
+each section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn 
+about failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 
+coverage: structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for 
+FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+===== export player-season-stats stderr =====
+fmsave.exe : fmsave: warning: Grok_Storm_424_EngineOpt_v1.2.fm was saved by FM27 build 27.0.1+2494687, an 
+unverified build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for 
+each section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn 
+about failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 
+coverage: structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for 
+FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+===== export player-match-stats stderr =====
+fmsave.exe : fmsave: warning: Grok_Storm_424_EngineOpt_v1.2.fm was saved by FM27 build 27.0.1+2494687, an 
+unverified build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for 
+each section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn 
+about failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 
+coverage: structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for 
+FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+===== export tactics stderr =====
+fmsave.exe : fmsave: warning: Grok_Storm_424_EngineOpt_v1.2.fm was saved by FM27 build 27.0.1+2494687, an 
+unverified build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for 
+each section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn 
+about failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 
+coverage: structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for 
+FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+===== export set-pieces stderr =====
+fmsave.exe : fmsave: warning: Grok_Storm_424_EngineOpt_v1.2.fm was saved by FM27 build 27.0.1+2494687, an 
+unverified build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for 
+each section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn 
+about failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 
+coverage: structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for 
+FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+===== export selections stderr =====
+fmsave.exe : fmsave: warning: Grok_Storm_424_EngineOpt_v1.2.fm was saved by FM27 build 27.0.1+2494687, an 
+unverified build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for 
+each section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn 
+about failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 
+coverage: structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for 
+FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+===== player position history audit stdout =====
+POSITION HISTORY AUDIT COMPLETE
+First-team fixtures: 67 | joined named records: 639 | with stats: 328
+Players with history: 45 | provisional IP/OOP alignments: 6/6
+Fixtures missing named history: 17
+Native position mapping: 24 positions | role candidates: 102 | role-duty permission rows: 714
+Selected role and live PI values remain unresolved; raw role/settings data preserved. Anonymous detailed rows were NOT assigned names.
+
+===== player match history archive stdout =====
+PLAYER MATCH HISTORY ARCHIVE OK
+{
+  "archive_dir": "D:\\a\\_temp\\FM27-Season-Export-44430905116\\saves\\Grok_Storm_424_EngineOpt_v1.2\\FM27_PlayerMatchHistoryArchives\\Grok_Storm_424_EngineOpt_v1.2_efc6d0774484",
+  "archive_rows": 552,
+  "archive_fixture_keys": 26,
+  "source_snapshots": 1,
+  "rows_added_this_run": 552,
+  "current_snapshot_history_fixture_keys": 26,
+  "current_snapshot_formal_fixture_keys": 62,
+  "ignored_rows": 0,
+  "branch_guard": "passed"
+}
+HISTORY ARCHIVE ROUTE OK
+{
+  "archive_dir": "D:\\a\\_temp\\FM27-Season-Export-44430905116\\saves\\Grok_Storm_424_EngineOpt_v1.2\\FM27_PlayerMatchHistoryArchives\\Grok_Storm_424_EngineOpt_v1.2_efc6d0774484",
+  "route_file": "D:\\a\\_temp\\FM27-Season-Export-44430905116\\saves\\Grok_Storm_424_EngineOpt_v1.2\\FM27_PlayerMatchHistoryArchives\\.routes\\efc6d0774484eca3fa5cc51dc5d734dc973910be547769848279d8213de7cc72.json",
+  "branch_number": 1,
+  "source": "new_save_archive",
+  "branch_guard": "passed"
+}
+
+===== player match report recovery stdout =====
+Enrichment complete: 948 identified rows; 948 retained-history ratings; 3 unresolved identities.
+Position candidates: {'unmapped_or_no_history': 627, 'AMR': 28, 'AML': 39, 'DL': 29, 'GK': 20, 'DR': 35, 'DC': 42, 'DMC': 66, 'ST': 62}
+Role codes preserved raw: {'missing': 627, '27': 68, '3': 29, '12': 20, '2': 35, '24': 42, '4': 31, '16': 35, '31': 35, '19': 26}
+Outputs written to: D:\a\_temp\FM27-Season-Export-44430905116\saves\Grok_Storm_424_EngineOpt_v1.2\FM27_Analysis_20261119_004118
+Identity cache quarantined 1 stale mapping(s); only strict same-match reconciliation may restore them.
+Formal competitions: 7,637,661,662
+Formal fixtures expected: 62 | detailed reports found: 62 | missing: 0
+Player appearances: 951 | raw activity rows: 966 | zero-minute rows skipped: 15
+Identified: 948 | unresolved: 3
+Ratings recovered: 948 | raw rating cross-check: 295/295
+Team-total reconciliation: 1178/1178 matched; 0 mismatches; 0 missing
+Outputs written to: D:\a\_temp\FM27-Season-Export-44430905116\saves\Grok_Storm_424_EngineOpt_v1.2\FM27_Analysis_20261119_004118
+
+===== player match report recovery stderr =====
+python.exe : D:\a\FM27-Exporter\FM27-Exporter\FM27_PlayerMatchReport_Recovery_v1.9_Formal.py:1058: 
+UnknownBuildWarning: Grok_Storm_424_EngineOpt_v1.2.fm was saved by FM27 build 27.0.1+2494687, an unverified 
+build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for each 
+section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn about 
+failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: 
+structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field 
+statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\a\FM27-Expor...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  save = fmsave.open(str(save_path))
+

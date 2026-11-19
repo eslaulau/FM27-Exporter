@@ -1,0 +1,391 @@
+{
+  "audit_version": "1.1",
+  "team_id": 539,
+  "club_uid": 680,
+  "tactic_name": "Grok Storm 424 EngineOpt v1.2",
+  "fmsave_version": "0.12.4",
+  "game_build": "27.0.1+2494687",
+  "game_date": "2027-06-04",
+  "played_first_team_fixtures": 67,
+  "fixtures_with_named_player_history": 26,
+  "fixtures_without_named_player_history": [
+    {
+      "date": "2026-07-30",
+      "competition_id": 131,
+      "opponent": "伊斯特利",
+      "opponent_team_id": 6934
+    },
+    {
+      "date": "2026-08-04",
+      "competition_id": 131,
+      "opponent": "乔鲁姆",
+      "opponent_team_id": 19714
+    },
+    {
+      "date": "2026-08-08",
+      "competition_id": 131,
+      "opponent": "比戈塞尔塔",
+      "opponent_team_id": 1363
+    },
+    {
+      "date": "2026-08-11",
+      "competition_id": 131,
+      "opponent": "加拉塔萨雷",
+      "opponent_team_id": 1469
+    },
+    {
+      "date": "2026-08-15",
+      "competition_id": 131,
+      "opponent": "罗马",
+      "opponent_team_id": 884
+    },
+    {
+      "date": "2026-08-22",
+      "competition_id": 7,
+      "opponent": "赫尔城",
+      "opponent_team_id": 524
+    },
+    {
+      "date": "2026-08-29",
+      "competition_id": 7,
+      "opponent": "伊普斯维奇",
+      "opponent_team_id": 526
+    },
+    {
+      "date": "2026-09-05",
+      "competition_id": 7,
+      "opponent": "埃弗顿",
+      "opponent_team_id": 509
+    },
+    {
+      "date": "2026-09-08",
+      "competition_id": 637,
+      "opponent": "巴塞罗那",
+      "opponent_team_id": 1355
+    },
+    {
+      "date": "2026-09-13",
+      "competition_id": 7,
+      "opponent": "曼城",
+      "opponent_team_id": 538
+    },
+    {
+      "date": "2026-09-16",
+      "competition_id": 662,
+      "opponent": "布里斯托尔城",
+      "opponent_team_id": 479
+    },
+    {
+      "date": "2026-09-19",
+      "competition_id": 7,
+      "opponent": "富勒姆",
+      "opponent_team_id": 513
+    },
+    {
+      "date": "2026-10-10",
+      "competition_id": 7,
+      "opponent": "热刺",
+      "opponent_team_id": 587
+    },
+    {
+      "date": "2026-10-14",
+      "competition_id": 637,
+      "opponent": "波兹南莱赫",
+      "opponent_team_id": 1160
+    },
+    {
+      "date": "2026-10-17",
+      "competition_id": 7,
+      "opponent": "利兹联",
+      "opponent_team_id": 530
+    },
+    {
+      "date": "2026-10-21",
+      "competition_id": 637,
+      "opponent": "布拉格斯拉维亚",
+      "opponent_team_id": 372
+    },
+    {
+      "date": "2026-10-25",
+      "competition_id": 7,
+      "opponent": "伯恩茅斯",
+      "opponent_team_id": 460
+    },
+    {
+      "date": "2026-10-28",
+      "competition_id": 662,
+      "opponent": "热刺",
+      "opponent_team_id": 587
+    },
+    {
+      "date": "2026-10-31",
+      "competition_id": 7,
+      "opponent": "切尔西",
+      "opponent_team_id": 490
+    },
+    {
+      "date": "2026-11-03",
+      "competition_id": 637,
+      "opponent": "加拉塔萨雷",
+      "opponent_team_id": 1469
+    },
+    {
+      "date": "2026-11-07",
+      "competition_id": 7,
+      "opponent": "阿斯顿维拉",
+      "opponent_team_id": 463
+    },
+    {
+      "date": "2026-11-21",
+      "competition_id": 7,
+      "opponent": "利物浦",
+      "opponent_team_id": 535
+    },
+    {
+      "date": "2026-11-25",
+      "competition_id": 637,
+      "opponent": "比利亚雷亚尔",
+      "opponent_team_id": 1396
+    },
+    {
+      "date": "2026-12-02",
+      "competition_id": 7,
+      "opponent": "纽卡斯尔联",
+      "opponent_team_id": 547
+    },
+    {
+      "date": "2026-12-05",
+      "competition_id": 7,
+      "opponent": "考文垂",
+      "opponent_team_id": 499
+    },
+    {
+      "date": "2026-12-08",
+      "competition_id": 637,
+      "opponent": "葡萄牙体育",
+      "opponent_team_id": 1185
+    },
+    {
+      "date": "2026-12-13",
+      "competition_id": 7,
+      "opponent": "水晶宫",
+      "opponent_team_id": 502
+    },
+    {
+      "date": "2026-12-19",
+      "competition_id": 7,
+      "opponent": "阿森纳",
+      "opponent_team_id": 462
+    },
+    {
+      "date": "2026-12-26",
+      "competition_id": 7,
+      "opponent": "诺丁汉森林",
+      "opponent_team_id": 551
+    },
+    {
+      "date": "2026-12-30",
+      "competition_id": 7,
+      "opponent": "桑德兰",
+      "opponent_team_id": 581
+    },
+    {
+      "date": "2027-01-02",
+      "competition_id": 7,
+      "opponent": "布莱顿",
+      "opponent_team_id": 478
+    },
+    {
+      "date": "2027-01-06",
+      "competition_id": 7,
+      "opponent": "纽卡斯尔联",
+      "opponent_team_id": 547
+    },
+    {
+      "date": "2027-01-13",
+      "competition_id": 662,
+      "opponent": "富勒姆",
+      "opponent_team_id": 513
+    },
+    {
+      "date": "2027-01-16",
+      "competition_id": 7,
+      "opponent": "阿斯顿维拉",
+      "opponent_team_id": 463
+    },
+    {
+      "date": "2027-01-19",
+      "competition_id": 637,
+      "opponent": "巴黎圣日耳曼",
+      "opponent_team_id": 708
+    },
+    {
+      "date": "2027-01-23",
+      "competition_id": 7,
+      "opponent": "利物浦",
+      "opponent_team_id": 535
+    },
+    {
+      "date": "2027-01-27",
+      "competition_id": 637,
+      "opponent": "布鲁日",
+      "opponent_team_id": 148
+    },
+    {
+      "date": "2027-02-06",
+      "competition_id": 7,
+      "opponent": "切尔西",
+      "opponent_team_id": 490
+    },
+    {
+      "date": "2027-02-10",
+      "competition_id": 7,
+      "opponent": "布莱顿",
+      "opponent_team_id": 478
+    },
+    {
+      "date": "2027-02-20",
+      "competition_id": 7,
+      "opponent": "诺丁汉森林",
+      "opponent_team_id": 551
+    },
+    {
+      "date": "2027-02-24",
+      "competition_id": 7,
+      "opponent": "曼城",
+      "opponent_team_id": 538
+    }
+  ],
+  "candidate_player_history_rows_joined_to_first_team": 552,
+  "joined_player_history_rows": 552,
+  "joined_rows_with_stats": 324,
+  "joined_rows_with_position_code": 324,
+  "joined_rows_with_role_code": 324,
+  "unique_players_with_history": 31,
+  "current_selection_players": 20,
+  "current_starters": 11,
+  "ambiguous_fixture_joins": 0,
+  "provisional_ip_position_mask_mappings": 6,
+  "provisional_oop_position_mask_mappings": 6,
+  "position_mask_mapping_evidence": [
+    {
+      "position_code": 1,
+      "position_mask_hex": "0x0001",
+      "inferred_current_ip_position": "GK",
+      "ip_evidence_status": "provisional_unique_ip_alignment",
+      "inferred_current_oop_position": "GK",
+      "oop_evidence_status": "provisional_unique_oop_alignment",
+      "supporting_starter_count": 1,
+      "supporting_starters": "塞恩·拉门斯",
+      "supporting_record_count": 15,
+      "warning": "Provisional alignment to current tactic only; not an official FM position-code dictionary."
+    },
+    {
+      "position_code": 4,
+      "position_mask_hex": "0x0004",
+      "inferred_current_ip_position": "DR",
+      "ip_evidence_status": "provisional_unique_ip_alignment",
+      "inferred_current_oop_position": "DR",
+      "oop_evidence_status": "provisional_unique_oop_alignment",
+      "supporting_starter_count": 1,
+      "supporting_starters": "迪奥戈·达洛特",
+      "supporting_record_count": 16,
+      "warning": "Provisional alignment to current tactic only; not an official FM position-code dictionary."
+    },
+    {
+      "position_code": 8,
+      "position_mask_hex": "0x0008",
+      "inferred_current_ip_position": "DL",
+      "ip_evidence_status": "provisional_unique_ip_alignment",
+      "inferred_current_oop_position": "DL",
+      "oop_evidence_status": "provisional_unique_oop_alignment",
+      "supporting_starter_count": 1,
+      "supporting_starters": "卢克·肖",
+      "supporting_record_count": 16,
+      "warning": "Provisional alignment to current tactic only; not an official FM position-code dictionary."
+    },
+    {
+      "position_code": 16,
+      "position_mask_hex": "0x0010",
+      "inferred_current_ip_position": "",
+      "ip_evidence_status": "ambiguous_ip_alignment",
+      "inferred_current_oop_position": "",
+      "oop_evidence_status": "ambiguous_oop_alignment",
+      "supporting_starter_count": 2,
+      "supporting_starters": "利桑德罗·马丁内斯;哈里·马奎尔",
+      "supporting_record_count": 31,
+      "warning": "Provisional alignment to current tactic only; not an official FM position-code dictionary."
+    },
+    {
+      "position_code": 128,
+      "position_mask_hex": "0x0080",
+      "inferred_current_ip_position": "",
+      "ip_evidence_status": "ambiguous_ip_alignment",
+      "inferred_current_oop_position": "",
+      "oop_evidence_status": "ambiguous_oop_alignment",
+      "supporting_starter_count": 2,
+      "supporting_starters": "卡洛斯·巴莱巴;尤里·蒂勒曼斯",
+      "supporting_record_count": 36,
+      "warning": "Provisional alignment to current tactic only; not an official FM position-code dictionary."
+    },
+    {
+      "position_code": 2048,
+      "position_mask_hex": "0x0800",
+      "inferred_current_ip_position": "AMR",
+      "ip_evidence_status": "provisional_unique_ip_alignment",
+      "inferred_current_oop_position": "MR",
+      "oop_evidence_status": "provisional_unique_oop_alignment",
+      "supporting_starter_count": 1,
+      "supporting_starters": "布鲁诺·费尔南德斯",
+      "supporting_record_count": 20,
+      "warning": "Provisional alignment to current tactic only; not an official FM position-code dictionary."
+    },
+    {
+      "position_code": 4096,
+      "position_mask_hex": "0x1000",
+      "inferred_current_ip_position": "AML",
+      "ip_evidence_status": "provisional_unique_ip_alignment",
+      "inferred_current_oop_position": "ML",
+      "oop_evidence_status": "provisional_unique_oop_alignment",
+      "supporting_starter_count": 1,
+      "supporting_starters": "马丁·巴图里纳",
+      "supporting_record_count": 20,
+      "warning": "Provisional alignment to current tactic only; not an official FM position-code dictionary."
+    },
+    {
+      "position_code": 16384,
+      "position_mask_hex": "0x4000",
+      "inferred_current_ip_position": "STL",
+      "ip_evidence_status": "provisional_unique_ip_alignment",
+      "inferred_current_oop_position": "STL",
+      "oop_evidence_status": "provisional_unique_oop_alignment",
+      "supporting_starter_count": 1,
+      "supporting_starters": "本亚明·谢什科",
+      "supporting_record_count": 19,
+      "warning": "Provisional alignment to current tactic only; not an official FM position-code dictionary."
+    }
+  ],
+  "native_catalog": {
+    "path": "D:\\a\\FM27-Exporter\\FM27-Exporter\\catalog.json",
+    "schema_version": 1,
+    "position_mask_count": 24,
+    "role_count": 79,
+    "role_permission_csv": "D:\\a\\FM27-Exporter\\FM27-Exporter\\FM27_Role_PI_Permissions.csv",
+    "role_permission_record_count": 0,
+    "current_starter_phase_position_rows": 22,
+    "current_role_candidate_rows": 102,
+    "current_role_duty_permission_rows": 714,
+    "candidate_roles_are_not_selected_roles": true
+  },
+  "limitations": [
+    "Named match-history records are joined by competition ID, date and opponent team ID to first-team fixtures; this is not a row-level identity mapping for the anonymous detailed match report.",
+    "Only goalkeeper is currently an upstream-named MatchPosition value. All other position masks are preserved raw.",
+    "The provisional mask-to-current-IP/OOP-position alignments are inferred separately from stable current A3.2 starter histories, not an official game-wide position-code dictionary.",
+    "role_code meanings are unknown; values are preserved exactly and are not translated into roles.",
+    "Current tactic slot position masks are mapped to exact native catalog positions; current selected role remains unresolved because fmsave role_bits are not proven role identifiers.",
+    "Role candidate and role-duty permission outputs list positions/roles allowed by the catalog; they do not assert which role or personal instruction is currently selected.",
+    "Raw tactic setting units are preserved; their individual instruction-value decoding still requires a verified field map.",
+    "Current tactic slots and setting bitfields are a snapshot; they do not prove the tactic was unchanged for every historical match.",
+    "Missing named histories remain missing; this audit never fabricates names or substitutes current selection for historical appearance."
+  ]
+}

@@ -1,0 +1,892 @@
+[
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "index": 0,
+    "name": "Grok Storm 424 EngineOpt v1.2",
+    "style_name": "高​位压​迫",
+    "mentality": "positive",
+    "mentality_code": 5,
+    "slots": [
+      {
+        "number": 0,
+        "in_possession_positions": [
+          "goalkeeper"
+        ],
+        "in_possession_positions_code": [
+          0
+        ],
+        "in_possession_mask": 1,
+        "in_possession_setting_count": 2,
+        "in_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 4096,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 2,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 4198400
+          }
+        ],
+        "out_of_possession_positions": [
+          "goalkeeper"
+        ],
+        "out_of_possession_positions_code": [
+          0
+        ],
+        "out_of_possession_mask": 1,
+        "out_of_possession_setting_count": 2,
+        "out_of_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 2,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 16777216,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 8388610
+          }
+        ],
+        "unknown": {
+          "in_possession_role_bits": 1,
+          "in_possession_trail_bits": 0,
+          "out_of_possession_role_bits": 1,
+          "out_of_possession_trail_bits": 0,
+          "out_of_possession_position_index": 0
+        }
+      },
+      {
+        "number": 1,
+        "in_possession_positions": [
+          "defender_right"
+        ],
+        "in_possession_positions_code": [
+          2
+        ],
+        "in_possession_mask": 4,
+        "in_possession_setting_count": 3,
+        "in_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 131072,
+            "second_bits_low": 0,
+            "second_bits_middle": 8,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 64
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 4194308
+          }
+        ],
+        "out_of_possession_positions": [
+          "defender_right"
+        ],
+        "out_of_possession_positions_code": [
+          2
+        ],
+        "out_of_possession_mask": 4,
+        "out_of_possession_setting_count": 3,
+        "out_of_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 33554432,
+            "second_bits_low": 0,
+            "second_bits_middle": 4096,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 8192,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2097664
+          }
+        ],
+        "unknown": {
+          "in_possession_role_bits": 4,
+          "in_possession_trail_bits": 0,
+          "out_of_possession_role_bits": 512,
+          "out_of_possession_trail_bits": 0,
+          "out_of_possession_position_index": 1
+        }
+      },
+      {
+        "number": 2,
+        "in_possession_positions": [
+          "defender_centre"
+        ],
+        "in_possession_positions_code": [
+          4
+        ],
+        "in_possession_mask": 2097168,
+        "in_possession_setting_count": 2,
+        "in_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 16777216,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 2,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 18874368
+          }
+        ],
+        "out_of_possession_positions": [
+          "defender_centre"
+        ],
+        "out_of_possession_positions_code": [
+          4
+        ],
+        "out_of_possession_mask": 2097168,
+        "out_of_possession_setting_count": 3,
+        "out_of_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 32,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 33554432,
+            "second_bits_low": 0,
+            "second_bits_middle": 64,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2097184
+          }
+        ],
+        "unknown": {
+          "in_possession_role_bits": 2,
+          "in_possession_trail_bits": 0,
+          "out_of_possession_role_bits": 8,
+          "out_of_possession_trail_bits": 0,
+          "out_of_possession_position_index": 2
+        }
+      },
+      {
+        "number": 3,
+        "in_possession_positions": [
+          "defender_centre"
+        ],
+        "in_possession_positions_code": [
+          4
+        ],
+        "in_possession_mask": 1048592,
+        "in_possession_setting_count": 2,
+        "in_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 16777216,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 2,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 18874368
+          }
+        ],
+        "out_of_possession_positions": [
+          "defender_centre"
+        ],
+        "out_of_possession_positions_code": [
+          4
+        ],
+        "out_of_possession_mask": 1048592,
+        "out_of_possession_setting_count": 1,
+        "out_of_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 33554432,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2097160
+          }
+        ],
+        "unknown": {
+          "in_possession_role_bits": 2,
+          "in_possession_trail_bits": 0,
+          "out_of_possession_role_bits": 8,
+          "out_of_possession_trail_bits": 0,
+          "out_of_possession_position_index": 3
+        }
+      },
+      {
+        "number": 4,
+        "in_possession_positions": [
+          "defender_left"
+        ],
+        "in_possession_positions_code": [
+          3
+        ],
+        "in_possession_mask": 8,
+        "in_possession_setting_count": 3,
+        "in_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 8,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 131072,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 64
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 4194312
+          }
+        ],
+        "out_of_possession_positions": [
+          "defender_left"
+        ],
+        "out_of_possession_positions_code": [
+          3
+        ],
+        "out_of_possession_mask": 8,
+        "out_of_possession_setting_count": 4,
+        "out_of_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 16,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 64,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 512,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 33554432,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2097664
+          }
+        ],
+        "unknown": {
+          "in_possession_role_bits": 4,
+          "in_possession_trail_bits": 0,
+          "out_of_possession_role_bits": 8,
+          "out_of_possession_trail_bits": 0,
+          "out_of_possession_position_index": 4
+        }
+      },
+      {
+        "number": 5,
+        "in_possession_positions": [
+          "defensive_midfielder"
+        ],
+        "in_possession_positions_code": [
+          7
+        ],
+        "in_possession_mask": 2097280,
+        "in_possession_setting_count": 6,
+        "in_possession_settings": [
+          {
+            "head_byte": 16,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 512,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 32768,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 131072,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 268435456,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2097168
+          }
+        ],
+        "out_of_possession_positions": [
+          "defensive_midfielder"
+        ],
+        "out_of_possession_positions_code": [
+          7
+        ],
+        "out_of_possession_mask": 2097280,
+        "out_of_possession_setting_count": 1,
+        "out_of_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 33554432,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2129920
+          }
+        ],
+        "unknown": {
+          "in_possession_role_bits": 16,
+          "in_possession_trail_bits": 0,
+          "out_of_possession_role_bits": 32768,
+          "out_of_possession_trail_bits": 0,
+          "out_of_possession_position_index": 5
+        }
+      },
+      {
+        "number": 6,
+        "in_possession_positions": [
+          "defensive_midfielder"
+        ],
+        "in_possession_positions_code": [
+          7
+        ],
+        "in_possession_mask": 1048704,
+        "in_possession_setting_count": 8,
+        "in_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 32768,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 65536,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 16384,
+            "second_bits_low": 0,
+            "second_bits_middle": 268435456,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 16384
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 32768
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 65536
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 262144
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 4259840
+          }
+        ],
+        "out_of_possession_positions": [
+          "defensive_midfielder"
+        ],
+        "out_of_possession_positions_code": [
+          7
+        ],
+        "out_of_possession_mask": 1048704,
+        "out_of_possession_setting_count": 3,
+        "out_of_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 33554432,
+            "second_bits_low": 0,
+            "second_bits_middle": 131072,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 1048576,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2129920
+          }
+        ],
+        "unknown": {
+          "in_possession_role_bits": 32,
+          "in_possession_trail_bits": 0,
+          "out_of_possession_role_bits": 32768,
+          "out_of_possession_trail_bits": 0,
+          "out_of_possession_position_index": 6
+        }
+      },
+      {
+        "number": 7,
+        "in_possession_positions": [
+          "attacking_midfielder_right"
+        ],
+        "in_possession_positions_code": [
+          11
+        ],
+        "in_possession_mask": 2048,
+        "in_possession_setting_count": 6,
+        "in_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 512,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 65536,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 134217728,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 8,
+            "first_bits": 1056,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 32768
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 131072
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 142606336
+          }
+        ],
+        "out_of_possession_positions": [
+          "midfielder_right"
+        ],
+        "out_of_possession_positions_code": [
+          8
+        ],
+        "out_of_possession_mask": 256,
+        "out_of_possession_setting_count": 5,
+        "out_of_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 134217728,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 8
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 16
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 2097152,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 64
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2097152
+          }
+        ],
+        "unknown": {
+          "in_possession_role_bits": 128,
+          "in_possession_trail_bits": 0,
+          "out_of_possession_role_bits": 1048576,
+          "out_of_possession_trail_bits": 16,
+          "out_of_possession_position_index": 7
+        }
+      },
+      {
+        "number": 8,
+        "in_possession_positions": [
+          "attacking_midfielder_left"
+        ],
+        "in_possession_positions_code": [
+          12
+        ],
+        "in_possession_mask": 4096,
+        "in_possession_setting_count": 4,
+        "in_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 131072,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 134217728,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 1056,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 131072
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 142606336
+          }
+        ],
+        "out_of_possession_positions": [
+          "midfielder_left"
+        ],
+        "out_of_possession_positions_code": [
+          9
+        ],
+        "out_of_possession_mask": 512,
+        "out_of_possession_setting_count": 5,
+        "out_of_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 8192,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 8
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 16
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 2097152,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 64
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2097152
+          }
+        ],
+        "unknown": {
+          "in_possession_role_bits": 128,
+          "in_possession_trail_bits": 0,
+          "out_of_possession_role_bits": 4096,
+          "out_of_possession_trail_bits": 16,
+          "out_of_possession_position_index": 8
+        }
+      },
+      {
+        "number": 9,
+        "in_possession_positions": [
+          "striker_centre"
+        ],
+        "in_possession_positions_code": [
+          14
+        ],
+        "in_possession_mask": 2113536,
+        "in_possession_setting_count": 4,
+        "in_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 1024,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 134217728,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 2147483648,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 17408,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2155872256
+          }
+        ],
+        "out_of_possession_positions": [
+          "striker_centre"
+        ],
+        "out_of_possession_positions_code": [
+          14
+        ],
+        "out_of_possession_mask": 2113536,
+        "out_of_possession_setting_count": 3,
+        "out_of_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 1024
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 2097152,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 2048
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 4194304
+          }
+        ],
+        "unknown": {
+          "in_possession_role_bits": 128,
+          "in_possession_trail_bits": 0,
+          "out_of_possession_role_bits": 1073741824,
+          "out_of_possession_trail_bits": 1024,
+          "out_of_possession_position_index": 9
+        }
+      },
+      {
+        "number": 10,
+        "in_possession_positions": [
+          "striker_centre"
+        ],
+        "in_possession_positions_code": [
+          14
+        ],
+        "in_possession_mask": 1064960,
+        "in_possession_setting_count": 4,
+        "in_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 2048,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 524288,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 1024,
+            "second_bits_low": 0,
+            "second_bits_middle": 2147483648,
+            "second_bits_high": 0
+          },
+          {
+            "head_byte": 0,
+            "first_bits": 0,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 8912896
+          }
+        ],
+        "out_of_possession_positions": [
+          "striker_centre"
+        ],
+        "out_of_possession_positions_code": [
+          14
+        ],
+        "out_of_possession_mask": 1064960,
+        "out_of_possession_setting_count": 1,
+        "out_of_possession_settings": [
+          {
+            "head_byte": 0,
+            "first_bits": 2097152,
+            "second_bits_low": 0,
+            "second_bits_middle": 0,
+            "second_bits_high": 4194304
+          }
+        ],
+        "unknown": {
+          "in_possession_role_bits": 1024,
+          "in_possession_trail_bits": 0,
+          "out_of_possession_role_bits": 4398046511104,
+          "out_of_possession_trail_bits": 1024,
+          "out_of_possession_position_index": 10
+        }
+      }
+    ],
+    "unknown": {
+      "team_instruction_00": 4,
+      "team_instruction_01": 1,
+      "team_instruction_02": 5,
+      "team_instruction_03": 7,
+      "team_instruction_04": 2,
+      "team_instruction_05": 3,
+      "team_instruction_06": 164,
+      "team_instruction_07": 0,
+      "team_instruction_08": 3,
+      "team_instruction_09": 0,
+      "team_instruction_10": 10,
+      "team_instruction_11": 144,
+      "team_instruction_12": 72,
+      "team_instruction_13": 34,
+      "team_instruction_14": 100,
+      "team_instruction_15": 144,
+      "team_instruction_16": 0,
+      "team_instruction_17": 0,
+      "team_instruction_18": 255,
+      "style_code": 1195722565
+    }
+  }
+]

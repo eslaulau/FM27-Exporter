@@ -1,0 +1,222 @@
+{
+  "enrichment_version": "1.1",
+  "input_identified_rows": 948,
+  "output_rows": 948,
+  "unresolved_rows_left_unchanged": 3,
+  "native_catalog_position_map": [
+    {
+      "mask": 1,
+      "id": "GK",
+      "name_zh": "门将"
+    },
+    {
+      "mask": 4,
+      "id": "DR",
+      "name_zh": "右后卫"
+    },
+    {
+      "mask": 8,
+      "id": "DL",
+      "name_zh": "左后卫"
+    },
+    {
+      "mask": 16,
+      "id": "DC",
+      "name_zh": "中后卫"
+    },
+    {
+      "mask": 32,
+      "id": "WBR",
+      "name_zh": "右翼卫"
+    },
+    {
+      "mask": 64,
+      "id": "WBL",
+      "name_zh": "左翼卫"
+    },
+    {
+      "mask": 128,
+      "id": "DMC",
+      "name_zh": "后腰"
+    },
+    {
+      "mask": 256,
+      "id": "MR",
+      "name_zh": "右前卫"
+    },
+    {
+      "mask": 512,
+      "id": "ML",
+      "name_zh": "左前卫"
+    },
+    {
+      "mask": 1024,
+      "id": "MC",
+      "name_zh": "中前卫"
+    },
+    {
+      "mask": 2048,
+      "id": "AMR",
+      "name_zh": "右边锋"
+    },
+    {
+      "mask": 4096,
+      "id": "AML",
+      "name_zh": "左边锋"
+    },
+    {
+      "mask": 8192,
+      "id": "AMC",
+      "name_zh": "前腰"
+    },
+    {
+      "mask": 16384,
+      "id": "ST",
+      "name_zh": "中锋"
+    }
+  ],
+  "position_mapping_note": "Only exact single-bit numeric matches to the bundle's native tactic-position catalog are labelled. GK is the only match-history position named by the upstream fmsave reference; other labels are candidates, not UI-verified match-position semantics. Raw position_code is preserved.",
+  "position_candidate_row_counts": {
+    "unmapped_or_no_history": 627,
+    "AMR": 28,
+    "AML": 39,
+    "DL": 29,
+    "GK": 20,
+    "DR": 35,
+    "DC": 42,
+    "DMC": 66,
+    "ST": 62
+  },
+  "role_code_note": "role_code is retained as a raw byte. Upstream fmsave documents its meaning as unestablished; it is not decoded by array order or by candidate roles.",
+  "role_code_raw_counts": {
+    "missing": 627,
+    "27": 68,
+    "3": 29,
+    "12": 20,
+    "2": 35,
+    "24": 42,
+    "4": 31,
+    "16": 35,
+    "31": 35,
+    "19": 26
+  },
+  "role_code_position_groups": [
+    {
+      "position_code_raw": "",
+      "position_id_candidate": "",
+      "position_name_candidate": "",
+      "role_code_raw": "",
+      "history_rows": 627,
+      "distinct_players": 25,
+      "role_code_meaning_status": "NO_HISTORY_ROLE_CODE"
+    },
+    {
+      "position_code_raw": "1",
+      "position_id_candidate": "GK",
+      "position_name_candidate": "门将",
+      "role_code_raw": "12",
+      "history_rows": 20,
+      "distinct_players": 2,
+      "role_code_meaning_status": "UNDECODED_KEEP_RAW"
+    },
+    {
+      "position_code_raw": "128",
+      "position_id_candidate": "DMC",
+      "position_name_candidate": "后腰",
+      "role_code_raw": "16",
+      "history_rows": 35,
+      "distinct_players": 3,
+      "role_code_meaning_status": "UNDECODED_KEEP_RAW"
+    },
+    {
+      "position_code_raw": "128",
+      "position_id_candidate": "DMC",
+      "position_name_candidate": "后腰",
+      "role_code_raw": "4",
+      "history_rows": 31,
+      "distinct_players": 3,
+      "role_code_meaning_status": "UNDECODED_KEEP_RAW"
+    },
+    {
+      "position_code_raw": "16",
+      "position_id_candidate": "DC",
+      "position_name_candidate": "中后卫",
+      "role_code_raw": "24",
+      "history_rows": 42,
+      "distinct_players": 5,
+      "role_code_meaning_status": "UNDECODED_KEEP_RAW"
+    },
+    {
+      "position_code_raw": "16384",
+      "position_id_candidate": "ST",
+      "position_name_candidate": "中锋",
+      "role_code_raw": "19",
+      "history_rows": 26,
+      "distinct_players": 4,
+      "role_code_meaning_status": "UNDECODED_KEEP_RAW"
+    },
+    {
+      "position_code_raw": "16384",
+      "position_id_candidate": "ST",
+      "position_name_candidate": "中锋",
+      "role_code_raw": "27",
+      "history_rows": 1,
+      "distinct_players": 1,
+      "role_code_meaning_status": "UNDECODED_KEEP_RAW"
+    },
+    {
+      "position_code_raw": "16384",
+      "position_id_candidate": "ST",
+      "position_name_candidate": "中锋",
+      "role_code_raw": "31",
+      "history_rows": 35,
+      "distinct_players": 4,
+      "role_code_meaning_status": "UNDECODED_KEEP_RAW"
+    },
+    {
+      "position_code_raw": "2048",
+      "position_id_candidate": "AMR",
+      "position_name_candidate": "右边锋",
+      "role_code_raw": "27",
+      "history_rows": 28,
+      "distinct_players": 4,
+      "role_code_meaning_status": "UNDECODED_KEEP_RAW"
+    },
+    {
+      "position_code_raw": "4",
+      "position_id_candidate": "DR",
+      "position_name_candidate": "右后卫",
+      "role_code_raw": "2",
+      "history_rows": 35,
+      "distinct_players": 3,
+      "role_code_meaning_status": "UNDECODED_KEEP_RAW"
+    },
+    {
+      "position_code_raw": "4096",
+      "position_id_candidate": "AML",
+      "position_name_candidate": "左边锋",
+      "role_code_raw": "27",
+      "history_rows": 39,
+      "distinct_players": 4,
+      "role_code_meaning_status": "UNDECODED_KEEP_RAW"
+    },
+    {
+      "position_code_raw": "8",
+      "position_id_candidate": "DL",
+      "position_name_candidate": "左后卫",
+      "role_code_raw": "3",
+      "history_rows": 29,
+      "distinct_players": 5,
+      "role_code_meaning_status": "UNDECODED_KEEP_RAW"
+    }
+  ],
+  "rating_note": "Ratings are sourced from the detailed raw match-report record at raw-window offset +136 (uint16 little-endian hundredths, divided by 100 and rounded half-up to one decimal) only when the current save passes at least 25 exact named-history rating cross-checks with zero mismatches. Otherwise retained same-match history remains the fallback; no performance-based estimate is used.",
+  "rating_source_status_counts": {
+    "raw_match_report_rating_recovered": 653,
+    "raw_match_report_rating_crosschecked": 295
+  },
+  "rating_rows_present": 948,
+  "rating_rows_missing": 0,
+  "history_archive_rows": 552,
+  "same_match_history_join_rows": 321
+}

@@ -1,0 +1,12 @@
+﻿position_code,position_mask_hex,role_code_raw,records,unique_players,players,meaning
+1,0x0001,12,20,2,塞恩·拉门斯;西蒙·恩加潘杜恩布,UNDECODED - preserve raw value
+4,0x0004,2,35,3,努赛尔·马兹拉维;莱尼·约罗;迪奥戈·达洛特,UNDECODED - preserve raw value
+8,0x0008,3,30,5,卢克·肖;哈里·阿马斯;帕特里克·多尔古;艾登·海文;迪奥戈·达洛特,UNDECODED - preserve raw value
+16,0x0010,24,42,5,利桑德罗·马丁内斯;哈里·马奎尔;艾登·海文;莱尼·约罗;马泰斯·德利赫特,UNDECODED - preserve raw value
+128,0x0080,4,31,3,尤里·蒂勒曼斯;曼努埃尔·乌加特;马泰斯·德利赫特,UNDECODED - preserve raw value
+128,0x0080,16,35,3,卡洛斯·巴莱巴;科比·梅努;马泰斯·德利赫特,UNDECODED - preserve raw value
+2048,0x0800,27,29,5,布鲁诺·费尔南德斯;梅森·芒特;谢伊·莱西;阿米尔·易卜拉欣莫夫;马库斯·拉什福德,UNDECODED - preserve raw value
+4096,0x1000,27,39,4,谢伊·莱西;马丁·巴图里纳;马库斯·拉什福德;马特乌斯·库尼亚,UNDECODED - preserve raw value
+16384,0x4000,19,26,4,布莱恩·姆伯莫;本亚明·谢什科;约书亚·齐尔克泽;马库斯·拉什福德,UNDECODED - preserve raw value
+16384,0x4000,27,1,1,马特乌斯·库尼亚,UNDECODED - preserve raw value
+16384,0x4000,31,36,5,恩佐·卡纳-比伊克;本亚明·谢什科;约书亚·齐尔克泽;马库斯·拉什福德;马特乌斯·库尼亚,UNDECODED - preserve raw value
