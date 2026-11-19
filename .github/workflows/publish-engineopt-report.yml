@@ -22,13 +22,17 @@ jobs:
           GH_TOKEN: ${{github.token}}
           REPOSITORY: ${{github.repository}}
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           ASSET='FM27_SeasonExport_Grok_Storm_424_EngineOpt_v1.2_44430905116.zip'
           INDEX='FM27_SeasonExport_Index_44430905116.json'
           DOWNLOAD_DIR="$RUNNER_TEMP/engineopt-report-source"
           mkdir -p "$DOWNLOAD_DIR"
           gh release download fm27-exports --repo "$REPOSITORY" --pattern "$ASSET" --dir "$DOWNLOAD_DIR"
+          test -s "$DOWNLOAD_DIR/$ASSET"
+          echo "Downloaded report ZIP: $(stat -c%s "$DOWNLOAD_DIR/$ASSET") bytes"
           gh release download fm27-exports --repo "$REPOSITORY" --pattern "$INDEX" --dir "$DOWNLOAD_DIR"
+          test -s "$DOWNLOAD_DIR/$INDEX"
+          echo "Downloaded report index."
 
           ACTUAL_SHA="$(sha256sum "$DOWNLOAD_DIR/$ASSET" | awk '{print $1}')"
           EXPECTED_SHA='bd6b60a4922bf3595688bb66ec10c0bf2a3a234a777b703d45ceb3e451cfc70f'
@@ -36,6 +40,7 @@ jobs:
 
           mkdir -p "$DOWNLOAD_DIR/unpacked"
           unzip -q "$DOWNLOAD_DIR/$ASSET" -d "$DOWNLOAD_DIR/unpacked"
+          find "$DOWNLOAD_DIR/unpacked" -maxdepth 5 -type f | head -60
 
           PACKAGE="$DOWNLOAD_DIR/unpacked/Grok_Storm_424_EngineOpt_v1.2"
           REPORT="$PACKAGE/FM27_Analysis_20261119_004118/FM27_Analysis_20261119_004118"
