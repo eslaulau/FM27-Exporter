@@ -37,7 +37,7 @@ jobs:
           mkdir -p "$DOWNLOAD_DIR/unpacked"
           unzip -q "$DOWNLOAD_DIR/$ASSET" -d "$DOWNLOAD_DIR/unpacked"
 
-          PACKAGE="$DOWNLOAD_DIR/unpacked/FM27_4Back_TransitionLab_v1.2"
+          PACKAGE="$DOWNLOAD_DIR/unpacked"
           REPORT="$PACKAGE/FM27_Analysis_20261119_012741/FM27_Analysis_20261119_012741"
           test -f "$REPORT/save-info.json"
           test -f "$REPORT/validation.json"
