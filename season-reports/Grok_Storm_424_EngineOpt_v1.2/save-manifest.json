@@ -1,0 +1,14 @@
+{
+  "source_repository": "eslaulau/FM27-Exporter",
+  "source_release": "fm27-saves",
+  "source_release_url": "https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-saves",
+  "source_asset": "Grok_Storm_424_EngineOpt_v1.2.fm",
+  "source_asset_id": 765597210,
+  "source_uploaded_at": "11/19/2026 00:36:16",
+  "source_size_bytes": 111394980,
+  "source_sha256": "bc5ab412da9c73d5e418beb6657d7010749b58b561111c46ab8e8fbdc68fae09",
+  "team_id": 539,
+  "club_uid": 680,
+  "exporter": "Run_FM27_Formal_Season_Export_v1.4.5.ps1",
+  "fmsave_version": "0.12.4"
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "fm27-season-export-index-v1",
+  "workflow_run_id": 44430905116,
+  "generated_at_utc": "2026-11-19T00:43:24.6266639Z",
+  "source_repository": "eslaulau/FM27-Exporter",
+  "source_release": "fm27-saves",
+  "source_release_url": "https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-saves",
+  "exporter": "FM27 formal season exporter v1.4.5",
+  "fmsave_version": "0.12.4",
+  "team_id": 539,
+  "club_uid": 680,
+  "source_assets": [
+    {
+      "source_asset": "Grok_Storm_424_EngineOpt_v1.2.fm",
+      "source_uploaded_at": "11/19/2026 00:36:16",
+      "source_size_bytes": 111394980,
+      "source_sha256": "bc5ab412da9c73d5e418beb6657d7010749b58b561111c46ab8e8fbdc68fae09",
+      "game_date": "2027-06-04",
+      "first_team_scope_verified": true,
+      "required_export_files": [
+        "save-info.json",
+        "validation.json",
+        "first-team-scope.json",
+        "fixtures.json",
+        "team-match-stats.json",
+        "players.json",
+        "player-season-stats.csv",
+        "player-match-report-formal-all.csv",
+        "player-match-report-formal-summary.json",
+        "player-report-identity-audit.json"
+      ],
+      "validation_status": "validation.json present",
+      "package": "FM27_SeasonExport_Grok_Storm_424_EngineOpt_v1.2_44430905116.zip"
+    }
+  ]
+}
