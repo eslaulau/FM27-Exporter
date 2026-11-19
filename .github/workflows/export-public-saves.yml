@@ -34,7 +34,7 @@ jobs:
         github.event_name == 'issue_comment' &&
         github.event.issue.title == 'FM27 Export Control' &&
         github.event.comment.user.login == github.repository_owner &&
-        (startsWith(github.event.comment.body, '/export ') || startsWith(github.event.comment.body, '/recover ') || startsWith(github.event.comment.body, '/analyze ') || github.event.comment.body == '/validate')
+        (startsWith(github.event.comment.body, '/export ') || startsWith(github.event.comment.body, '/export-asset ') || startsWith(github.event.comment.body, '/recover ') || startsWith(github.event.comment.body, '/analyze ') || github.event.comment.body == '/validate')
       )
     name: Validate exporter scripts and six-save manifest
     runs-on: windows-latest
@@ -115,7 +115,7 @@ jobs:
         github.event_name == 'issue_comment' &&
         github.event.issue.title == 'FM27 Export Control' &&
         github.event.comment.user.login == github.repository_owner &&
-        (startsWith(github.event.comment.body, '/export ') || startsWith(github.event.comment.body, '/recover ') || startsWith(github.event.comment.body, '/analyze '))
+        (startsWith(github.event.comment.body, '/export ') || startsWith(github.event.comment.body, '/export-asset ') || startsWith(github.event.comment.body, '/recover ') || startsWith(github.event.comment.body, '/analyze '))
       )
     name: Export or recover FM27 trial reports
     runs-on: windows-latest
@@ -174,7 +174,16 @@ jobs:
             ./scripts/Invoke-LatestReleaseAssetExport.ps1
             exit 0
           }
-          if ($command -match '^/export-asset\s+([A-Za-z0-9._-]+\.fm)          $saveSet = $Matches[1].ToLowerInvariant()
+          if ($command -match '^/export-asset\s+([A-Za-z0-9._-]+\.fm)$') {
+            $assetName = $Matches[1]
+            Write-Host ('Exporting the specified .fm asset from Release fm27-saves: ' + $assetName)
+            ./scripts/Invoke-LatestReleaseAssetExport.ps1 -AssetName $assetName -SourceReleaseTag 'fm27-saves'
+            exit 0
+          }
+          if ($command -notmatch '^/export\s+(all|tactic1|tactic2)$') {
+            throw 'Invalid command. Use /export all, /export tactic1, /export tactic2, /recover RUN_ID, /analyze RUN_ID, /export-latest-two or /export-asset FILE.fm.'
+          }
+          $saveSet = $Matches[1].ToLowerInvariant()
           Write-Host ('Starting public FM27 tactic comparison: ' + $saveSet)
           ./scripts/Invoke-PublicExport.ps1 -SaveSet $saveSet
 
@@ -193,83 +202,6 @@ jobs:
         with:
           name: FM27-season-report-packages-${{github.run_id}}
           path: _season-export-packages/
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Report result to control issue
-        if: ${{always() && github.event_name == 'issue_comment'}}
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{github.token}}
-          ISSUE_NUMBER: ${{github.event.issue.number}}
-          JOB_STATUS: ${{job.status}}
-          RUN_ID: ${{github.run_id}}
-          REPOSITORY: ${{github.repository}}
-        run: |
-          $body = "FM27 report job run $($env:RUN_ID) finished with status: **$($env:JOB_STATUS)**.$([Environment]::NewLine)$([Environment]::NewLine)Run: https://github.com/$($env:REPOSITORY)/actions/runs/$($env:RUN_ID)$([Environment]::NewLine)Reports: https://github.com/$($env:REPOSITORY)/releases/tag/fm27-exports"
-          gh issue comment $env:ISSUE_NUMBER --repo $env:REPOSITORY --body $body
-) {
-            $assetName = $Matches[1]
-            Write-Host ('Exporting the specified .fm asset from Release fm27-saves: ' + $assetName)
-            ./scripts/Invoke-LatestReleaseAssetExport.ps1 -AssetName $assetName -SourceReleaseTag 'fm27-saves'
-            exit 0
-          }
-          if ($command -notmatch '^/export\s+(all|tactic1|tactic2)          $saveSet = $Matches[1].ToLowerInvariant()
-          Write-Host ('Starting public FM27 tactic comparison: ' + $saveSet)
-          ./scripts/Invoke-PublicExport.ps1 -SaveSet $saveSet
-
-      - name: Upload six-trial analysis inputs
-        if: ${{success() && ((github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/analyze ')) || (github.event_name == 'push' && contains(github.event.head_commit.message, '/analyze ')))}}
-        uses: actions/upload-artifact@v4
-        with:
-          name: FM27-analysis-inputs-${{github.run_id}}
-          path: _analysis-artifact/
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Upload latest-two season reports
-        if: ${{success() && github.event_name == 'push' && contains(github.event.head_commit.message, '/export-latest-two')}}
-        uses: actions/upload-artifact@v4
-        with:
-          name: FM27-latest-two-season-reports-${{github.run_id}}
-          path: _latest-two-export/
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Report result to control issue
-        if: ${{always() && github.event_name == 'issue_comment'}}
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{github.token}}
-          ISSUE_NUMBER: ${{github.event.issue.number}}
-          JOB_STATUS: ${{job.status}}
-          RUN_ID: ${{github.run_id}}
-          REPOSITORY: ${{github.repository}}
-        run: |
-          $body = "FM27 report job run $($env:RUN_ID) finished with status: **$($env:JOB_STATUS)**.$([Environment]::NewLine)$([Environment]::NewLine)Run: https://github.com/$($env:REPOSITORY)/actions/runs/$($env:RUN_ID)$([Environment]::NewLine)Reports: https://github.com/$($env:REPOSITORY)/releases/tag/fm27-exports"
-          gh issue comment $env:ISSUE_NUMBER --repo $env:REPOSITORY --body $body
-) {
-            throw 'Invalid command. Use /export all, /export tactic1, /export tactic2, /recover RUN_ID, /analyze RUN_ID, /export-latest-two or /export-asset FILE.fm.'
-          }
-          $saveSet = $Matches[1].ToLowerInvariant()
-          Write-Host ('Starting public FM27 tactic comparison: ' + $saveSet)
-          ./scripts/Invoke-PublicExport.ps1 -SaveSet $saveSet
-
-      - name: Upload six-trial analysis inputs
-        if: ${{success() && ((github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/analyze ')) || (github.event_name == 'push' && contains(github.event.head_commit.message, '/analyze ')))}}
-        uses: actions/upload-artifact@v4
-        with:
-          name: FM27-analysis-inputs-${{github.run_id}}
-          path: _analysis-artifact/
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Upload latest-two season reports
-        if: ${{success() && github.event_name == 'push' && contains(github.event.head_commit.message, '/export-latest-two')}}
-        uses: actions/upload-artifact@v4
-        with:
-          name: FM27-latest-two-season-reports-${{github.run_id}}
-          path: _latest-two-export/
           if-no-files-found: error
           retention-days: 14
 
