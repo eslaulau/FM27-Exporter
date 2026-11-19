@@ -99,6 +99,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f season-reports/Grok_Storm_424_EngineOpt_v1.2/FM27_Analysis_20261119_004118
-          git add season-reports/Grok_Storm_424_EngineOpt_v1.2 publish-engineopt-report-trigger.txt
+          git add season-reports/Grok_Storm_424_EngineOpt_v1.2
           git commit -m "Publish full Grok Storm 424 EngineOpt v1.2 season report"
           git push
