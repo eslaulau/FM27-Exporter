@@ -1,0 +1,109 @@
+
+FM27 Save Batch Exporter
+Read-only: the save file will not be modified.
+FM27 27.0.1 team-match-stats may use a clearly labelled experimental schema fallback.
+
+Python detected: Python 3.12.10
+Using FM27 save: D:\a\_temp\FM27-Season-Export-44436969034\saves\FM27_4Back_TransitionLab_v1.2\FM27_4Back_TransitionLab_v1.2.fm
+
+Installing/checking pinned fmsave 0.12.4 (automatic upgrades disabled)...
+Collecting fmsave==0.12.4
+  Downloading fmsave-0.12.4-py3-none-any.whl.metadata (13 kB)
+Collecting backports-zstd>=1.7 (from fmsave==0.12.4)
+  Downloading backports_zstd-1.8.0-cp312-cp312-win_amd64.whl.metadata (7.0 kB)
+Downloading fmsave-0.12.4-py3-none-any.whl (527 kB)
+   ---------------------------------------- 527.5/527.5 kB 3.4 MB/s  0:00:00
+Downloading backports_zstd-1.8.0-cp312-cp312-win_amd64.whl (330 kB)
+Installing collected packages: backports-zstd, fmsave
+
+Successfully installed backports-zstd-1.8.0 fmsave-0.12.4
+Confirmed fmsave 0.12.4; automatic upgrades are disabled.
+
+Reading save metadata...
+Validating readable sections...
+Exporting: fixtures
+Note: fixtures produced parser warnings; see native-diagnostics.txt.
+Exporting: team-match-stats
+Note: team-match-stats produced parser warnings; see native-diagnostics.txt.
+Exporting: players
+Note: players produced parser warnings; see native-diagnostics.txt.
+Exporting: player-season-stats
+Note: player-season-stats produced parser warnings; see native-diagnostics.txt.
+Exporting: player-match-stats
+Note: player-match-stats produced parser warnings; see native-diagnostics.txt.
+Exporting: tactics
+Note: tactics produced parser warnings; see native-diagnostics.txt.
+Exporting: set-pieces
+Note: set-pieces produced parser warnings; see native-diagnostics.txt.
+Exporting: selections
+Note: selections produced parser warnings; see native-diagnostics.txt.
+
+Building named player position history and A3.2 alignment audit...
+POSITION HISTORY AUDIT COMPLETE
+First-team fixtures: 59 | joined named records: 610 | with stats: 317
+Players with history: 42 | provisional IP/OOP alignments: 7/7
+Fixtures missing named history: 23
+Native position mapping: 24 positions | role candidates: 101 | role-duty permission rows: 707
+Selected role and live PI values remain unresolved; raw role/settings data preserved. Anonymous detailed rows were NOT assigned names.
+Named player position-history files created. Raw role codes and unverified masks remain preserved.
+FIRST-TEAM FILTER v1.2.2 COMPLETE
+First-team profiles: 28 | historical guests with minutes: 2 | guest nonappearance rows removed: 22 | current selection: 20
+Fixtures: 59 (59 played) | player-match rows: 563 | own team-match rows: 58
+No reserve/youth profiles, reserve-team season rows, opponent profiles or opponent-side team-match rows remain.
+Using save-scoped named match-history archives: D:\a\_temp\FM27-Season-Export-44436969034\saves\FM27_4Back_TransitionLab_v1.2\FM27_PlayerMatchHistoryArchives
+
+PLAYER MATCH HISTORY ARCHIVE OK
+{
+  "archive_dir": "D:\\a\\_temp\\FM27-Season-Export-44436969034\\saves\\FM27_4Back_TransitionLab_v1.2\\FM27_PlayerMatchHistoryArchives\\FM27_4Back_TransitionLab_v1.2_3d09c81b4663",
+  "archive_rows": 563,
+  "archive_fixture_keys": 20,
+  "source_snapshots": 1,
+  "rows_added_this_run": 563,
+  "current_snapshot_history_fixture_keys": 20,
+  "current_snapshot_formal_fixture_keys": 54,
+  "ignored_rows": 0,
+  "branch_guard": "passed"
+}
+HISTORY ARCHIVE ROUTE OK
+{
+  "archive_dir": "D:\\a\\_temp\\FM27-Season-Export-44436969034\\saves\\FM27_4Back_TransitionLab_v1.2\\FM27_PlayerMatchHistoryArchives\\FM27_4Back_TransitionLab_v1.2_3d09c81b4663",
+  "route_file": "D:\\a\\_temp\\FM27-Season-Export-44436969034\\saves\\FM27_4Back_TransitionLab_v1.2\\FM27_PlayerMatchHistoryArchives\\.routes\\3d09c81b466346389f5331143c19ca865d2c8f752ba9d71f3479830752d21a91.json",
+  "branch_number": 1,
+  "source": "new_save_archive",
+  "branch_guard": "passed"
+}
+
+Recovering player detailed match reports across all formal competitions (7, 637, 661, 662; excluding pre-season 131)...
+Enrichment complete: 819 identified rows; 819 retained-history ratings; 1 unresolved identities.
+Position candidates: {'unmapped_or_no_history': 506, 'GK': 20, 'DR': 30, 'DC': 41, 'DL': 31, 'DMC': 53, 'AMR': 36, 'AML': 34, 'ST': 44, 'MC': 24}
+Role codes preserved raw: {'missing': 526, '2': 61, '1': 41, '4': 31, '15': 22, '7': 70, '10': 14, '11': 30, '5': 15, '9': 9}
+Outputs written to: D:\a\_temp\FM27-Season-Export-44436969034\saves\FM27_4Back_TransitionLab_v1.2\FM27_Analysis_20261119_012741
+Formal competitions: 7,637,661,662
+Formal fixtures expected: 54 | detailed reports found: 53 | missing: 1
+Player appearances: 820 | raw activity rows: 833 | zero-minute rows skipped: 13
+Identified: 819 | unresolved: 1
+Ratings recovered: 819 | raw rating cross-check: 286/286
+Team-total reconciliation: 1007/1007 matched; 0 mismatches; 0 missing
+Outputs written to: D:\a\_temp\FM27-Season-Export-44436969034\saves\FM27_4Back_TransitionLab_v1.2\FM27_Analysis_20261119_012741
+python.exe : D:\a\FM27-Exporter\FM27-Exporter\FM27_PlayerMatchReport_Recovery_v1.9_Formal.py:1058: 
+UnknownBuildWarning: FM27_4Back_TransitionLab_v1.2.fm was saved by FM27 build 27.0.1+2494687, an unverified 
+build: fmsave 0.12.4 has no layouts registered for it. It borrows the 27.0.0+2486695 layouts for each 
+section whose schema matches, and tries an available FM27 layout when the schema differs. Readers warn about 
+failed checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: 
+structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field 
+statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.4.5.ps1:64 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\a\FM27-Expor...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  save = fmsave.open(str(save_path))
+WARNING: coverage/team totals require review; the audit records the exact blockers.
+Detailed player rows identified: 819; unresolved: 1
+Team-stat reconciliation: 1007/1007; named-history cross-check: 0/0
+WARNING: recovery output is partial or has checks to review; unresolved rows were not guessed.
+
+Export bundle created with warnings. See export-warnings.txt.
+Output folder: D:\a\_temp\FM27-Season-Export-44436969034\saves\FM27_4Back_TransitionLab_v1.2\FM27_Analysis_20261119_012741
+ZIP file: D:\a\_temp\FM27-Season-Export-44436969034\saves\FM27_4Back_TransitionLab_v1.2\FM27_Analysis_20261119_012741.zip

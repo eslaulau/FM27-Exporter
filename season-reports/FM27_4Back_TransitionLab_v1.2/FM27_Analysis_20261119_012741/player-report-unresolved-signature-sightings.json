@@ -1,0 +1,1633 @@
+{
+  "scope": "unresolved report-row signatures only; sightings are not identity proof",
+  "unresolved_signatures": {
+    "025e5100": {
+      "active_sightings": 1,
+      "all_roster_sightings": 15,
+      "sightings": [
+        {
+          "date": "2026-09-08",
+          "competition_id": 637,
+          "round": null,
+          "opponent_team_id": 1355,
+          "opponent_name": "巴塞罗那",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": []
+        },
+        {
+          "date": "2026-09-16",
+          "competition_id": 662,
+          "round": "third_round",
+          "opponent_team_id": 479,
+          "opponent_name": "布里斯托尔城",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": []
+        },
+        {
+          "date": "2026-10-21",
+          "competition_id": 637,
+          "round": null,
+          "opponent_team_id": 372,
+          "opponent_name": "布拉格斯拉维亚",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": []
+        },
+        {
+          "date": "2026-10-28",
+          "competition_id": 662,
+          "round": "fourth_round",
+          "opponent_team_id": 462,
+          "opponent_name": "阿森纳",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": true,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 77,
+            "passes_attempted": 5,
+            "passes_completed": 5,
+            "rating_hundredths": 687
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.99261304,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": []
+        },
+        {
+          "date": "2026-11-03",
+          "competition_id": 637,
+          "round": null,
+          "opponent_team_id": 1469,
+          "opponent_name": "加拉塔萨雷",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": []
+        },
+        {
+          "date": "2026-11-25",
+          "competition_id": 637,
+          "round": null,
+          "opponent_team_id": 1396,
+          "opponent_name": "比利亚雷亚尔",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": []
+        },
+        {
+          "date": "2026-12-08",
+          "competition_id": 637,
+          "round": null,
+          "opponent_team_id": 1185,
+          "opponent_name": "葡萄牙体育",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": []
+        },
+        {
+          "date": "2027-01-10",
+          "competition_id": 661,
+          "round": "third_round",
+          "opponent_team_id": 560,
+          "opponent_name": "女王公园巡游者",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": []
+        },
+        {
+          "date": "2027-01-19",
+          "competition_id": 637,
+          "round": null,
+          "opponent_team_id": 708,
+          "opponent_name": "巴黎圣日耳曼",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": []
+        },
+        {
+          "date": "2027-01-27",
+          "competition_id": 637,
+          "round": null,
+          "opponent_team_id": 148,
+          "opponent_name": "布鲁日",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": []
+        },
+        {
+          "date": "2027-02-13",
+          "competition_id": 661,
+          "round": "fourth_round",
+          "opponent_team_id": 553,
+          "opponent_name": "奥尔德姆",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": [
+            {
+              "player_uid": 14164743,
+              "player_name": "利桑德罗·马丁内斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.2,
+              "position_code": 16
+            },
+            {
+              "player_uid": 37052200,
+              "player_name": "努赛尔·马兹拉维",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000166556,
+              "player_name": "卡洛斯·巴莱巴",
+              "has_stats": true,
+              "minutes": 74,
+              "rating": 6.6,
+              "position_code": 128
+            },
+            {
+              "player_uid": 29076104,
+              "player_name": "卢克·肖",
+              "has_stats": true,
+              "minutes": 86,
+              "rating": 6.9,
+              "position_code": 8
+            },
+            {
+              "player_uid": 28049725,
+              "player_name": "哈里·马奎尔",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.8,
+              "position_code": 16
+            },
+            {
+              "player_uid": 18107187,
+              "player_name": "塞恩·拉门斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.6,
+              "position_code": 1
+            },
+            {
+              "player_uid": 2000006976,
+              "player_name": "安德雷·桑托斯",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 18076704,
+              "player_name": "尤里·蒂勒曼斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.0,
+              "position_code": 128
+            },
+            {
+              "player_uid": 48042654,
+              "player_name": "布莱恩·姆伯莫",
+              "has_stats": true,
+              "minutes": 63,
+              "rating": 6.6,
+              "position_code": 2048
+            },
+            {
+              "player_uid": 43124199,
+              "player_name": "布鲁诺·费尔南德斯",
+              "has_stats": true,
+              "minutes": 27,
+              "rating": 6.6,
+              "position_code": 2048
+            },
+            {
+              "player_uid": 27164375,
+              "player_name": "帕特里克·多尔古",
+              "has_stats": true,
+              "minutes": 4,
+              "rating": null,
+              "position_code": 8
+            },
+            {
+              "player_uid": 78084523,
+              "player_name": "曼努埃尔·乌加特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 62239624,
+              "player_name": "本亚明·谢什科",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.5,
+              "position_code": 16384
+            },
+            {
+              "player_uid": 28103589,
+              "player_name": "梅森·芒特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000123555,
+              "player_name": "科比·梅努",
+              "has_stats": true,
+              "minutes": 16,
+              "rating": 6.7,
+              "position_code": 128
+            },
+            {
+              "player_uid": 37060899,
+              "player_name": "约书亚·齐尔克泽",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000095662,
+              "player_name": "维托·罗克",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.2,
+              "position_code": 16384
+            },
+            {
+              "player_uid": 2000301026,
+              "player_name": "艾登·海文",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000182811,
+              "player_name": "莱尼·约罗",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 73200888,
+              "player_name": "西蒙·恩加潘杜恩布",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 83103245,
+              "player_name": "迪奥戈·达洛特",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.9,
+              "position_code": 4
+            },
+            {
+              "player_uid": 24065098,
+              "player_name": "马丁·巴图里纳",
+              "has_stats": true,
+              "minutes": 86,
+              "rating": 6.2,
+              "position_code": 4096
+            },
+            {
+              "player_uid": 28100242,
+              "player_name": "马库斯·拉什福德",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 37055842,
+              "player_name": "马泰斯·德利赫特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 19333258,
+              "player_name": "马特乌斯·库尼亚",
+              "has_stats": true,
+              "minutes": 4,
+              "rating": null,
+              "position_code": 4096
+            }
+          ]
+        },
+        {
+          "date": "2027-02-17",
+          "competition_id": 637,
+          "round": "unknown",
+          "opponent_team_id": 372,
+          "opponent_name": "布拉格斯拉维亚",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": [
+            {
+              "player_uid": 14164743,
+              "player_name": "利桑德罗·马丁内斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.7,
+              "position_code": 16
+            },
+            {
+              "player_uid": 37052200,
+              "player_name": "努赛尔·马兹拉维",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000166556,
+              "player_name": "卡洛斯·巴莱巴",
+              "has_stats": true,
+              "minutes": 53,
+              "rating": 7.2,
+              "position_code": 128
+            },
+            {
+              "player_uid": 29076104,
+              "player_name": "卢克·肖",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.0,
+              "position_code": 8
+            },
+            {
+              "player_uid": 28049725,
+              "player_name": "哈里·马奎尔",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.9,
+              "position_code": 16
+            },
+            {
+              "player_uid": 18107187,
+              "player_name": "塞恩·拉门斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.4,
+              "position_code": 1
+            },
+            {
+              "player_uid": 2000006976,
+              "player_name": "安德雷·桑托斯",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 18076704,
+              "player_name": "尤里·蒂勒曼斯",
+              "has_stats": true,
+              "minutes": 53,
+              "rating": 6.7,
+              "position_code": 1024
+            },
+            {
+              "player_uid": 48042654,
+              "player_name": "布莱恩·姆伯莫",
+              "has_stats": true,
+              "minutes": 68,
+              "rating": 6.7,
+              "position_code": 2048
+            },
+            {
+              "player_uid": 43124199,
+              "player_name": "布鲁诺·费尔南德斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.9,
+              "position_code": 1024
+            },
+            {
+              "player_uid": 27164375,
+              "player_name": "帕特里克·多尔古",
+              "has_stats": true,
+              "minutes": 22,
+              "rating": 6.7,
+              "position_code": 2048
+            },
+            {
+              "player_uid": 78084523,
+              "player_name": "曼努埃尔·乌加特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 62239624,
+              "player_name": "本亚明·谢什科",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 5.9,
+              "position_code": 16384
+            },
+            {
+              "player_uid": 28103589,
+              "player_name": "梅森·芒特",
+              "has_stats": true,
+              "minutes": 37,
+              "rating": 6.8,
+              "position_code": 1024
+            },
+            {
+              "player_uid": 2000123555,
+              "player_name": "科比·梅努",
+              "has_stats": true,
+              "minutes": 37,
+              "rating": 7.1,
+              "position_code": 128
+            },
+            {
+              "player_uid": 37060899,
+              "player_name": "约书亚·齐尔克泽",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000095662,
+              "player_name": "维托·罗克",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000301026,
+              "player_name": "艾登·海文",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000182811,
+              "player_name": "莱尼·约罗",
+              "has_stats": true,
+              "minutes": 0,
+              "rating": null,
+              "position_code": 4
+            },
+            {
+              "player_uid": 73200888,
+              "player_name": "西蒙·恩加潘杜恩布",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 83103245,
+              "player_name": "迪奥戈·达洛特",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.8,
+              "position_code": 4
+            },
+            {
+              "player_uid": 24065098,
+              "player_name": "马丁·巴图里纳",
+              "has_stats": true,
+              "minutes": 68,
+              "rating": 6.8,
+              "position_code": 4096
+            },
+            {
+              "player_uid": 28100242,
+              "player_name": "马库斯·拉什福德",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 37055842,
+              "player_name": "马泰斯·德利赫特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 19333258,
+              "player_name": "马特乌斯·库尼亚",
+              "has_stats": true,
+              "minutes": 22,
+              "rating": 6.9,
+              "position_code": 4096
+            }
+          ]
+        },
+        {
+          "date": "2027-02-23",
+          "competition_id": 637,
+          "round": "unknown",
+          "opponent_team_id": 372,
+          "opponent_name": "布拉格斯拉维亚",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": [
+            {
+              "player_uid": 14164743,
+              "player_name": "利桑德罗·马丁内斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.1,
+              "position_code": 16
+            },
+            {
+              "player_uid": 37052200,
+              "player_name": "努赛尔·马兹拉维",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000166556,
+              "player_name": "卡洛斯·巴莱巴",
+              "has_stats": true,
+              "minutes": 71,
+              "rating": 7.1,
+              "position_code": 128
+            },
+            {
+              "player_uid": 29076104,
+              "player_name": "卢克·肖",
+              "has_stats": true,
+              "minutes": 86,
+              "rating": 6.9,
+              "position_code": 8
+            },
+            {
+              "player_uid": 28049725,
+              "player_name": "哈里·马奎尔",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.4,
+              "position_code": 16
+            },
+            {
+              "player_uid": 18107187,
+              "player_name": "塞恩·拉门斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.8,
+              "position_code": 1
+            },
+            {
+              "player_uid": 2000006976,
+              "player_name": "安德雷·桑托斯",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 18076704,
+              "player_name": "尤里·蒂勒曼斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 8.2,
+              "position_code": 128
+            },
+            {
+              "player_uid": 48042654,
+              "player_name": "布莱恩·姆伯莫",
+              "has_stats": true,
+              "minutes": 86,
+              "rating": 7.2,
+              "position_code": 2048
+            },
+            {
+              "player_uid": 43124199,
+              "player_name": "布鲁诺·费尔南德斯",
+              "has_stats": true,
+              "minutes": 33,
+              "rating": 7.6,
+              "position_code": 16384
+            },
+            {
+              "player_uid": 27164375,
+              "player_name": "帕特里克·多尔古",
+              "has_stats": true,
+              "minutes": 4,
+              "rating": null,
+              "position_code": 8
+            },
+            {
+              "player_uid": 78084523,
+              "player_name": "曼努埃尔·乌加特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 62239624,
+              "player_name": "本亚明·谢什科",
+              "has_stats": true,
+              "minutes": 57,
+              "rating": 6.7,
+              "position_code": 16384
+            },
+            {
+              "player_uid": 28103589,
+              "player_name": "梅森·芒特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000123555,
+              "player_name": "科比·梅努",
+              "has_stats": true,
+              "minutes": 19,
+              "rating": 7.2,
+              "position_code": 128
+            },
+            {
+              "player_uid": 37060899,
+              "player_name": "约书亚·齐尔克泽",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000095662,
+              "player_name": "维托·罗克",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000301026,
+              "player_name": "艾登·海文",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000182811,
+              "player_name": "莱尼·约罗",
+              "has_stats": true,
+              "minutes": 19,
+              "rating": 6.9,
+              "position_code": 4
+            },
+            {
+              "player_uid": 73200888,
+              "player_name": "西蒙·恩加潘杜恩布",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000256107,
+              "player_name": "谢伊·莱西",
+              "has_stats": true,
+              "minutes": 4,
+              "rating": null,
+              "position_code": 2048
+            },
+            {
+              "player_uid": 83103245,
+              "player_name": "迪奥戈·达洛特",
+              "has_stats": true,
+              "minutes": 71,
+              "rating": 7.1,
+              "position_code": 4
+            },
+            {
+              "player_uid": 24065098,
+              "player_name": "马丁·巴图里纳",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 8.1,
+              "position_code": 4096
+            },
+            {
+              "player_uid": 28100242,
+              "player_name": "马库斯·拉什福德",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 37055842,
+              "player_name": "马泰斯·德利赫特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 19333258,
+              "player_name": "马特乌斯·库尼亚",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.1,
+              "position_code": 16384
+            }
+          ]
+        },
+        {
+          "date": "2027-03-09",
+          "competition_id": 637,
+          "round": "unknown",
+          "opponent_team_id": 916,
+          "opponent_name": "国际米兰",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": [
+            {
+              "player_uid": 14164743,
+              "player_name": "利桑德罗·马丁内斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.1,
+              "position_code": 16
+            },
+            {
+              "player_uid": 37052200,
+              "player_name": "努赛尔·马兹拉维",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000166556,
+              "player_name": "卡洛斯·巴莱巴",
+              "has_stats": true,
+              "minutes": 62,
+              "rating": 6.5,
+              "position_code": 128
+            },
+            {
+              "player_uid": 29076104,
+              "player_name": "卢克·肖",
+              "has_stats": true,
+              "minutes": 86,
+              "rating": 7.0,
+              "position_code": 8
+            },
+            {
+              "player_uid": 28049725,
+              "player_name": "哈里·马奎尔",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.6,
+              "position_code": 16
+            },
+            {
+              "player_uid": 18107187,
+              "player_name": "塞恩·拉门斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.7,
+              "position_code": 1
+            },
+            {
+              "player_uid": 2000006976,
+              "player_name": "安德雷·桑托斯",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 18076704,
+              "player_name": "尤里·蒂勒曼斯",
+              "has_stats": true,
+              "minutes": 62,
+              "rating": 6.8,
+              "position_code": 1024
+            },
+            {
+              "player_uid": 48042654,
+              "player_name": "布莱恩·姆伯莫",
+              "has_stats": true,
+              "minutes": 68,
+              "rating": 6.4,
+              "position_code": 2048
+            },
+            {
+              "player_uid": 43124199,
+              "player_name": "布鲁诺·费尔南德斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.1,
+              "position_code": 1024
+            },
+            {
+              "player_uid": 27164375,
+              "player_name": "帕特里克·多尔古",
+              "has_stats": true,
+              "minutes": 22,
+              "rating": 6.7,
+              "position_code": 2048
+            },
+            {
+              "player_uid": 78084523,
+              "player_name": "曼努埃尔·乌加特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 62239624,
+              "player_name": "本亚明·谢什科",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.1,
+              "position_code": 16384
+            },
+            {
+              "player_uid": 28103589,
+              "player_name": "梅森·芒特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000123555,
+              "player_name": "科比·梅努",
+              "has_stats": true,
+              "minutes": 28,
+              "rating": 6.6,
+              "position_code": 1024
+            },
+            {
+              "player_uid": 37060899,
+              "player_name": "约书亚·齐尔克泽",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000095662,
+              "player_name": "维托·罗克",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000301026,
+              "player_name": "艾登·海文",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000182811,
+              "player_name": "莱尼·约罗",
+              "has_stats": true,
+              "minutes": 4,
+              "rating": null,
+              "position_code": 4
+            },
+            {
+              "player_uid": 73200888,
+              "player_name": "西蒙·恩加潘杜恩布",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 83103245,
+              "player_name": "迪奥戈·达洛特",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.3,
+              "position_code": 4
+            },
+            {
+              "player_uid": 24065098,
+              "player_name": "马丁·巴图里纳",
+              "has_stats": true,
+              "minutes": 68,
+              "rating": 7.0,
+              "position_code": 4096
+            },
+            {
+              "player_uid": 28100242,
+              "player_name": "马库斯·拉什福德",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 37055842,
+              "player_name": "马泰斯·德利赫特",
+              "has_stats": true,
+              "minutes": 28,
+              "rating": 6.6,
+              "position_code": 128
+            },
+            {
+              "player_uid": 19333258,
+              "player_name": "马特乌斯·库尼亚",
+              "has_stats": true,
+              "minutes": 22,
+              "rating": 6.6,
+              "position_code": 4096
+            }
+          ]
+        },
+        {
+          "date": "2027-03-17",
+          "competition_id": 637,
+          "round": "unknown",
+          "opponent_team_id": 916,
+          "opponent_name": "国际米兰",
+          "report_row_index": 12,
+          "activity_hint_from_raw_stats": false,
+          "raw_player_stats": {
+            "goals": 0,
+            "assists": 0,
+            "left_at_minute": 0,
+            "entered_at_minute": 0,
+            "passes_attempted": 0,
+            "passes_completed": 0,
+            "rating_hundredths": 670
+          },
+          "detail_metrics": {
+            "shots": 0,
+            "shots_on_target": 0,
+            "blocked_shots": 0,
+            "shots_outside_box": 0,
+            "clear_cut_chances": 0,
+            "fouls_made": 0,
+            "offsides": 0,
+            "yellow_cards": 0,
+            "red_cards": 0,
+            "crosses_attempted": 0,
+            "crosses_completed": 0,
+            "tackles_attempted": 0,
+            "tackles_completed": 0,
+            "aerial_challenges_attempted": 0,
+            "headers_won": 0,
+            "expected_goals": 0.0,
+            "non_penalty_expected_goals": 0.0,
+            "distance_km": 0.0,
+            "progressive_passes": 0
+          },
+          "same_match_named_history_candidates_not_linked_to_this_signature": [
+            {
+              "player_uid": 14164743,
+              "player_name": "利桑德罗·马丁内斯",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 37052200,
+              "player_name": "努赛尔·马兹拉维",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000166556,
+              "player_name": "卡洛斯·巴莱巴",
+              "has_stats": true,
+              "minutes": 58,
+              "rating": 6.3,
+              "position_code": 128
+            },
+            {
+              "player_uid": 29076104,
+              "player_name": "卢克·肖",
+              "has_stats": true,
+              "minutes": 66,
+              "rating": 6.7,
+              "position_code": 8
+            },
+            {
+              "player_uid": 28049725,
+              "player_name": "哈里·马奎尔",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.0,
+              "position_code": 16
+            },
+            {
+              "player_uid": 18107187,
+              "player_name": "塞恩·拉门斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.3,
+              "position_code": 1
+            },
+            {
+              "player_uid": 2000006976,
+              "player_name": "安德雷·桑托斯",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 18076704,
+              "player_name": "尤里·蒂勒曼斯",
+              "has_stats": true,
+              "minutes": 66,
+              "rating": 6.8,
+              "position_code": 1024
+            },
+            {
+              "player_uid": 48042654,
+              "player_name": "布莱恩·姆伯莫",
+              "has_stats": true,
+              "minutes": 86,
+              "rating": 6.2,
+              "position_code": 2048
+            },
+            {
+              "player_uid": 43124199,
+              "player_name": "布鲁诺·费尔南德斯",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.1,
+              "position_code": 1024
+            },
+            {
+              "player_uid": 27164375,
+              "player_name": "帕特里克·多尔古",
+              "has_stats": true,
+              "minutes": 24,
+              "rating": 6.9,
+              "position_code": 8
+            },
+            {
+              "player_uid": 78084523,
+              "player_name": "曼努埃尔·乌加特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 62239624,
+              "player_name": "本亚明·谢什科",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.3,
+              "position_code": 16384
+            },
+            {
+              "player_uid": 28103589,
+              "player_name": "梅森·芒特",
+              "has_stats": true,
+              "minutes": 24,
+              "rating": 6.7,
+              "position_code": 1024
+            },
+            {
+              "player_uid": 2000123555,
+              "player_name": "科比·梅努",
+              "has_stats": true,
+              "minutes": 32,
+              "rating": 6.6,
+              "position_code": 128
+            },
+            {
+              "player_uid": 37060899,
+              "player_name": "约书亚·齐尔克泽",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000095662,
+              "player_name": "维托·罗克",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000301026,
+              "player_name": "艾登·海文",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 7.1,
+              "position_code": 16
+            },
+            {
+              "player_uid": 2000182811,
+              "player_name": "莱尼·约罗",
+              "has_stats": true,
+              "minutes": 4,
+              "rating": null,
+              "position_code": 4
+            },
+            {
+              "player_uid": 73200888,
+              "player_name": "西蒙·恩加潘杜恩布",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 2000256107,
+              "player_name": "谢伊·莱西",
+              "has_stats": true,
+              "minutes": 4,
+              "rating": null,
+              "position_code": 2048
+            },
+            {
+              "player_uid": 83103245,
+              "player_name": "迪奥戈·达洛特",
+              "has_stats": true,
+              "minutes": 86,
+              "rating": 6.7,
+              "position_code": 4
+            },
+            {
+              "player_uid": 24065098,
+              "player_name": "马丁·巴图里纳",
+              "has_stats": true,
+              "minutes": 90,
+              "rating": 6.5,
+              "position_code": 4096
+            },
+            {
+              "player_uid": 28100242,
+              "player_name": "马库斯·拉什福德",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 37055842,
+              "player_name": "马泰斯·德利赫特",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            },
+            {
+              "player_uid": 19333258,
+              "player_name": "马特乌斯·库尼亚",
+              "has_stats": false,
+              "minutes": null,
+              "rating": null,
+              "position_code": null
+            }
+          ]
+        }
+      ],
+      "status": "unresolved_no_unique_uid_evidence"
+    }
+  }
+}

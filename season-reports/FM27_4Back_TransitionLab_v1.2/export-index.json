@@ -1,0 +1,36 @@
+{
+  "schema": "fm27-season-export-index-v1",
+  "workflow_run_id": 44436969034,
+  "generated_at_utc": "2026-11-19T01:30:19.3595043Z",
+  "source_repository": "eslaulau/FM27-Exporter",
+  "source_release": "fm27-saves",
+  "source_release_url": "https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-saves",
+  "exporter": "FM27 formal season exporter v1.4.5",
+  "fmsave_version": "0.12.4",
+  "team_id": 539,
+  "club_uid": 680,
+  "source_assets": [
+    {
+      "source_asset": "FM27_4Back_TransitionLab_v1.2.fm",
+      "source_uploaded_at": "11/19/2026 01:25:33",
+      "source_size_bytes": 110714193,
+      "source_sha256": "c63a5d3add7c410669822c03477ee338e892cb83af4b3870b155bb7574bbcd1e",
+      "game_date": "2027-05-31",
+      "first_team_scope_verified": true,
+      "required_export_files": [
+        "save-info.json",
+        "validation.json",
+        "first-team-scope.json",
+        "fixtures.json",
+        "team-match-stats.json",
+        "players.json",
+        "player-season-stats.csv",
+        "player-match-report-formal-all.csv",
+        "player-match-report-formal-summary.json",
+        "player-report-identity-audit.json"
+      ],
+      "validation_status": "validation.json present",
+      "package": "FM27_SeasonExport_FM27_4Back_TransitionLab_v1.2_44436969034.zip"
+    }
+  ]
+}

@@ -1,0 +1,202 @@
+[
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 0,
+    "player_uid": 18107187,
+    "player_name": "塞恩·拉门斯"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 1,
+    "player_uid": 83103245,
+    "player_name": "迪奥戈·达洛特"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 2,
+    "player_uid": 28049725,
+    "player_name": "哈里·马奎尔"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 3,
+    "player_uid": 14164743,
+    "player_name": "利桑德罗·马丁内斯"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 4,
+    "player_uid": 29076104,
+    "player_name": "卢克·肖"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 5,
+    "player_uid": 18076704,
+    "player_name": "尤里·蒂勒曼斯"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 6,
+    "player_uid": 2000166556,
+    "player_name": "卡洛斯·巴莱巴"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 7,
+    "player_uid": 48042654,
+    "player_name": "布莱恩·姆伯莫"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 8,
+    "player_uid": 43124199,
+    "player_name": "布鲁诺·费尔南德斯"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 9,
+    "player_uid": 24065098,
+    "player_name": "马丁·巴图里纳"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 10,
+    "player_uid": 62239624,
+    "player_name": "本亚明·谢什科"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 0,
+    "player_uid": 78084523,
+    "player_name": "曼努埃尔·乌加特"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 1,
+    "player_uid": 37055842,
+    "player_name": "马泰斯·德利赫特"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 2,
+    "player_uid": 2000123555,
+    "player_name": "科比·梅努"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 3,
+    "player_uid": 19333258,
+    "player_name": "马特乌斯·库尼亚"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 4,
+    "player_uid": 37052200,
+    "player_name": "努赛尔·马兹拉维"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 5,
+    "player_uid": 28103589,
+    "player_name": "梅森·芒特"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 6,
+    "player_uid": 37060899,
+    "player_name": "约书亚·齐尔克泽"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 7,
+    "player_uid": 2000182811,
+    "player_name": "莱尼·约罗"
+  },
+  {
+    "club_uid": 680,
+    "club_name": "曼彻斯特联足球俱乐部",
+    "team_id": 539,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 8,
+    "player_uid": 28100242,
+    "player_name": "马库斯·拉什福德"
+  }
+]

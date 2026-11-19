@@ -1,0 +1,10 @@
+﻿position_code,position_mask_hex,inferred_current_ip_position,ip_evidence_status,inferred_current_oop_position,oop_evidence_status,supporting_starter_count,supporting_starters,supporting_record_count,warning
+1,0x0001,GK,provisional_unique_ip_alignment,GK,provisional_unique_oop_alignment,1,塞恩·拉门斯,20,Provisional alignment to current tactic only; not an official FM position-code dictionary.
+4,0x0004,DR,provisional_unique_ip_alignment,DR,provisional_unique_oop_alignment,1,迪奥戈·达洛特,20,Provisional alignment to current tactic only; not an official FM position-code dictionary.
+8,0x0008,DL,provisional_unique_ip_alignment,DL,provisional_unique_oop_alignment,1,卢克·肖,18,Provisional alignment to current tactic only; not an official FM position-code dictionary.
+16,0x0010,,ambiguous_ip_alignment,,ambiguous_oop_alignment,2,利桑德罗·马丁内斯;哈里·马奎尔,35,Provisional alignment to current tactic only; not an official FM position-code dictionary.
+128,0x0080,DML,provisional_unique_ip_alignment,DML,provisional_unique_oop_alignment,1,卡洛斯·巴莱巴,20,Provisional alignment to current tactic only; not an official FM position-code dictionary.
+1024,0x0400,,no_stable_starter_evidence,,no_stable_starter_evidence,0,,0,Provisional alignment to current tactic only; not an official FM position-code dictionary.
+2048,0x0800,AMR,provisional_unique_ip_alignment,MR,provisional_unique_oop_alignment,1,布莱恩·姆伯莫,20,Provisional alignment to current tactic only; not an official FM position-code dictionary.
+4096,0x1000,AML,provisional_unique_ip_alignment,ML,provisional_unique_oop_alignment,1,马丁·巴图里纳,20,Provisional alignment to current tactic only; not an official FM position-code dictionary.
+16384,0x4000,ST,provisional_unique_ip_alignment,AMCL,provisional_unique_oop_alignment,1,本亚明·谢什科,20,Provisional alignment to current tactic only; not an official FM position-code dictionary.
