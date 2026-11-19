@@ -46,7 +46,21 @@ $release = ($releaseJson -join '') | ConvertFrom-Json
 
 if ([string]::IsNullOrWhiteSpace($AssetName)) {
     $latestSaves = @($release.assets |
-        Where-Object { [string]$_.name -match '\.fm
+        Where-Object { [string]$_.name -match '\.fm$' } |
+        Sort-Object @{ Expression = { [datetime]$_.updated_at }; Descending = $true } |
+        Select-Object -First 2)
+    if ($latestSaves.Count -ne 2) {
+        throw ('Expected two latest .fm assets in Release ' + $sourceReleaseTag + '; found ' + $latestSaves.Count)
+    }
+} else {
+    if ($AssetName -notmatch '\.fm$') { throw 'AssetName must identify a .fm save file.' }
+    $latestSaves = @($release.assets | Where-Object { [string]$_.name -ceq $AssetName })
+    if ($latestSaves.Count -ne 1) {
+        throw ('Expected exactly one asset named ' + $AssetName + ' in Release ' + $sourceReleaseTag + '; found ' + $latestSaves.Count)
+    }
+    Write-Host ('Selected exact source save asset: ' + $AssetName)
+}
+
 $requiredOutputs = @(
     'save-info.json',
     'validation.json',
@@ -173,8 +187,9 @@ foreach ($asset in $latestSaves) {
     Write-Host ('Validated and packaged season report: ' + $assetName)
 }
 
+$indexSchema = if ([string]::IsNullOrWhiteSpace($AssetName)) { 'fm27-latest-two-season-exports-v1' } else { 'fm27-season-export-index-v1' }
 $index = [ordered]@{
-    schema = if ([string]::IsNullOrWhiteSpace($AssetName)) { 'fm27-latest-two-season-exports-v1' } else { 'fm27-season-export-index-v1' }
+    schema = $indexSchema
     workflow_run_id = [int64]$env:GITHUB_RUN_ID
     generated_at_utc = [datetime]::UtcNow.ToString('o')
     source_repository = $repo
