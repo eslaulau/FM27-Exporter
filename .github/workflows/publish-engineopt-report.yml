@@ -42,7 +42,7 @@ jobs:
           unzip -q "$DOWNLOAD_DIR/$ASSET" -d "$DOWNLOAD_DIR/unpacked"
           find "$DOWNLOAD_DIR/unpacked" -maxdepth 5 -type f | head -60
 
-          PACKAGE="$DOWNLOAD_DIR/unpacked/Grok_Storm_424_EngineOpt_v1.2"
+          PACKAGE="$DOWNLOAD_DIR/unpacked"
           REPORT="$PACKAGE/FM27_Analysis_20261119_004118/FM27_Analysis_20261119_004118"
           test -f "$REPORT/save-info.json"
           test -f "$REPORT/validation.json"
