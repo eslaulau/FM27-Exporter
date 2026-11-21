@@ -1,1 +1,1 @@
-Retry run74 export after restoring validated player identity cache.
+Retry run74 export after fixing summary JSON serialization.
