@@ -1,3 +1,7 @@
+HISTORICAL EXPORT BUNDLE — NOT CURRENT GUIDANCE.
+Generated with the retired v1.4.5 exporter and legacy first-team filter. The files below are preserved as originally exported. Fixed IDs, tactic/set-piece exports, position/role outputs and the old export scope do not describe current v1.5.0 behavior.
+Current supported contract: see repository README_EXPORTER.md.
+
 ﻿FM27 FIRST-TEAM ONLY analysis export bundle v1.4.5 (formal competitions)
 Default named player history uses a save-scoped route under FM27_PlayerMatchHistoryArchives beside the save file.
 Overlapping fixture or named-row conflicts automatically fork a new save-specific archive branch; conflicting histories are never merged.
