@@ -617,12 +617,15 @@ try {
         if (-not (Test-Path -LiteralPath $script:OutDir -PathType Container)) {
             throw ('ReuseExportDir is not a folder: ' + $script:OutDir)
         }
-        $reuseRequired = @('first-team-scope.json','fixtures.json','player-match-stats.json','player-season-stats.csv','team-match-stats.json')
+        $reuseRequired = @('managed-club.json','first-team-scope.json','fixtures.json','player-match-stats.json','player-season-stats.csv','team-match-stats.json')
         $reuseMissing = @($reuseRequired | Where-Object { -not (Test-Path -LiteralPath (Join-Path $script:OutDir $_) -PathType Leaf) })
         if ($reuseMissing.Count -gt 0) {
             throw ('Existing export folder is incomplete; missing: ' + ($reuseMissing -join ', '))
         }
         $scope = Get-Content -LiteralPath (Join-Path $script:OutDir 'first-team-scope.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ([string]$scope.scope_version -ne '1.3.0-managed-first-team-match-opponents') {
+            throw 'ReuseExportDir must be a v1.5.0 export with paired home/away team-match statistics.'
+        }
         if ([int]$scope.team_id -le 0 -or [int]$scope.club_uid -le 0) {
             throw 'Existing folder does not contain valid managed-club identity metadata.'
         }
