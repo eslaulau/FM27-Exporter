@@ -75,12 +75,13 @@ def main() -> int:
     write_json(ppath, profiles)
 
     mpath = root / "player-match-stats.json"; match_raw = rows_from(read_json(mpath), mpath.name)
-    initial_player_rows = [r for r in match_raw if as_int(r.get("player_uid")) in (profile_uids | selection_uids)]
-    guest_uids = {as_int(r.get("player_uid")) for r in initial_player_rows
+    # The managed-club player-match export can include historical players no longer
+    # in the current squad. Retain those only when their own row proves first-team minutes.
+    guest_uids = {as_int(r.get("player_uid")) for r in match_raw
                   if r.get("has_stats") and (as_int(r.get("minutes")) or 0) > 0}
     guest_uids.discard(None)
     tracked_uids = profile_uids | selection_uids | guest_uids
-    match = [r for r in initial_player_rows if as_int(r.get("player_uid")) in tracked_uids]
+    match = [r for r in match_raw if as_int(r.get("player_uid")) in tracked_uids]
     write_json(mpath, match)
 
     season_path = root / "player-season-stats.csv"
