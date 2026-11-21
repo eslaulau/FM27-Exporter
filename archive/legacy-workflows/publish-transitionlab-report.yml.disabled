@@ -1,0 +1,168 @@
+name: Publish TransitionLab v1.2 season report directory
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: contains(github.event.head_commit.message, '[publish-transitionlab-report]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout public exporter repository
+        uses: actions/checkout@v7
+
+      - name: Download and verify published report package
+        shell: bash
+        env:
+          GH_TOKEN: ${{github.token}}
+          REPOSITORY: ${{github.repository}}
+        run: |
+          set -euxo pipefail
+          ASSET='FM27_SeasonExport_FM27_4Back_TransitionLab_v1.2_44436969034.zip'
+          INDEX='FM27_SeasonExport_Index_44436969034.json'
+          DOWNLOAD_DIR="$RUNNER_TEMP/transitionlab-report-source"
+          mkdir -p "$DOWNLOAD_DIR"
+          gh release download fm27-exports --repo "$REPOSITORY" --pattern "$ASSET" --dir "$DOWNLOAD_DIR"
+          gh release download fm27-exports --repo "$REPOSITORY" --pattern "$INDEX" --dir "$DOWNLOAD_DIR"
+
+          ACTUAL_SHA="$(sha256sum "$DOWNLOAD_DIR/$ASSET" | awk '{print $1}')"
+          EXPECTED_SHA='8b49f5325a05b3301fcc564adec52fa9eeb60a53efc3ca798e5328d629b70566'
+          test "$ACTUAL_SHA" = "$EXPECTED_SHA"
+
+          mkdir -p "$DOWNLOAD_DIR/unpacked"
+          unzip -q "$DOWNLOAD_DIR/$ASSET" -d "$DOWNLOAD_DIR/unpacked"
+
+          PACKAGE="$DOWNLOAD_DIR/unpacked"
+          REPORT="$PACKAGE/FM27_Analysis_20261119_012741/FM27_Analysis_20261119_012741"
+          test -f "$REPORT/save-info.json"
+          test -f "$REPORT/validation.json"
+          test -f "$REPORT/first-team-scope.json"
+          test -f "$REPORT/fixtures.json"
+          test -f "$REPORT/team-match-stats.json"
+          test -f "$REPORT/player-season-stats.csv"
+          test -f "$REPORT/player-match-report-formal-all.csv"
+          test -f "$REPORT/player-report-identity-audit.json"
+          test -f "$REPORT/team-match-stats-compatibility.json"
+
+          DEST='season-reports/FM27_4Back_TransitionLab_v1.2'
+          mkdir -p "$DEST"
+          cp -a "$REPORT" "$DEST/FM27_Analysis_20261119_012741"
+          cp "$PACKAGE/save-manifest.json" "$DEST/"
+          cp -a "$PACKAGE/RunnerLogs" "$DEST/"
+          cp "$DOWNLOAD_DIR/$INDEX" "$DEST/export-index.json"
+          cp "$DOWNLOAD_DIR/$ASSET" "$DEST/source-report-package.zip"
+
+          cat > "$DEST/README.md" <<'EOF'
+          # FM27 4Back TransitionLab v1.2 — season export
+
+          Full first-team read-only export of FM27_4Back_TransitionLab_v1.2.fm.
+
+          - Game date: 2027-05-31
+          - Team scope: team_id=539, club_uid=680
+          - Played first-team fixtures: 59
+          - Formal fixtures: 54; detailed reports: 53/54
+          - Formal results: 28 wins, 11 draws, 15 losses; 122 scored, 73 conceded
+          - Player activity: 820 active appearances; 819 identified, 1 unresolved
+          - Team/player reconciliation: 1,007/1,007 matched, 0 mismatches
+          - Exporter: Run_FM27_Formal_Season_Export_v1.4.5.ps1
+          - fmsave: 0.12.4
+          - Game build: 27.0.1+2494687 (known_build=false upstream)
+
+          The full CSV, JSON, role/position evidence, audit and diagnostics are
+          in FM27_Analysis_20261119_012741/. One formal detail report is
+          missing: 2026-10-14 away at Lech Poznan (0-0, competition ID 637).
+          Player identity for one active appearance remains unresolved.
+
+          The original .fm save was not modified.
+          EOF
+
+          cat > "$DEST/ANALYSIS.md" <<'EOF'
+          # TransitionLab v1.2 — export analysis and validation
+
+          ## Season snapshot
+
+          | Scope | Played | W-D-L | Goals |
+          |---|---:|---:|---:|
+          | All first-team fixtures, including five non-competitive matches | 59 | 31-12-16 | 130-80 |
+          | Formal competitions only | 54 | 28-11-15 | 122-73 |
+          | League (competition ID 7) | 38 | 21-8-9 | 92-52 |
+          | Competition ID 637 | 12 | 5-3-4 | 19-14 |
+          | Competition ID 661 | 2 | 1-0-1 | 6-2 |
+          | Competition ID 662 | 2 | 1-0-1 | 5-5 |
+          | Non-competitive (competition ID 131) | 5 | 3-1-1 | 8-7 |
+
+          ## Tactic structure
+
+          The save contains one tactic named FM27 4Back TransitionLab v1.2,
+          style 灵活防反, mentality positive. The exported position map shows
+          a goalkeeper, right back, two centre backs and left back in both
+          in-possession and out-of-possession phases, with two defensive
+          midfield positions. The back four is present in both phases.
+
+          player-current-tactic-slot-map.csv exposes position IDs and role
+          candidates, but the raw role bits do not identify the selected role.
+          The exporter therefore leaves selected-role fields unresolved rather
+          than guessing.
+
+          ## Match and player data quality
+
+          - First-team fixtures in the save: 59 played.
+          - Formal detailed reports expected: 54; found: 53.
+          - Missing detail: competition 637, 2026-10-14, away at Lech Poznan,
+            0-0. No duplicate or unexpected detailed reports.
+          - Raw player activity rows: 833; active appearances: 820; 13
+            verified zero-minute rows excluded from per-player appearance CSVs.
+          - Identified active appearances: 819; unresolved: 1; 26 unique
+            players identified.
+          - Team/player reconciliation: 1,007 comparisons, 1,007 matches,
+            zero mismatches or missing comparisons.
+          - Team-match-stats contains 58 first-team rows. Across those rows,
+            average shots were 14.90, shots on target 7.24, xG 1.74 and
+            possession 55.53%. One played match lacks detailed match data,
+            so these averages describe the 58 decoded rows, not all 59 games.
+
+          ## Compatibility boundary
+
+          The save is FM27 build 27.0.1+2494687; fmsave 0.12.4 reports
+          known_build=false. For match_stats_cfg schema 6, the local
+          compatibility reader borrows the registered 27.0.0+2486695
+          schema-6 layout. Local player/team reconciliation passes, but the
+          formal fixture coverage check is incomplete (53/54), and the
+          compatibility assessment is partial_or_unverified. This does not
+          constitute upstream registration or validation of other saves.
+
+          ## Source and export
+
+          - Source release: fm27-saves
+          - Source file: FM27_4Back_TransitionLab_v1.2.fm
+          - Source size: 110,714,193 bytes
+          - Source SHA-256: c63a5d3add7c410669822c03477ee338e892cb83af4b3870b155bb7574bbcd1e
+          - Exporter: Run_FM27_Formal_Season_Export_v1.4.5.ps1
+          - fmsave: 0.12.4
+          - Report package SHA-256: 8b49f5325a05b3301fcc564adec52fa9eeb60a53efc3ca798e5328d629b70566
+          - Export run: 44436969034
+
+          Raw outputs and audit records are preserved beside this analysis.
+          The source save is read-only and was not modified.
+          EOF
+
+          rm -f publish-transitionlab-report-trigger.txt
+          echo "Prepared TransitionLab report directory:"
+          find "$DEST" -type f | sort
+          echo "Archive SHA256 verified: $ACTUAL_SHA"
+
+      - name: Commit full report directory to public repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f season-reports/FM27_4Back_TransitionLab_v1.2/FM27_Analysis_20261119_012741
+          git add -A
+          git commit -m "Publish full FM27 4Back TransitionLab v1.2 season report"
+          git push
