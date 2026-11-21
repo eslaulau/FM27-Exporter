@@ -89,22 +89,34 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{github.token}}
+          EVENT_NAME: ${{github.event_name}}
+          COMMENT_BODY: ${{github.event.comment.body}}
         run: |
           $gh = (Get-Command gh -ErrorAction Stop).Source
           $repo = $env:GITHUB_REPOSITORY
           $json = & $gh api "repos/$repo/releases/tags/fm27-saves"
           if ($LASTEXITCODE -ne 0) { throw 'Cannot read public source release fm27-saves.' }
           $release = ($json -join '') | ConvertFrom-Json
-          $assets = @($release.assets | Where-Object { $_.name -match '^.+-[1-3]\.fm$' })
-          if ($assets.Count -ne 6) { throw "Expected six .fm save assets, found $($assets.Count)." }
-          $groups = @($assets | ForEach-Object { [regex]::Match($_.name, '^(.+)-[1-3]\.fm$').Groups[1].Value } | Sort-Object -Unique)
-          if ($groups.Count -ne 2) { throw "Expected two tactic names, found $($groups.Count)." }
-          foreach ($name in $groups) {
-            $runs = @($assets | Where-Object { $_.name -match ('^' + [regex]::Escape($name) + '-[1-3]\.fm$') } |
-              ForEach-Object { [int]([regex]::Match($_.name, '-([1-3])\.fm$').Groups[1].Value) } | Sort-Object)
-            if (($runs -join ',') -ne '1,2,3') { throw "Tactic $name does not have the three -1/-2/-3 files." }
+
+          if ($env:EVENT_NAME -eq 'issue_comment' -and $env:COMMENT_BODY.Trim() -match '^/export-asset\s+([A-Za-z0-9._-]+\.fm)$') {
+            $assetName = $Matches[1]
+            $asset = @($release.assets | Where-Object { $_.name -ceq $assetName })
+            if ($asset.Count -ne 1 -or [long]$asset[0].size -le 0) {
+              throw "Requested .fm asset was not found or is empty: $assetName"
+            }
+            Write-Host ('Validated one-off save asset: ' + $assetName + ' (' + $asset[0].size + ' bytes)')
+          } else {
+            $assets = @($release.assets | Where-Object { $_.name -match '^.+-[1-3]\.fm$' })
+            if ($assets.Count -ne 6) { throw "Expected six .fm save assets, found $($assets.Count)." }
+            $groups = @($assets | ForEach-Object { [regex]::Match($_.name, '^(.+)-[1-3]\.fm$').Groups[1].Value } | Sort-Object -Unique)
+            if ($groups.Count -ne 2) { throw "Expected two tactic names, found $($groups.Count)." }
+            foreach ($name in $groups) {
+              $runs = @($assets | Where-Object { $_.name -match ('^' + [regex]::Escape($name) + '-[1-3]\.fm$') } |
+                ForEach-Object { [int]([regex]::Match($_.name, '-([1-3])\.fm$').Groups[1].Value) } | Sort-Object)
+              if (($runs -join ',') -ne '1,2,3') { throw "Tactic $name does not have the three -1/-2/-3 files." }
+            }
+            Write-Host ('Validated two tactics and six saves: ' + ($groups -join ' | '))
           }
-          Write-Host ('Validated two tactics and six saves: ' + ($groups -join ' | '))
 
   export:
     needs: validate
