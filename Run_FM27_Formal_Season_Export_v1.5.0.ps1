@@ -802,7 +802,7 @@ try {
         'Save path defaults to the configured FM27 2.fm; override with -SavePath when needed.',
         'Optional -ReuseExportDir reuses an existing first-team export folder and regenerates only the detailed formal player reports.',
         '',
-        'Files include managed first-team fixtures, BOTH teams' match statistics for those fixtures, and first-team player profiles/attributes,',
+        'Files include managed first-team fixtures, both home and away team statistics for those fixtures, and first-team player profiles/attributes,',
         'first-team player-season-stats, first-team player-match-stats and first-team selections,',
         'managed-club.json, save-info, parser validation and first-team-scope.json.',
         'Per-player detailed match-report outputs: player-report-probe.json, player-match-report-identified.csv/json, player-match-report-unresolved.csv, player-match-report-formal-all.csv and player-match-report-formal-summary.json.',
