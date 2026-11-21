@@ -6,6 +6,7 @@ on:
     paths:
       - 'Run_FM27_Formal_Season_Export_v1.5.0.ps1'
       - 'FM27_FirstTeam_Filter_v1.3.0.py'
+      - 'tests/test_first_team_filter_v1_3.py'
       - '.github/workflows/validate-local-exporter-v1.5.yml'
   workflow_dispatch:
 
@@ -26,6 +27,8 @@ jobs:
         run: |
           python -m py_compile FM27_FirstTeam_Filter_v1.3.0.py
           if ($LASTEXITCODE -ne 0) { throw 'Filter Python syntax validation failed.' }
+          python tests/test_first_team_filter_v1_3.py
+          if ($LASTEXITCODE -ne 0) { throw 'First-team filter regression tests failed.' }
       - name: Validate PowerShell syntax
         shell: pwsh
         run: |
