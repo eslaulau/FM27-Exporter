@@ -1,0 +1,104 @@
+name: Publish EngineOpt v1.2 season report directory
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: contains(github.event.head_commit.message, '[publish-engineopt-report]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout public exporter repository
+        uses: actions/checkout@v7
+
+      - name: Download and verify published report package
+        shell: bash
+        env:
+          GH_TOKEN: ${{github.token}}
+          REPOSITORY: ${{github.repository}}
+        run: |
+          set -euxo pipefail
+          ASSET='FM27_SeasonExport_Grok_Storm_424_EngineOpt_v1.2_44430905116.zip'
+          INDEX='FM27_SeasonExport_Index_44430905116.json'
+          DOWNLOAD_DIR="$RUNNER_TEMP/engineopt-report-source"
+          mkdir -p "$DOWNLOAD_DIR"
+          gh release download fm27-exports --repo "$REPOSITORY" --pattern "$ASSET" --dir "$DOWNLOAD_DIR"
+          test -s "$DOWNLOAD_DIR/$ASSET"
+          echo "Downloaded report ZIP: $(stat -c%s "$DOWNLOAD_DIR/$ASSET") bytes"
+          gh release download fm27-exports --repo "$REPOSITORY" --pattern "$INDEX" --dir "$DOWNLOAD_DIR"
+          test -s "$DOWNLOAD_DIR/$INDEX"
+          echo "Downloaded report index."
+
+          ACTUAL_SHA="$(sha256sum "$DOWNLOAD_DIR/$ASSET" | awk '{print $1}')"
+          EXPECTED_SHA='bd6b60a4922bf3595688bb66ec10c0bf2a3a234a777b703d45ceb3e451cfc70f'
+          test "$ACTUAL_SHA" = "$EXPECTED_SHA"
+
+          mkdir -p "$DOWNLOAD_DIR/unpacked"
+          unzip -q "$DOWNLOAD_DIR/$ASSET" -d "$DOWNLOAD_DIR/unpacked"
+          find "$DOWNLOAD_DIR/unpacked" -maxdepth 5 -type f | head -60
+
+          PACKAGE="$DOWNLOAD_DIR/unpacked"
+          REPORT="$PACKAGE/FM27_Analysis_20261119_004118/FM27_Analysis_20261119_004118"
+          test -f "$REPORT/save-info.json"
+          test -f "$REPORT/validation.json"
+          test -f "$REPORT/fixtures.json"
+          test -f "$REPORT/team-match-stats.json"
+          test -f "$REPORT/player-season-stats.csv"
+          test -f "$REPORT/player-match-report-formal-all.csv"
+          test -f "$REPORT/player-report-identity-audit.json"
+
+          DEST='season-reports/Grok_Storm_424_EngineOpt_v1.2'
+          mkdir -p "$DEST"
+          cp -a "$REPORT" "$DEST/FM27_Analysis_20261119_004118"
+          cp "$PACKAGE/save-manifest.json" "$DEST/"
+          cp -a "$PACKAGE/RunnerLogs" "$DEST/"
+          cp "$DOWNLOAD_DIR/$INDEX" "$DEST/export-index.json"
+          cp "$DOWNLOAD_DIR/$ASSET" "$DEST/source-report-package.zip"
+
+          cat > "$DEST/README.md" <<'EOF'
+          # Grok Storm 424 EngineOpt v1.2 — season export
+
+          Full read-only season export for Grok_Storm_424_EngineOpt_v1.2.fm.
+
+          - Game date: 2027-06-04
+          - First-team scope: team_id=539, club_uid=680
+          - Played first-team fixtures: 67
+          - Formal fixture reports: 62/62
+          - Player match activity rows: 951; 948 identified and 3 unresolved
+          - Team/player reconciliation: 1,178/1,178 matched, 0 mismatches
+          - Exporter: Run_FM27_Formal_Season_Export_v1.4.5.ps1
+          - fmsave: 0.12.4
+          - Game build: 27.0.1+2494687 (known_build=false upstream)
+
+          The complete CSV, JSON, audit and diagnostic outputs are in
+          FM27_Analysis_20261119_004118/. Unresolved identities are retained
+          in the audit files rather than guessed. The original .fm save was
+          not modified.
+
+          Source save SHA-256:
+          bc5ab412da9c73d5e418beb6657d7010749b58b561111c46ab8e8fbdc68fae09
+
+          Published report package SHA-256:
+          bd6b60a4922bf3595688bb66ec10c0bf2a3a234a777b703d45ceb3e451cfc70f
+          EOF
+
+          rm -f publish-engineopt-report-trigger.txt
+          echo "Prepared public report directory:"
+          find "$DEST" -type f | sort
+          echo "Archive SHA256 verified: $ACTUAL_SHA"
+
+      - name: Commit full report directory to public repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f season-reports/Grok_Storm_424_EngineOpt_v1.2/FM27_Analysis_20261119_004118
+          git add season-reports/Grok_Storm_424_EngineOpt_v1.2
+          git commit -m "Publish full Grok Storm 424 EngineOpt v1.2 season report"
+          git push
