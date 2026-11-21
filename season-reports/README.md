@@ -1,24 +1,17 @@
-# FM27 season reports
+# Historical season reports
 
-This directory contains full season exports committed as browsable report files.
+<blockquote>
+**Historical artifacts only — not current exporter instructions.** These reports were produced by older exporter versions and may contain fixed IDs, tactic/set-piece exports, role/position experiments, or one-sided team-stat rows.
+</blockquote>
 
-## Grok Storm 424 EngineOpt v1.2 — 2026-11-19
+- Historical CSV/JSON and audit data are intentionally preserved. Do not delete or rewrite raw evidence as part of exporter cleanup.
+- Check each report's own metadata for exporter version, parser version, game build, known gaps and validation status.
+- Values such as `team_id=539` and `club_uid=680` describe those historical saves only. The current v1.5.0 exporter resolves club and first-team identity dynamically.
+- Current export behavior is defined only by the repository-root [README_EXPORTER.md](../README_EXPORTER.md).
 
-- [Full report directory](./Grok_Storm_424_EngineOpt_v1.2/)
-- [Core analysis files (40 files)](./Grok_Storm_424_EngineOpt_v1.2/FM27_Analysis_20261119_004118/)
-- [Season report README](./Grok_Storm_424_EngineOpt_v1.2/README.md)
-- [Published ZIP package](https://github.com/eslaulau/FM27-Exporter/releases/download/fm27-exports/FM27_SeasonExport_Grok_Storm_424_EngineOpt_v1.2_44430905116.zip)
-- [Export index JSON](./Grok_Storm_424_EngineOpt_v1.2/export-index.json)
+## Reports
 
-The checked-in report directory preserves the original exported CSV, JSON, text diagnostics, audit files, source manifest and runner logs. The source FM save itself is not committed here.
+- [FM27 4Back TransitionLab v1.2](FM27_4Back_TransitionLab_v1.2/README.md)
+- [Grok Storm 424 EngineOpt v1.2](Grok_Storm_424_EngineOpt_v1.2/README.md)
 
-
-## FM27 4Back TransitionLab v1.2 — 2026-11-19
-
-- [完整报告目录](./FM27_4Back_TransitionLab_v1.2/)
-- [分析与核验摘要](./FM27_4Back_TransitionLab_v1.2/ANALYSIS.md)
-- [核心导出文件（40 个 CSV / JSON / 审计文件）](./FM27_4Back_TransitionLab_v1.2/FM27_Analysis_20261119_012741/)
-- [原始报告 ZIP](https://github.com/eslaulau/FM27-Exporter/releases/download/fm27-exports/FM27_SeasonExport_FM27_4Back_TransitionLab_v1.2_44436969034.zip)
-- [导出索引 JSON](./FM27_4Back_TransitionLab_v1.2/export-index.json)
-
-正式赛事 54 场，详细球员报告覆盖 53 场；缺失一场为 2026-10-14 客场对波兹南莱赫（0:0）。完整报告保留了身份审计与兼容性限制。
+The report files remain available for retrospective tactical analysis. Their old exporter instructions must not be copied into a new run.
