@@ -1,42 +1,34 @@
 # FM27 Exporter
 
-**Current supported entry point: local exporter v1.5.0 only.** This repository is organized around read-only analysis of an FM27 save using the managed first team as the scope.
+**Official workflow: v1.5.0 cloud automatic export through GitHub Actions.** The repository runs the exporter on GitHub-hosted Windows runners; users do not need to run PowerShell or install Python locally.
 
-- Main script: [Run_FM27_Formal_Season_Export_v1.5.0.ps1](Run_FM27_Formal_Season_Export_v1.5.0.ps1)
-- Filter: [FM27_FirstTeam_Filter_v1.3.0.py](FM27_FirstTeam_Filter_v1.3.0.py)
-- Full specification: [README_EXPORTER.md](README_EXPORTER.md)
-- Windows setup: [SETUP.md](SETUP.md)
-- Historical/retired code: [archive/README.md](archive/README.md)
-- Historical reports: [season-reports/README.md](season-reports/README.md)
+- Export engine: [Run_FM27_Formal_Season_Export_v1.5.0.ps1](Run_FM27_Formal_Season_Export_v1.5.0.ps1)
+- First-team filter: [FM27_FirstTeam_Filter_v1.3.0.py](FM27_FirstTeam_Filter_v1.3.0.py)
+- Full export contract: [README_EXPORTER.md](README_EXPORTER.md)
+- Cloud workflow: [.github/workflows/fm27-v1.5-cloud-export.yml](.github/workflows/fm27-v1.5-cloud-export.yml)
 
-## What the current exporter does
+## How cloud export runs
 
-The exporter resolves the managed club and its owned first team dynamically from the save. It keeps first-team fixtures and player data, plus both sides' team-level match statistics for direct first-team fixtures. It does **not** export or infer tactics, set pieces, tactic slots, roles, or opponent player data. The user supplies the tactic used in each match.
+1. Upload one or more FM27 `.fm` save assets to the GitHub Release tagged `fm27-saves`.
+2. Publishing that release automatically starts the v1.5.0 cloud export workflow.
+3. To rerun an export or export a particular save, open **Actions → FM27 v1.5.0 Cloud Season Export → Run workflow**. Enter the exact `.fm` asset name to export only that save; leave it blank to process every `.fm` asset in `fm27-saves`.
+4. The GitHub-hosted Windows runner downloads the saves, runs v1.5.0, validates the dynamic managed-club/first-team scope and required outputs, then publishes ZIP reports to the `fm27-exports` Release.
+5. Open [Cloud export reports](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-exports) to retrieve the results.
 
-The source save is read-only and is not modified. The current local exporter pins `fmsave==0.12.4`; compatibility of a particular FM27 build and decoded fields must still be checked in that export's validation and diagnostics.
+The workflow uses the v1.5.0 exporter and its pinned `fmsave==0.12.4` dependency. The original save is read-only. No fixed club UID or team ID is assumed.
 
-## Run locally
+## Export scope
 
-Requires Windows PowerShell 5.1 and Python 3.12+.
+The exporter resolves the managed club and its owned first team dynamically. It exports first-team fixtures and player data, plus both sides' team-level match statistics for direct first-team fixtures. It does not export or infer tactics, set pieces, tactic slots, roles, or opponent player data. The tactic used in each match must be supplied separately for tactical analysis.
 
-```powershell
-python -m pip install --disable-pip-version-check fmsave==0.12.4
-.\Run_FM27_Formal_Season_Export_v1.5.0.ps1 -SavePath "D:\FM27\games\your-save.fm"
-```
+## Validation boundary
 
-If `-SavePath` is omitted, the script attempts the standard FM27 save folder under the current Windows user's Documents directory.
+A workflow success means the cloud job completed and its required files and dynamic first-team scope passed structural checks. It does not prove every decoded statistic is semantically correct for every FM27 build; inspect each report's validation and diagnostics.
 
-## Source saves and published historical outputs
+## Historical material
 
-- [Source-save Release](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-saves)
-- [Historical export Release](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-exports)
-
-Release contents can change; check the actual asset list rather than assuming a fixed number of saves or tactic groups. Old reports remain available as historical evidence and are **not** current exporter specifications.
-
-## Retired automation
-
-The previous six-save/two-tactic GitHub Actions pipeline and its report-publishing workflows have been disabled and preserved under `archive/legacy-workflows/`. They are not part of the v1.5.0 local export path. There are no supported `/export tactic1`, `/export tactic2`, or ChatGPT-triggered cloud export commands in the current setup.
+Old exporter scripts and workflows are preserved under `archive/` for historical reference. They are not the v1.5.0 cloud execution path. Historical reports remain available as evidence, not as current exporter instructions.
 
 ## Public-data notice
 
-The source `.fm` saves, identity mappings, reports, diagnostics and history archives in public Releases/repository paths are publicly downloadable.
+Source `.fm` saves and report ZIPs published in Releases are publicly downloadable.
