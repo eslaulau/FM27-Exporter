@@ -1,8 +1,8 @@
 # FM27 Exporter
 
-Windows-based, read-only first-team FM27 save exporter.
+Windows-based, read-only FM27 exporter. The v1.5.0 local bundle scopes player data to the managed first team and preserves both teams' match statistics for direct fixtures.
 
-- Exporter version: **v1.4.5**
+- Local exporter version: **v1.5.0** (`Run_FM27_Formal_Season_Export_v1.5.0.ps1`)
 - Parser pin: **fmsave==0.12.4**
 - Three source career saves are stored in the public `fm27-saves` Release.
 - The player-identity cache, export reports, diagnostics and history archives are public.
@@ -23,6 +23,6 @@ You can also start the [Export public FM27 saves](https://github.com/eslaulau/FM
 
 Reports are published to the public [Release fm27-exports](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-exports).
 
-See [SETUP.md](SETUP.md) for usage and [README_EXPORTER.md](README_EXPORTER.md) for exporter scope and validation.
+The v1.5.0 local exporter resolves the managed club and first-team ID from the save, retains home + away team statistics for direct matches, and does not extract or infer tactics. See [README_EXPORTER.md](README_EXPORTER.md) for its exact scope. The public six-save Actions workflow remains a separate trial-comparison pipeline.
 
 **Public-data notice:** anyone can download the source `.fm` saves, player-identity cache, reports and history archives.
