@@ -10,7 +10,7 @@
 - Retains BOTH home and away rows from `team-match-stats.json` for those fixtures, and validates exactly one home row plus one away row per match.
 - Retains managed first-team player profiles, selections, player match rows and season rows. Historical players are retained in player-match data only when their record confirms actual minutes.
 - Retains opponent identity, competition, date, venue, score and opponent team-level match statistics only in direct matches against the managed first team.
-- Excludes opponent player profiles, opponent player match records and unrelated matches.
+- Excludes opponent player profiles, opponent player records and unrelated matches.
 - Tactical configurations, set-piece configurations, current tactic slots, historical tactic inference and role inference are deliberately not exported. The user supplies the tactic used for each match.
 - Detailed player match reports for formal competition IDs 7, 637, 661 and 662; excludes non-competitive ID 131.
 - Unresolved anonymous match rows remain unresolved; the exporter does not guess player identity.
@@ -34,9 +34,9 @@ If `-SavePath` is omitted, the script tries the standard FM27 save folder under 
 
 `-ReuseExportDir` reuses an existing compatible v1.5.0 export folder to regenerate detailed formal player reports. Its `first-team-scope.json` supplies the dynamic club UID, club name and first-team ID.
 
-## Cloud use
+## Historical pipeline boundary
 
-The public-save Actions workflow is a separate six-save tactic-comparison pipeline. This v1.5.0 local exporter is not silently substituted into that pipeline; the latter still has its own trial manifest and comparison assumptions.
+The former six-save/two-tactic public Actions pipeline and its report publishers are retired. Their scripts and workflow definitions are preserved under `archive/` for historical reference only and are not invoked by this local exporter. Historical reports may contain fields or assumptions from v1.4.5 and earlier; do not use them as v1.5.0 export instructions.
 
 ## Validate results
 
