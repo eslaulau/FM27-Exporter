@@ -40,6 +40,8 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: 'utf-8'
           SOURCE_ASSET: ${{ inputs.source_asset }}
           EVENT_NAME: ${{ github.event_name }}
           REPOSITORY: ${{ github.repository }}
