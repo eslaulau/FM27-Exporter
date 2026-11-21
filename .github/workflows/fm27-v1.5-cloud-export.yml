@@ -1,6 +1,9 @@
 name: FM27 v1.5.0 Cloud Season Export
 
 on:
+  push:
+    paths:
+      - '.github/run-cloud-export'
   release:
     types: [published]
   workflow_dispatch:
@@ -20,7 +23,7 @@ concurrency:
 
 jobs:
   cloud-export:
-    if: github.event_name == 'workflow_dispatch' || github.event.release.tag_name == 'fm27-saves'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.release.tag_name == 'fm27-saves'
     runs-on: windows-latest
     timeout-minutes: 240
     steps:
@@ -54,7 +57,7 @@ jobs:
           $releaseJson = & gh api "repos/$repo/releases/tags/$sourceTag"
           if ($LASTEXITCODE -ne 0) { throw "Cannot read source release $sourceTag." }
           $release = ($releaseJson -join '') | ConvertFrom-Json
-          $assets = @($release.assets | Where-Object { $_.name -match '\.fm -and [long]$_.size -gt 0 })
+          $assets = @($release.assets | Where-Object { $_.name -match '\.fm$' -and [long]$_.size -gt 0 })
 
           if (-not [string]::IsNullOrWhiteSpace($env:SOURCE_ASSET)) {
             $assets = @($assets | Where-Object { $_.name -ceq $env:SOURCE_ASSET.Trim() })
