@@ -225,8 +225,8 @@ def main():
             )
 
         managed = career.managed_clubs()
-        if not managed:
-            raise RuntimeError("the save has no managed club entry")
+        if len(managed) != 1:
+            raise RuntimeError("expected exactly one managed club entry; refusing to guess")
         managed_uid = managed[0].club_uid
         managed_club_name = managed[0].club_name
         managed_clubs = [club for club in career.clubs() if club.uid == managed_uid]
@@ -806,7 +806,7 @@ try {
         '',
         'Files include managed first-team fixtures, BOTH teams’ match statistics for those fixtures, and first-team player profiles/attributes,',
         'first-team player-season-stats, first-team player-match-stats and first-team selections,',
-        'save-info, parser validation and first-team-scope.json.',
+        'managed-club.json, save-info, parser validation and first-team-scope.json.',
         'Per-player detailed match-report outputs: player-report-probe.json, player-match-report-identified.csv/json, player-match-report-unresolved.csv, player-match-report-formal-all.csv and player-match-report-formal-summary.json.',
         'These detailed reports cover formal competitions 7, 637, 661 and 662; pre-season/non-competitive competition 131 is excluded.',
         'The match-report helper performs a targeted read-only pass over match_stats_cfg with fmsave==0.12.4.',
@@ -818,20 +818,13 @@ try {
         'Match ratings use the locally cross-validated uint16 little-endian field at raw-window +136 (statistics_anchor +36): hundredths divided by 100, rounded half-up to one decimal. Enable only after at least 25 exact same-match history checks pass with zero mismatches.',
         'Rows with a confirmed 0-minute appearance are omitted from player-level match reports; team-total checks still use the full raw match report.',
         'FM27 named match history is rolling (~20 rows per player/team spell across all competitions); preserve it by exporting regularly and keeping FM27_PlayerMatchHistoryArchive.',
-        'players.json contains only current first-team team_id 539 profiles; no reserve/youth profiles are kept.',
+        'Managed club and first-team ID are resolved from the save at runtime; no club/team ID is hardcoded.',
+        'players.json contains only current managed first-team profiles; no reserve/youth or opponent profiles are kept.',
         'Historical reserve/youth players are retained only on individual first-team match rows where they logged minutes; their full profiles and reserve statistics are excluded.',
         'Reserve/youth match-sheet rows without minutes are removed per match, even for a guest who appeared in another match.',
-        'Opponent identity, competition, date, venue and score remain as match context only.',
+        'Opponent identity, competition, date, venue and score remain as match context; opponent team-level statistics are retained for direct matches.',
         'Opponent player profiles and unrelated opponent matches are excluded; opponent-side team statistics for direct matches are retained.',
-        'Additional named-player audit outputs: player-position-history.csv/json,',
-        'player-position-player-summary.csv, player-position-mask-evidence.csv,',
-        'player-position-role-code-audit.csv, player-current-tactic-slot-map.csv,',
-        'player-current-role-candidates.csv, player-current-role-candidate-summary.csv,',
-        'player-current-role-duty-permissions.csv, player-position-coverage.json and player-position-unmatched-joins.json.',
-        'The native catalog maps full current tactic masks to all 24 position IDs and lists eligible IP/OOP role candidates.',
-        'The role-duty permission file contains workbook-decoded combinations with editable/fixed-on/fixed-off options.',
-        'Candidate roles and permission lists are NOT the actual selected role or live personal-instruction values.',
-        'The save raw role bits do not uniquely identify the selected role; they are preserved, not guessed.',
+        'Tactical configurations, set-piece configurations, current tactic slots and historical tactic inference are deliberately not exported.',
         'For FM27 27.0.1+2494687 with match_stats_cfg schema 6, fmsave 0.12.4 borrows the registered 27.0.0 schema-6 layout because 27.0.1 is not upstream-registered.',
         'The generated team-match-stats-compatibility.json records the reader status, source layout, formal-fixture coverage, team totals and raw-field cross-checks for this save only.',
         'A local compatibility pass does not change fmsave known_build and is not a claim of upstream verification for other saves/builds.',
