@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: fm27-v150-cloud-export
@@ -102,7 +103,7 @@ jobs:
               exporter_version = '1.5.0'
               source_asset = $name
               source_release = $sourceTag
-              tactic_name = 'FM27_EngineExploit_424_IP_523_OOP_v1_run74'
+              tactic_name = 'FM27_4Back_TransitionLab_v1_3_DualWingback_EngineSynergy_run81'
               source_size_bytes = [long]$asset.size
               source_sha256 = $sha
               exported_at_utc = [DateTime]::UtcNow.ToString('o')
@@ -124,6 +125,7 @@ jobs:
               club_name = [string]$scope.club_name
               club_uid = [int]$scope.club_uid
               first_team_id = [int]$scope.team_id
+              report_folder = [IO.Path]::GetRelativePath($outputs, $reportFolder)
               report_zip = [IO.Path]::GetFileName($zip)
               status = 'exported'
             })
@@ -144,6 +146,18 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Could not publish cloud export packages.' }
 
           Write-Host "Cloud export complete. Reports: https://github.com/$repo/releases/tag/$resultsTag"
+
+      - name: Upload complete export folders and ZIPs as a browsable workflow artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FM27-v1.5.0-Full-Export-Folders-and-ZIPs-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/FM27-v1.5.0-${{ github.run_id }}/outputs/
+          if-no-files-found: error
+          include-hidden-files: true
+          compression-level: 0
+          retention-days: 30
 
       - name: Preserve runner diagnostics on failure
         if: failure()
