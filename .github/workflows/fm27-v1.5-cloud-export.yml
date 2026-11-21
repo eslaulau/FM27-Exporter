@@ -131,7 +131,7 @@ jobs:
           }
 
           $summaryPath = Join-Path $outputs ('FM27_v1.5.0_CloudExport_Summary_' + $env:RUN_ID + '.json')
-          ConvertTo-Json -InputObject @($summary) -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
+          $summary.ToArray() | ConvertTo-Json -AsArray -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
 
           & gh release view $resultsTag --repo $repo *> $null
           if ($LASTEXITCODE -ne 0) {
