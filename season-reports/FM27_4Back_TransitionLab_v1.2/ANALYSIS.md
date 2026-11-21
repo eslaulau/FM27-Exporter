@@ -1,3 +1,5 @@
+> **HISTORICAL ANALYSIS ONLY.** This analysis is based on the v1.4.5 export and its legacy data scope. It is retained for retrospective reference, not as current v1.5.0 exporter guidance. See [current export contract](../../README_EXPORTER.md).
+
 # TransitionLab v1.2 — export analysis and validation
 
 ## Season snapshot
@@ -58,7 +60,7 @@ constitute upstream registration or validation of other saves.
 - Source file: FM27_4Back_TransitionLab_v1.2.fm
 - Source size: 110,714,193 bytes
 - Source SHA-256: c63a5d3add7c410669822c03477ee338e892cb83af4b3870b155bb7574bbcd1e
-- Exporter: Run_FM27_Formal_Season_Export_v1.4.5.ps1
+- Exporter: archived Run_FM27_Formal_Season_Export_v1.4.5.ps1
 - fmsave: 0.12.4
 - Report package SHA-256: 8b49f5325a05b3301fcc564adec52fa9eeb60a53efc3ca798e5328d629b70566
 - Export run: 44436969034
