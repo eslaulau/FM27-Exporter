@@ -1,28 +1,42 @@
 # FM27 Exporter
 
-Windows-based, read-only FM27 exporter. The v1.5.0 local bundle scopes player data to the managed first team and preserves both teams' match statistics for direct fixtures.
+**Current supported entry point: local exporter v1.5.0 only.** This repository is organized around read-only analysis of an FM27 save using the managed first team as the scope.
 
-- Local exporter version: **v1.5.0** (`Run_FM27_Formal_Season_Export_v1.5.0.ps1`)
-- Parser pin: **fmsave==0.12.4**
-- Three source career saves are stored in the public `fm27-saves` Release.
-- The player-identity cache, export reports, diagnostics and history archives are public.
-- Routine exports use this repository's built-in GitHub Actions token. No private repository or personal access token is needed.
+- Main script: [Run_FM27_Formal_Season_Export_v1.5.0.ps1](Run_FM27_Formal_Season_Export_v1.5.0.ps1)
+- Filter: [FM27_FirstTeam_Filter_v1.3.0.py](FM27_FirstTeam_Filter_v1.3.0.py)
+- Full specification: [README_EXPORTER.md](README_EXPORTER.md)
+- Windows setup: [SETUP.md](SETUP.md)
+- Historical/retired code: [archive/README.md](archive/README.md)
+- Historical reports: [season-reports/README.md](season-reports/README.md)
 
-## Run an export
+## What the current exporter does
 
-You can ask ChatGPT to export a save. ChatGPT posts an owner-authenticated command to the [FM27 Export Control issue](https://github.com/eslaulau/FM27-Exporter/issues/1), which starts GitHub Actions automatically.
+The exporter resolves the managed club and its owned first team dynamically from the save. It keeps first-team fixtures and player data, plus both sides' team-level match statistics for direct first-team fixtures. It does **not** export or infer tactics, set pieces, tactic slots, roles, or opponent player data. The user supplies the tactic used in each match.
 
-Supported commands:
-- `/export all`
-- `/export tactic1`
-- `/export tactic2`
-- `/recover RUN_ID`：从失败运行的诊断包恢复已完成的报告，不重新解析 `.fm` 存档
-- `/validate`：只进行语法与存档清单预检
+The source save is read-only and is not modified. The current local exporter pins `fmsave==0.12.4`; compatibility of a particular FM27 build and decoded fields must still be checked in that export's validation and diagnostics.
 
-You can also start the [Export public FM27 saves](https://github.com/eslaulau/FM27-Exporter/actions/workflows/export-public-saves.yml) workflow manually. Choose `all`, `tactic1`, or `tactic2`.
+## Run locally
 
-Reports are published to the public [Release fm27-exports](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-exports).
+Requires Windows PowerShell 5.1 and Python 3.12+.
 
-The v1.5.0 local exporter resolves the managed club and first-team ID from the save, retains home + away team statistics for direct matches, and does not extract or infer tactics. See [README_EXPORTER.md](README_EXPORTER.md) for its exact scope. The public six-save Actions workflow remains a separate trial-comparison pipeline.
+```powershell
+python -m pip install --disable-pip-version-check fmsave==0.12.4
+.\Run_FM27_Formal_Season_Export_v1.5.0.ps1 -SavePath "D:\FM27\games\your-save.fm"
+```
 
-**Public-data notice:** anyone can download the source `.fm` saves, player-identity cache, reports and history archives.
+If `-SavePath` is omitted, the script attempts the standard FM27 save folder under the current Windows user's Documents directory.
+
+## Source saves and published historical outputs
+
+- [Source-save Release](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-saves)
+- [Historical export Release](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-exports)
+
+Release contents can change; check the actual asset list rather than assuming a fixed number of saves or tactic groups. Old reports remain available as historical evidence and are **not** current exporter specifications.
+
+## Retired automation
+
+The previous six-save/two-tactic GitHub Actions pipeline and its report-publishing workflows have been disabled and preserved under `archive/legacy-workflows/`. They are not part of the v1.5.0 local export path. There are no supported `/export tactic1`, `/export tactic2`, or ChatGPT-triggered cloud export commands in the current setup.
+
+## Public-data notice
+
+The source `.fm` saves, identity mappings, reports, diagnostics and history archives in public Releases/repository paths are publicly downloadable.
