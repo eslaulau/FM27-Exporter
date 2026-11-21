@@ -623,9 +623,6 @@ try {
             throw ('Existing export folder is incomplete; missing: ' + ($reuseMissing -join ', '))
         }
         $scope = Get-Content -LiteralPath (Join-Path $script:OutDir 'first-team-scope.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-        $script:TeamId = [int]$scope.team_id
-        $script:ClubUid = [int]$scope.club_uid
-        $script:ClubName = [string]$scope.club_name
         if ([int]$scope.team_id -le 0 -or [int]$scope.club_uid -le 0) {
             throw 'Existing folder does not contain valid managed-club identity metadata.'
         }
@@ -733,10 +730,8 @@ try {
         Export-FmTable -TableName 'player-match-stats' -ExtraArgs @('--managed-club', '--format', 'json')
         Export-FmTable -TableName 'selections' -ExtraArgs @('--managed-club', '--format', 'json')
     
-        # Add named player identity + position history without anonymous-row guesses.
-    
-        # Reduce the saved bundle to first-team-only data; no opponent-side performance remains.
-            Invoke-FirstTeamDataFilter
+        # Keep first-team player data and both sides of direct first-team match statistics.
+        Invoke-FirstTeamDataFilter
     }
     else {
         Write-Host 'Skipping base table export and first-team filtering; existing verified first-team JSON/CSV files will be reused.' -ForegroundColor Green
