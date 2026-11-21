@@ -1,6 +1,6 @@
 ﻿# FM27 managed first-team + opponent match-stat exporter v1.5.0 - Windows PowerShell 5.1 compatible
 # Read-only. Requires Python 3.12+ and fmsave==0.12.4 (pinned; no auto-upgrade).
-# Keeps managed first-team player data and BOTH teams' match statistics for direct first-team fixtures.
+# Keeps managed first-team player data and both home and away team statistics for direct first-team fixtures.
 # Tactical configurations are intentionally not exported or inferred; user supplies match-to-tactic mapping.
 # Opponent player profiles and unrelated opponent matches are excluded.
 
