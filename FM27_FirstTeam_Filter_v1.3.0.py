@@ -75,13 +75,23 @@ def main() -> int:
     write_json(ppath, profiles)
 
     mpath = root / "player-match-stats.json"; match_raw = rows_from(read_json(mpath), mpath.name)
-    # The managed-club player-match export can include historical players no longer
-    # in the current squad. Retain those only when their own row proves first-team minutes.
-    guest_uids = {as_int(r.get("player_uid")) for r in match_raw
+    # Match-history rows also cover reserve/youth appearances. Join each row to a
+    # managed-first-team fixture by competition, date and opponent team ID before keeping it.
+    first_team_fixture_keys = {
+        (as_int(f.get("competition_id")), str(f.get("date")),
+         as_int(f.get("away_team_id")) if as_int(f.get("home_team_id")) == a.team_id
+         else as_int(f.get("home_team_id")))
+        for f in fixtures
+    }
+    def player_fixture_key(row):
+        return (as_int(row.get("competition_id")), str(row.get("date")),
+                as_int(row.get("opponent_team_id")))
+    first_team_match_rows = [r for r in match_raw if player_fixture_key(r) in first_team_fixture_keys]
+    guest_uids = {as_int(r.get("player_uid")) for r in first_team_match_rows
                   if r.get("has_stats") and (as_int(r.get("minutes")) or 0) > 0}
     guest_uids.discard(None)
     tracked_uids = profile_uids | selection_uids | guest_uids
-    match = [r for r in match_raw if as_int(r.get("player_uid")) in tracked_uids]
+    match = [r for r in first_team_match_rows if as_int(r.get("player_uid")) in tracked_uids]
     write_json(mpath, match)
 
     season_path = root / "player-season-stats.csv"
