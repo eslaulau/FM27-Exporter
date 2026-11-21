@@ -82,8 +82,9 @@ jobs:
 
             $stdout = Join-Path $slot 'export.stdout.txt'
             $stderr = Join-Path $slot 'export.stderr.txt'
-            $arguments = @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$exporter,'-SavePath',$savePath)
-            $process = Start-Process -FilePath (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') -ArgumentList $arguments -Wait -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+            $powershell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+            $argumentLine = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $exporter + '" -SavePath "' + $savePath + '"'
+            $process = Start-Process -FilePath $powershell -ArgumentList $argumentLine -Wait -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
 
             $analysis = @(Get-ChildItem -LiteralPath $downloads -Directory -Filter 'FM27_Analysis_*' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1)
             if ($process.ExitCode -ne 0 -or $analysis.Count -ne 1) {
