@@ -1,0 +1,148 @@
+name: FM27 v1.5.0 Cloud Season Export
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      source_asset:
+        description: Exact .fm asset name in release fm27-saves; leave blank to export every .fm save
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fm27-v150-cloud-export
+  cancel-in-progress: false
+
+jobs:
+  cloud-export:
+    if: github.event_name == 'workflow_dispatch' || github.event.release.tag_name == 'fm27-saves'
+    runs-on: windows-latest
+    timeout-minutes: 240
+    steps:
+      - name: Checkout v1.5.0 exporter
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+
+      - name: Export source saves in the cloud
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_ASSET: ${{ inputs.source_asset }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repo = $env:REPOSITORY
+          $sourceTag = 'fm27-saves'
+          $resultsTag = 'fm27-exports'
+          $root = Join-Path $env:RUNNER_TEMP ('FM27-v1.5.0-' + $env:RUN_ID)
+          $downloads = Join-Path $root 'downloads'
+          $outputs = Join-Path $root 'outputs'
+          New-Item -ItemType Directory -Path $downloads,$outputs -Force | Out-Null
+
+          $releaseJson = & gh api "repos/$repo/releases/tags/$sourceTag"
+          if ($LASTEXITCODE -ne 0) { throw "Cannot read source release $sourceTag." }
+          $release = ($releaseJson -join '') | ConvertFrom-Json
+          $assets = @($release.assets | Where-Object { $_.name -match '\\.fm$' -and [long]$_.size -gt 0 })
+
+          if (-not [string]::IsNullOrWhiteSpace($env:SOURCE_ASSET)) {
+            $assets = @($assets | Where-Object { $_.name -ceq $env:SOURCE_ASSET.Trim() })
+            if ($assets.Count -ne 1) { throw "Requested .fm asset was not found: $($env:SOURCE_ASSET)" }
+          } elseif ($assets.Count -eq 0) {
+            throw "No non-empty .fm assets found in release $sourceTag."
+          }
+
+          $exporter = Join-Path $env:GITHUB_WORKSPACE 'Run_FM27_Formal_Season_Export_v1.5.0.ps1'
+          $summary = New-Object System.Collections.Generic.List[object]
+          foreach ($asset in $assets) {
+            $name = [string]$asset.name
+            $savePath = Join-Path $downloads $name
+            Write-Host "Downloading source save: $name"
+            & gh release download $sourceTag --repo $repo --pattern $name --dir $downloads --clobber
+            if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $savePath -PathType Leaf)) {
+              throw "Could not download source save: $name"
+            }
+            if ((Get-Item -LiteralPath $savePath).Length -ne [long]$asset.size) {
+              throw "Downloaded save size mismatch: $name"
+            }
+            $sha = (Get-FileHash -LiteralPath $savePath -Algorithm SHA256).Hash.ToLowerInvariant()
+            $slot = Join-Path $outputs ([IO.Path]::GetFileNameWithoutExtension($name))
+            New-Item -ItemType Directory -Path $slot -Force | Out-Null
+
+            $stdout = Join-Path $slot 'export.stdout.txt'
+            $stderr = Join-Path $slot 'export.stderr.txt'
+            $arguments = @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$exporter,'-SavePath',$savePath)
+            $process = Start-Process -FilePath (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') -ArgumentList $arguments -Wait -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+
+            $analysis = @(Get-ChildItem -LiteralPath $downloads -Directory -Filter 'FM27_Analysis_*' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1)
+            if ($process.ExitCode -ne 0 -or $analysis.Count -ne 1) {
+              throw "v1.5.0 export failed for $name (exit=$($process.ExitCode)). See runner logs in the workflow run."
+            }
+            $reportFolder = Join-Path $slot $analysis[0].Name
+            Copy-Item -LiteralPath $analysis[0].FullName -Destination $reportFolder -Recurse -Force
+            Copy-Item -LiteralPath $stdout,$stderr -Destination $reportFolder -Force
+            $manifest = [ordered]@{
+              exporter_version = '1.5.0'
+              source_asset = $name
+              source_release = $sourceTag
+              source_size_bytes = [long]$asset.size
+              source_sha256 = $sha
+              exported_at_utc = [DateTime]::UtcNow.ToString('o')
+            }
+            $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $reportFolder 'cloud-export-manifest.json') -Encoding UTF8
+
+            $scopePath = Join-Path $reportFolder 'first-team-scope.json'
+            $required = @('save-info.json','validation.json','first-team-scope.json','fixtures.json','team-match-stats.json','players.json','player-season-stats.csv','player-match-report-formal-all.csv','player-match-report-formal-summary.json','player-report-identity-audit.json')
+            $missing = @($required | Where-Object { -not (Test-Path -LiteralPath (Join-Path $reportFolder $_) -PathType Leaf) })
+            if ($missing.Count -gt 0) { throw "Export for $name is missing required outputs: $($missing -join ', ')" }
+            $scope = Get-Content -LiteralPath $scopePath -Raw | ConvertFrom-Json
+            if ([int]$scope.team_id -le 0 -or [int]$scope.club_uid -le 0) { throw "Dynamic first-team scope validation failed for $name." }
+
+            $zip = Join-Path $outputs (([IO.Path]::GetFileNameWithoutExtension($name)) + '_v1.5.0_' + $env:RUN_ID + '.zip')
+            Compress-Archive -Path (Join-Path $reportFolder '*') -DestinationPath $zip -CompressionLevel Optimal
+            $summary.Add([pscustomobject]@{
+              source_asset = $name
+              sha256 = $sha
+              club_name = [string]$scope.club_name
+              club_uid = [int]$scope.club_uid
+              first_team_id = [int]$scope.team_id
+              report_zip = [IO.Path]::GetFileName($zip)
+              status = 'exported'
+            })
+            Write-Host "Completed v1.5.0 cloud export: $name | $($scope.club_name) | team $($scope.team_id)"
+          }
+
+          $summaryPath = Join-Path $outputs ('FM27_v1.5.0_CloudExport_Summary_' + $env:RUN_ID + '.json')
+          ConvertTo-Json -InputObject @($summary) -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
+
+          & gh release view $resultsTag --repo $repo *> $null
+          if ($LASTEXITCODE -ne 0) {
+            & gh release create $resultsTag --repo $repo --target main --title 'FM27 v1.5.0 Cloud Exports' --notes 'Cloud-generated read-only first-team season exports produced by the v1.5.0 exporter.'
+            if ($LASTEXITCODE -ne 0) { throw 'Could not create report release.' }
+          }
+          $upload = @(Get-ChildItem -LiteralPath $outputs -File -Filter '*.zip' | ForEach-Object { $_.FullName }) + @($summaryPath)
+          if ($upload.Count -eq 0) { throw 'No report packages were generated.' }
+          & gh release upload $resultsTag @upload --repo $repo --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Could not publish cloud export packages.' }
+
+          Write-Host "Cloud export complete. Reports: https://github.com/$repo/releases/tag/$resultsTag"
+
+      - name: Preserve runner diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FM27-v1.5.0-cloud-export-diagnostics-${{ github.run_id }}
+          path: ${{ runner.temp }}/FM27-v1.5.0-${{ github.run_id }}/
+          if-no-files-found: warn
+          retention-days: 14
