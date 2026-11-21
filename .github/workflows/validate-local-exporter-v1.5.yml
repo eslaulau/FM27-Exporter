@@ -1,0 +1,60 @@
+name: Validate v1.5.0 local exporter
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Run_FM27_Formal_Season_Export_v1.5.0.ps1'
+      - 'FM27_FirstTeam_Filter_v1.3.0.py'
+      - '.github/workflows/validate-local-exporter-v1.5.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax-and-scope:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate Python syntax
+        shell: pwsh
+        run: |
+          python -m py_compile FM27_FirstTeam_Filter_v1.3.0.py
+          if ($LASTEXITCODE -ne 0) { throw 'Filter Python syntax validation failed.' }
+      - name: Validate PowerShell syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path './Run_FM27_Formal_Season_Export_v1.5.0.ps1').Path,
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            throw 'Exporter PowerShell syntax validation failed.'
+          }
+      - name: Enforce requested scope
+        shell: pwsh
+        run: |
+          $ps = Get-Content './Run_FM27_Formal_Season_Export_v1.5.0.ps1' -Raw
+          $filter = Get-Content './FM27_FirstTeam_Filter_v1.3.0.py' -Raw
+          if ($ps -match '\$script:TeamId\s*=\s*539|\$script:ClubUid\s*=\s*680|FIRST_TEAM_ID\s*=\s*539') {
+            throw 'Hard-coded managed club/team ID remains.'
+          }
+          if ($ps -match "Export-FmTable -TableName 'tactics'|Export-FmTable -TableName 'set-pieces'|Invoke-PlayerPositionHistoryAudit") {
+            throw 'Tactical extraction or historical tactic inference remains enabled.'
+          }
+          foreach ($required in @('managed_clubs()', 'team.slot', 'team-match-stats.json', 'is_home', 'first-team-scope.json')) {
+            if (($ps + $filter) -notmatch [regex]::Escape($required)) { throw "Required scope behavior missing: $required" }
+          }
+          if ($filter -notmatch 'len\(pair\) != 2' -or $filter -notmatch 'team_match_stats_after') {
+            throw 'Two-sided team-match-stat pair validation is missing.'
+          }
+          Write-Host 'v1.5.0 exporter scope checks passed.'
