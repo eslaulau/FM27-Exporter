@@ -1,14 +1,16 @@
+> **HISTORICAL REPORT — NOT CURRENT EXPORTER GUIDANCE.** This dataset was produced by `Run_FM27_Formal_Season_Export_v1.4.5.ps1`. Its fixed IDs and legacy export scope must not be used as v1.5.0 instructions. The current contract is in [README_EXPORTER.md](../../README_EXPORTER.md). Historical report data is preserved unchanged.
+
 # Grok Storm 424 EngineOpt v1.2 — season export
 
 Full read-only season export for Grok_Storm_424_EngineOpt_v1.2.fm.
 
 - Game date: 2027-06-04
-- First-team scope: team_id=539, club_uid=680
+- First-team scope: team_id=539, club_uid=680 (historical save-specific values only)
 - Played first-team fixtures: 67
 - Formal fixture reports: 62/62
 - Player match activity rows: 951; 948 identified and 3 unresolved
 - Team/player reconciliation: 1,178/1,178 matched, 0 mismatches
-- Exporter: Run_FM27_Formal_Season_Export_v1.4.5.ps1
+- Exporter: archived Run_FM27_Formal_Season_Export_v1.4.5.ps1
 - fmsave: 0.12.4
 - Game build: 27.0.1+2494687 (known_build=false upstream)
 
