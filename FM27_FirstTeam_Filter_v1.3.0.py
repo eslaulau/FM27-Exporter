@@ -148,7 +148,12 @@ def main() -> int:
         "tracked_player_uids": len(tracked_uids), "player_match_stats_before": len(match_raw),
         "player_match_stats_after": len(match), "player_season_stats_before": len(season_source),
         "player_season_stats_after": len(season_kept), "team_match_stats_before": len(stats_raw),
-        "team_match_stats_after": len(stats), "matches_with_two_team_rows": len(grouped),
+        "team_match_stats_after": len(stats),
+        "managed_team_rows": sum(1 for r in stats if as_int(r.get("team_id")) == a.team_id),
+        "opponent_team_rows": sum(1 for r in stats if as_int(r.get("team_id")) != a.team_id),
+        "home_team_rows": sum(1 for r in stats if r.get("is_home") is True),
+        "away_team_rows": sum(1 for r in stats if r.get("is_home") is False),
+        "matches_with_two_team_rows": len(grouped),
         "team_stats_matches_joined_to_fixtures": len(joined),
         "tactical_configuration_files_removed": removed_tactics
       },
