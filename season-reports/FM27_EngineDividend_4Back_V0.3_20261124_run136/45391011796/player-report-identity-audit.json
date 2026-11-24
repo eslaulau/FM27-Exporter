@@ -1,0 +1,432 @@
+{
+  "audit_version": "1.9-formal-stale-cache-quarantine",
+  "team_id": 472,
+  "competition_id": 0,
+  "formal_competition_ids": [
+    7,
+    637,
+    661,
+    662
+  ],
+  "excluded_non_competitive_competition_ids": [
+    131
+  ],
+  "source": {
+    "save_file": "FM27_EngineDividend_4Back_V0.3_20261124_run136.fm",
+    "fmsave_version": "0.12.4",
+    "game": "FM27",
+    "game_build": "27.0.1+2494687",
+    "known_build": false,
+    "section": "match_stats_cfg",
+    "section_schema": 6,
+    "team_id": 472,
+    "competition_id_filter": 0,
+    "formal_competition_ids": [
+      7,
+      637,
+      661,
+      662
+    ],
+    "excluded_non_competitive_ids": [
+      131
+    ],
+    "layout_source_build": "27.0.0+2486695",
+    "layout_source_schema": 6,
+    "layout_exact_for_save_build": false,
+    "layout_borrowed": true,
+    "layout_note": "Uses the registered FM27 27.0.0 schema-6 layout for build 27.0.1+2494687; not upstream-verified for this build.",
+    "signature_layout": {
+      "bytes": 4,
+      "offset_from_statistics_anchor": -100,
+      "description": "First four bytes of each player record; fmsave._squads statistics anchor minus 100 bytes.",
+      "corrected_from_cached_raw_window": false
+    }
+  },
+  "scope": {
+    "detailed_report_matches": 6,
+    "played_first_team_formal_competition_fixtures": 22,
+    "played_fixtures_without_detailed_report": [
+      [
+        7,
+        "2026-08-23",
+        472,
+        457
+      ],
+      [
+        7,
+        "2026-08-30",
+        484,
+        472
+      ],
+      [
+        7,
+        "2026-09-05",
+        472,
+        524
+      ],
+      [
+        7,
+        "2026-09-12",
+        493,
+        472
+      ],
+      [
+        7,
+        "2026-09-19",
+        472,
+        456
+      ],
+      [
+        7,
+        "2026-10-10",
+        575,
+        472
+      ],
+      [
+        7,
+        "2026-10-18",
+        472,
+        496
+      ],
+      [
+        7,
+        "2026-10-25",
+        529,
+        472
+      ],
+      [
+        7,
+        "2026-10-31",
+        532,
+        472
+      ],
+      [
+        7,
+        "2026-11-08",
+        472,
+        471
+      ],
+      [
+        7,
+        "2026-11-21",
+        518,
+        472
+      ],
+      [
+        7,
+        "2026-11-29",
+        472,
+        541
+      ],
+      [
+        7,
+        "2026-12-02",
+        454,
+        472
+      ],
+      [
+        7,
+        "2026-12-05",
+        545,
+        472
+      ],
+      [
+        662,
+        "2026-09-16",
+        529,
+        472
+      ],
+      [
+        662,
+        "2026-10-28",
+        471,
+        472
+      ]
+    ],
+    "unexpected_reports": [],
+    "duplicate_report_keys": [],
+    "matchday_roster_rows": 120,
+    "raw_activity_rows_detected": 96,
+    "actual_appearance_rows": 93,
+    "excluded_zero_minute_rows": 3,
+    "identified_appearance_rows": 0,
+    "unresolved_appearance_rows": 93,
+    "identified_unique_players": 0,
+    "detail_metrics": [
+      "shots",
+      "shots_on_target",
+      "blocked_shots",
+      "shots_outside_box",
+      "clear_cut_chances",
+      "fouls_made",
+      "offsides",
+      "yellow_cards",
+      "red_cards",
+      "crosses_attempted",
+      "crosses_completed",
+      "tackles_attempted",
+      "tackles_completed",
+      "aerial_challenges_attempted",
+      "headers_won",
+      "expected_goals",
+      "non_penalty_expected_goals",
+      "distance_km",
+      "progressive_passes"
+    ],
+    "raw_player_fields": [
+      "goals",
+      "assists",
+      "left_at_minute",
+      "entered_at_minute",
+      "passes_attempted",
+      "passes_completed",
+      "rating_hundredths"
+    ],
+    "entered_at_minute_source": "fmsave==0.12.4 PlayerMatchStats.entered_at_minute; raw-window offset +71 is dynamically checked against same-match history where available.",
+    "minutes_rows_decoded": 93,
+    "rating_rows_available": 0
+  },
+  "identity": {
+    "method": "player_record_signature_anchor_minus_100_with_guarded_singleton_inference",
+    "rejected_cache_mappings": [],
+    "named_history_source": "player-match-stats-history-archive.json",
+    "signature_layout": {
+      "bytes": 4,
+      "offset_from_statistics_anchor": -100,
+      "description": "First four bytes of each player record; fmsave._squads statistics anchor minus 100 bytes.",
+      "corrected_from_cached_raw_window": false
+    },
+    "signature_mapping_count": 0,
+    "mapping_provenance": {},
+    "mappings_by_evidence": {},
+    "derived_singleton_signature_mappings": {},
+    "derived_singleton_evidence": [],
+    "rejected_singleton_inferences": [],
+    "same_match_history_rows_present": 0,
+    "unresolved_signatures": {
+      "02001600": 5,
+      "02072700": 5,
+      "020e1700": 6,
+      "022d1500": 1,
+      "02342000": 3,
+      "02481700": 5,
+      "025a1e00": 6,
+      "025b0a00": 2,
+      "02651700": 6,
+      "026c2600": 4,
+      "028a1000": 6,
+      "02ab2500": 5,
+      "02ac0600": 1,
+      "02b22200": 6,
+      "02bc0a00": 1,
+      "02be2600": 3,
+      "02c11500": 6,
+      "02c41500": 6,
+      "02ca1e00": 2,
+      "02e12400": 4,
+      "02e91500": 6,
+      "02f71600": 4
+    },
+    "duplicate_uid_conflicts": [],
+    "candidate_history_conflicts": [],
+    "cache_entries_not_in_current_overall_stats": [],
+    "limitations": [
+      "The four-byte signature map was learned from the same save's league report; applying it to other formal competitions is a cross-competition transfer, not an independent row-by-row name proof for every cup/continental match.",
+      "No row index, lineup order, or performance profile is treated as a player ID; only the four-byte record signature at statistics_anchor-100 is used.",
+      "Goals, assists and pass attempts/completions are decoded from verified raw player-record offsets and cross-checked against named same-match history; season aggregates are not copied into individual rows.",
+      "Minutes are decoded from raw entry/exit clocks only when the match duration is established by named-history votes, a unique exact category-aggregate solution, or a regular-time competition/stage rule. Otherwise they remain blank unless exact named history supplies them.",
+      "Match-report rating is uint16 little-endian at raw-window +136 (statistics_anchor +36), divided by 100 and rounded half-up to one decimal. It is enabled only after at least 25 same-match named-history rating checks pass with zero mismatches.",
+      "Rows with a verified zero-minute appearance are omitted from per-player CSV reports. Team-total reconciliation still uses every raw match-report row before this filter.",
+      "FM27 27.0.1+2494687 remains upstream-unregistered in fmsave 0.12.4; the compatibility audit records local checks only and does not change upstream known_build status.",
+      "Pre-season/non-competitive competition_id 131 is excluded from this report."
+    ]
+  },
+  "validation": {
+    "fixture_coverage": {
+      "expected_formal_fixtures": 22,
+      "decoded_reports": 6,
+      "missing_fixtures": 16,
+      "unexpected_reports": 0,
+      "duplicate_reports": 0,
+      "complete": false
+    },
+    "team_total_checks": {
+      "comparisons": 114,
+      "matches": 114,
+      "mismatches": 0,
+      "missing": 0
+    },
+    "all_active_rows_identified": false,
+    "raw_player_field_offsets": {
+      "goals": 20,
+      "assists": 56,
+      "left_at_minute": 67,
+      "entered_at_minute": 71,
+      "passes_attempted": 86,
+      "passes_completed": 87
+    },
+    "raw_player_field_reference_validation": {
+      "goals": {
+        "matched": 320,
+        "tested": 320
+      },
+      "assists": {
+        "matched": 320,
+        "tested": 320
+      },
+      "passes_attempted": {
+        "matched": 320,
+        "tested": 320
+      },
+      "passes_completed": {
+        "matched": 320,
+        "tested": 320
+      },
+      "left_at_minute": {
+        "matched": 95,
+        "tested": 95
+      }
+    },
+    "entered_at_minute_validation": {
+      "native_source": "fmsave 0.12.4 PlayerMatchStats.entered_at_minute",
+      "raw_window_offset": 71,
+      "same_match_crosscheck": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      }
+    },
+    "minute_formula": "If left_at and entered_at are both nonzero, minutes=left_at-entered_at; if only left_at is nonzero, minutes=left_at; if only entered_at is nonzero, minutes=match_duration-entered_at; if both are zero, minutes=match_duration.",
+    "match_duration_audit": {
+      "match_duration_minutes": {
+        "7|2026-12-13|503": {
+          "minutes_played": 90,
+          "source": "league_regulation_time",
+          "vote_count": 0
+        },
+        "7|2026-12-20|520": {
+          "minutes_played": 90,
+          "source": "league_regulation_time",
+          "vote_count": 0
+        },
+        "7|2026-12-26|507": {
+          "minutes_played": 90,
+          "source": "league_regulation_time",
+          "vote_count": 0
+        },
+        "7|2026-12-30|581": {
+          "minutes_played": 90,
+          "source": "league_regulation_time",
+          "vote_count": 0
+        },
+        "7|2027-01-02|533": {
+          "minutes_played": 90,
+          "source": "league_regulation_time",
+          "vote_count": 0
+        },
+        "7|2027-01-06|454": {
+          "minutes_played": 90,
+          "source": "league_regulation_time",
+          "vote_count": 0
+        }
+      },
+      "history_vote_fixture_count": 0,
+      "history_vote_conflicts": {},
+      "aggregate_solver": {
+        "cup": {
+          "unknown_fixtures": 0,
+          "status": "all_durations_from_history"
+        },
+        "continental": {
+          "unknown_fixtures": 0,
+          "status": "all_durations_from_history"
+        }
+      },
+      "unresolved_duration_fixtures": []
+    },
+    "raw_history_crosschecks": {
+      "goals": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "assists": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "passes_attempted": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "passes_completed": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "entered_at_minute": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "left_at_minute": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "minutes": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "rating": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      }
+    },
+    "rating_recovery": {
+      "status": "named_history_fallback_only",
+      "source": "uint16 little-endian at raw-window +136 (statistics_anchor +36), divided by 100 and rounded half-up to one decimal",
+      "raw_window_offset": 136,
+      "anchor_relative_offset": 36,
+      "crosscheck_minimum": 25,
+      "crosscheck": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "raw_source_enabled": false,
+      "available_rows": 0,
+      "missing_rows": 0,
+      "total_identified_rows": 0
+    },
+    "zero_minute_exclusion": {
+      "excluded_rows": 3,
+      "by_competition": {
+        "7": 3
+      },
+      "reason": "verified_minutes_zero",
+      "team_total_checks_use_full_raw_report_rows": true
+    },
+    "raw_field_coverage": {
+      "goals": 93,
+      "assists": 93,
+      "passes_attempted": 93,
+      "passes_completed": 93,
+      "entered_at_minute": 27,
+      "minutes": 93,
+      "rating": 0,
+      "rating_raw_hundredths": 0
+    },
+    "named_history_match_count": 0,
+    "named_history_matches_passed": 0,
+    "named_history_source": "player-match-stats-history-archive.json",
+    "named_history_note": "Named history supplies positions and cross-checks ratings/entry clocks; the raw match-report player record supplies detailed ratings plus goals, assists, entry/exit clocks and passing counts.",
+    "duplicate_uid_within_match_rows": [],
+    "candidate_history_conflicts": [],
+    "formal_competitions_only": true,
+    "excluded_competition_131_rows": 0
+  }
+}
