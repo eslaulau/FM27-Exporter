@@ -390,11 +390,28 @@ def load_identity_cache(path: Path, team_id: int, club_uid: int, roster_names: d
                     and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(item.get("date") or "")))
                     and as_int(item.get("competition_id")) in FORMAL_COMPETITION_IDS
                     and (as_int(item.get("opponent_team_id"), 0) or 0) > 0
-                    and item.get("reason") == "unique_single_remaining_row_and_named_history_uid_after_complete_match_roster_reconciliation"
+                    and item.get("reason") == "unique_single_remaining_row_and_unique_named_history_uid_after_complete_match_roster_reconciliation"
                     for item in evidence_rows
                 )
             )
-            if entry.get("evidence") != "prior_validated_signature_cache" and not guarded_singleton:
+            guarded_exact_vector = (
+                entry.get("evidence") == "unique_exact_same_match_stat_vector"
+                and isinstance(evidence_rows, list)
+                and bool(evidence_rows)
+                and all(
+                    as_int(item.get("player_uid")) == uid
+                    and str(item.get("player_name") or "") == name
+                    and item.get("same_match_history_has_stats") is True
+                    and item.get("exact_stat_vector_match") is True
+                    and item.get("matched_fields") == ["goals", "assists", "passes_attempted", "passes_completed"]
+                    and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(item.get("date") or "")))
+                    and as_int(item.get("competition_id")) in FORMAL_COMPETITION_IDS
+                    and (as_int(item.get("opponent_team_id"), 0) or 0) > 0
+                    and item.get("reason") == "unique_exact_four_field_same_match_stat_vector"
+                    for item in evidence_rows
+                )
+            )
+            if entry.get("evidence") != "prior_validated_signature_cache" and not guarded_singleton and not guarded_exact_vector:
                 rejected_mappings.append({
                     "signature": sig,
                     "player_uid": uid,
@@ -844,6 +861,134 @@ def audit_raw_history_crosschecks(
     return result
 
 
+def infer_exact_stat_signature_mappings(
+    reports: list[dict[str, Any]],
+    base_map: dict[str, dict[str, Any]],
+) -> tuple[dict[str, dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """Recover stable record signatures from unique exact same-match stat vectors.
+
+    A match is eligible only when its active anonymous report-row count equals the
+    active named-history UID count. A row is assigned only when goals, assists,
+    passes attempted and passes completed match exactly one active named-history
+    player. Assignments are then reconciled across matches; conflicting signatures
+    and duplicate player UIDs are rejected rather than guessed.
+    """
+    fields = ["goals", "assists", "passes_attempted", "passes_completed"]
+    evidence_by_signature: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    rejected: list[dict[str, Any]] = []
+
+    for report in reports:
+        history_by_uid: dict[int, dict[str, Any]] = {}
+        for history in report.get("candidate_player_history_rows", []):
+            uid = as_int(history.get("player_uid"))
+            if uid is None:
+                continue
+            prior = history_by_uid.get(uid)
+            if prior is None or (history.get("has_stats") is True and prior.get("has_stats") is not True):
+                history_by_uid[uid] = history
+
+        active_uids = {
+            uid: history for uid, history in history_by_uid.items()
+            if history.get("has_stats") is True or (as_int(history.get("minutes"), 0) or 0) > 0
+        }
+        active_rows = [
+            row for row in report.get("anonymous_player_rows", [])
+            if is_appearance(row.get("metrics") or {}, None)
+        ]
+        if not active_uids or len(active_rows) != len(active_uids):
+            continue
+
+        match_assignments: list[tuple[str, int, dict[str, Any], dict[str, int]]] = []
+        used_uids: set[int] = set()
+        for row in active_rows:
+            signature = str(row.get("row_signature") or "").lower()
+            raw_stats = raw_stats_from_probe_row(row)
+            if not re.fullmatch(r"[0-9a-f]{8}", signature) or raw_stats is None:
+                continue
+            if not all(as_int(raw_stats.get(field)) is not None for field in fields):
+                continue
+            matches = []
+            for uid, history in active_uids.items():
+                if history.get("has_stats") is not True:
+                    continue
+                if all(
+                    as_int(history.get(field)) is not None
+                    and as_int(history.get(field)) == as_int(raw_stats.get(field))
+                    for field in fields
+                ):
+                    matches.append((uid, history))
+            if len(matches) != 1:
+                continue
+            uid, history = matches[0]
+            if uid in used_uids:
+                continue
+            used_uids.add(uid)
+            match_assignments.append((signature, uid, history, raw_stats))
+
+        # A partial match is still useful evidence for signatures with unique vectors;
+        # full one-to-one coverage is independently asserted by the regression test.
+        for signature, uid, history, raw_stats in match_assignments:
+            evidence_by_signature[signature].append({
+                "player_uid": uid,
+                "player_name": str(history.get("player_name") or ""),
+                "competition_id": int(report["competition_id"]),
+                "date": str(report["date"]),
+                "opponent_team_id": int(report["opponent_team_id"]),
+                "same_match_history_has_stats": history.get("has_stats") is True,
+                "same_match_minutes": history.get("minutes"),
+                "exact_stat_vector_match": True,
+                "matched_fields": fields,
+                "raw_stat_vector": {field: as_int(raw_stats.get(field)) for field in fields},
+                "reason": "unique_exact_four_field_same_match_stat_vector",
+            })
+
+    inferred: dict[str, dict[str, Any]] = {}
+    uid_to_signature: dict[int, str] = {}
+    for signature, occurrences in evidence_by_signature.items():
+        identities = {(int(item["player_uid"]), str(item["player_name"])) for item in occurrences}
+        if len(identities) != 1 or not next(iter(identities))[1]:
+            rejected.append({
+                "signature": signature,
+                "reason": "conflicting_same_match_exact_stat_vector_assignments",
+                "assignments": sorted(
+                    [{"player_uid": uid, "player_name": name} for uid, name in identities],
+                    key=lambda item: (item["player_uid"], item["player_name"]),
+                ),
+                "occurrences": occurrences,
+            })
+            continue
+        uid, name = next(iter(identities))
+        existing = base_map.get(signature)
+        if existing and as_int(existing.get("player_uid")) != uid:
+            rejected.append({
+                "signature": signature,
+                "reason": "exact_stat_vector_conflicts_with_existing_cache",
+                "cached_player_uid": as_int(existing.get("player_uid")),
+                "observed_player_uid": uid,
+            })
+            continue
+        previous_signature = uid_to_signature.get(uid)
+        if previous_signature and previous_signature != signature:
+            rejected.append({
+                "signature": signature,
+                "reason": "one_player_uid_resolves_to_multiple_record_signatures",
+                "player_uid": uid,
+                "other_signature": previous_signature,
+            })
+            continue
+        uid_to_signature[uid] = signature
+        inferred[signature] = {
+            "player_uid": uid,
+            "player_name": name,
+            "evidence": "unique_exact_same_match_stat_vector",
+            "confidence": "high",
+            "seed_competition_id": None,
+            "derived_from_matches": occurrences,
+        }
+
+    return inferred, [item for group in evidence_by_signature.values() for item in group], rejected
+
+
 def infer_singleton_signature_mappings(
     reports: list[dict[str, Any]],
     base_map: dict[str, dict[str, Any]],
@@ -1212,17 +1357,29 @@ def main() -> int:
         }
 
 
-    # Try only the strict one-remaining-row / one-remaining-UID case from complete
-    # same-match player history. This can recover a player such as a cup-only keeper
-    # without guessing from row order or position.
+    # Recover identities from exact same-match stat vectors first. This is possible
+    # even when every row is initially anonymous: the four raw per-player counters
+    # are independently cross-checkable against the named match-history table.
+    exact_map, exact_evidence, rejected_exact = infer_exact_stat_signature_mappings(reports, signature_map)
+    for sig, entry in exact_map.items():
+        if sig in signature_map:
+            continue
+        if any(int(existing["player_uid"]) == int(entry["player_uid"]) for existing in signature_map.values()):
+            rejected_exact.append({"signature": sig, "reason": "player_uid_already_has_a_different_cached_signature", "player_uid": entry["player_uid"]})
+            continue
+        signature_map[sig] = entry
+
+    # Retain the strict one-remaining-row / one-remaining-UID fallback for genuinely
+    # sparse cases, using exact-vector mappings as already-established anchors.
     inferred_map, inferred_evidence, rejected_inference = infer_singleton_signature_mappings(reports, signature_map)
     for sig, entry in inferred_map.items():
         if sig in signature_map:
             continue
         if any(int(existing["player_uid"]) == int(entry["player_uid"]) for existing in signature_map.values()):
-            rejected_inference.append({"signature": sig, "reason": "player_uid_already_has_a_different_cached_signature", "player_uid": entry["player_uid"]})
+            rejected_inference.append({"signature": sig, "reason": "player_uid_already_has_a_different_signature", "player_uid": entry["player_uid"]})
             continue
         signature_map[sig] = entry
+    all_derived_map = {**exact_map, **inferred_map}
 
     # Attach match-duration evidence after singleton identity recovery so every trusted
     # signature mapping can contribute. This enables direct per-match minutes on rows
@@ -1406,6 +1563,9 @@ def main() -> int:
                 if evidence_type == "single_remaining_same_match_named_history":
                     identity_method = "unique_same_match_history_residual"
                     identity_confidence = "同场具名出场名单与详细报告出场行数量完全一致，且仅剩该球员与该记录一一对应"
+                elif evidence_type == "unique_exact_same_match_stat_vector":
+                    identity_method = "unique_exact_same_match_stat_vector"
+                    identity_confidence = "同场四项原始统计（进球、助攻、传球尝试、传球成功）与具名历史唯一精确匹配，并经跨场签名一致性核验"
                 elif evidence_type == "prior_validated_signature_cache":
                     identity_method = "prior_named_history_validated_signature_cache_cross_competition"
                     identity_confidence = "签名映射曾在同一存档的旧报告中通过具名历史交叉检查；本场仅作为跨赛事签名转用"
@@ -1545,8 +1705,12 @@ def main() -> int:
             "signature_mapping_count": len(signature_map),
             "mapping_provenance": cache.get("seed_source") or {},
             "mappings_by_evidence": dict(cache_usage),
-            "derived_singleton_signature_mappings": inferred_map,
+            "derived_exact_stat_vector_signature_mappings": exact_map,
+        "derived_singleton_signature_mappings": inferred_map,
             "derived_singleton_evidence": inferred_evidence,
+            "exact_stat_vector_signature_mappings": exact_map,
+            "exact_stat_vector_evidence_rows": exact_evidence,
+            "rejected_exact_stat_vector_inferences": rejected_exact,
             "rejected_singleton_inferences": rejected_inference,
             "same_match_history_rows_present": cache_history_presence,
             "unresolved_signatures": dict(sorted(unknown_signatures.items())),
@@ -1704,12 +1868,14 @@ def main() -> int:
     })
 
     learned_cache = {**cache, "team_id": args.team_id, "club_uid": args.club_uid, "mappings": dict(cache.get("mappings", {}))}
-    for sig, entry in inferred_map.items():
+    for sig, entry in all_derived_map.items():
         if sig not in learned_cache["mappings"]:
             learned_cache["mappings"][sig] = entry
     learned_cache["updated_from_report"] = {
         "output_directory": export_dir.name,
-        "derived_signature_count": len(inferred_map),
+        "derived_signature_count": len(all_derived_map),
+        "derived_exact_stat_vector_signature_count": len(exact_map),
+        "derived_singleton_signature_count": len(inferred_map),
         "unresolved_signature_count": len(unknown_signatures),
     }
     write_json(export_dir / "FM27_PlayerIdentityCache_Formal_v1.1_learned.json", learned_cache)
