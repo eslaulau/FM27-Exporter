@@ -2,14 +2,17 @@
 # -*- coding: utf-8 -*-
 """Extract or repair FM27 first-team player detailed match reports for all formal competitions.
 
+Competition IDs are discovered from the managed team's fixture rows because those IDs are
+save-local. Match-rule family 1 is excluded as friendly/pre-season; other families are included.
+
 This is a read-only, targeted reread of the existing match_stats_cfg section in the
 current save. It does not rerun the full exporter and never modifies the save. After writing
 standard reports, it invokes the bundled field-enrichment step for conservative position
 candidates, raw role-code provenance, rating-source statuses and unresolved signature sightings.
 
 Scope is resolved at runtime from the current save's managed club and owned first-team slot 0:
-  formal competitions: 7 (league), 637 (continental), 661 and 662 (cups)
-  excluded: 131 (pre-season / non-competitive)
+  formal competitions: discovered from the current save's managed-team fixture rules
+  excluded: friendly/pre-season match-rule family 1
 
 Names are assigned through a persisted four-byte player-record signature map validated on the
 same save, plus a strict same-match singleton residual only when the named active roster exactly
@@ -55,9 +58,9 @@ SECTION = "match_stats_cfg"
 EXPECTED_BUILD = "27.0.1+2494687"
 REFERENCE_BUILD = "27.0.0+2486695"
 EXPECTED_SCHEMA = 6
-# These are the four official competitions present in this specific season export.
-FORMAL_COMPETITION_IDS = (7, 637, 661, 662)
-EXCLUDED_NON_COMPETITIVE_IDS = (131,)
+# Competition IDs are save-local and must never be hardcoded.
+# Match-rule family 1 identifies friendly/pre-season fixtures in the observed FM27 schema.
+NON_COMPETITIVE_MATCH_RULE_FAMILIES = frozenset({1})
 # fmsave._squads returns the player-statistics anchor, not the start of the player record.
 # The 4-byte stable identity signature is at the beginning of that record (anchor - 100).
 PLAYER_SIGNATURE_OFFSET_FROM_ANCHOR = -100
@@ -241,6 +244,45 @@ def resolve_match_layout(info: Any) -> tuple[Any, dict[str, Any]]:
     }
 
 
+def discover_formal_competition_ids(
+    fixtures: list[dict[str, Any]], team_id: int
+) -> tuple[set[int], set[int], set[int]]:
+    """Discover formal competition IDs from this save's managed-team fixture rules.
+
+    Competition IDs are save-local. Match-rule family 1 identifies friendlies and
+    pre-season matches in the observed FM27 fixture schema. Other observed families
+    are retained. Missing rule families are included conservatively and disclosed.
+    """
+    families_by_competition: dict[int, set[int]] = defaultdict(set)
+    unclassified: set[int] = set()
+    for row in fixtures:
+        home = as_int(row.get("home_team_id"))
+        away = as_int(row.get("away_team_id"))
+        if team_id not in (home, away):
+            continue
+        comp = as_int(row.get("competition_id"))
+        if comp is None:
+            continue
+        template = row.get("match_rules_template")
+        family = as_int(template[0]) if isinstance(template, list) and template else None
+        if family is None:
+            unclassified.add(comp)
+        else:
+            families_by_competition[comp].add(family)
+
+    formal = {
+        comp for comp, families in families_by_competition.items()
+        if any(family not in NON_COMPETITIVE_MATCH_RULE_FAMILIES for family in families)
+    }
+    excluded = {
+        comp for comp, families in families_by_competition.items()
+        if families and families.issubset(NON_COMPETITIVE_MATCH_RULE_FAMILIES)
+    }
+    formal.update(unclassified)
+    formal.difference_update(excluded)
+    return formal, excluded, unclassified
+
+
 def load_formal_fixtures(export_dir: Path, team_id: int, comp_ids: set[int]) -> tuple[list[dict[str, Any]], dict[tuple[int, str, int, int], dict[str, Any]]]:
     fixtures = read_json(export_dir / "fixtures.json")
     selected: list[dict[str, Any]] = []
@@ -329,7 +371,10 @@ def load_candidates(export_dir: Path, comp_ids: set[int], roster_names: dict[int
     return result
 
 
-def load_identity_cache(path: Path, team_id: int, club_uid: int, roster_names: dict[int, str]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+def load_identity_cache(
+    path: Path, team_id: int, club_uid: int, roster_names: dict[int, str],
+    formal_competition_ids: set[int],
+) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
     """Load only trusted mappings; quarantine stale vector-only cache entries.
 
     A stale cache UID must not abort the entire report. When it is absent from the
@@ -388,7 +433,7 @@ def load_identity_cache(path: Path, team_id: int, club_uid: int, roster_names: d
                     and item.get("same_match_history_has_stats") is True
                     and (as_int(item.get("same_match_minutes"), 0) or 0) > 0
                     and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(item.get("date") or "")))
-                    and as_int(item.get("competition_id")) in FORMAL_COMPETITION_IDS
+                    and as_int(item.get("competition_id")) in formal_competition_ids
                     and (as_int(item.get("opponent_team_id"), 0) or 0) > 0
                     and item.get("reason") == "unique_single_remaining_row_and_unique_named_history_uid_after_complete_match_roster_reconciliation"
                     for item in evidence_rows
@@ -405,7 +450,7 @@ def load_identity_cache(path: Path, team_id: int, club_uid: int, roster_names: d
                     and item.get("exact_stat_vector_match") is True
                     and item.get("matched_fields") == ["goals", "assists", "passes_attempted", "passes_completed"]
                     and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(item.get("date") or "")))
-                    and as_int(item.get("competition_id")) in FORMAL_COMPETITION_IDS
+                    and as_int(item.get("competition_id")) in formal_competition_ids
                     and (as_int(item.get("opponent_team_id"), 0) or 0) > 0
                     and item.get("reason") == "unique_exact_four_field_same_match_stat_vector"
                     for item in evidence_rows
@@ -1091,7 +1136,7 @@ def main() -> int:
     parser.add_argument("--team-id", type=int, required=True, help="Dynamically resolved managed first-team ID")
     parser.add_argument("--club-uid", type=int, required=True, help="Dynamically resolved managed club UID")
     parser.add_argument("--competition-id", type=int, default=0,
-                        help="0 = the four formal competitions in this season; never includes pre-season 131")
+                        help="0 = discover formal competitions from this save's managed-team fixture rules; exclude friendlies/pre-season")
     parser.add_argument("--no-raw", action="store_true", help="Do not retain raw match-report byte windows in the probe JSON")
     parser.add_argument(
         "--reuse-probe", action="store_true",
@@ -1113,9 +1158,20 @@ def main() -> int:
     for required in ("fixtures.json", "player-match-stats.json", "player-season-stats.csv", "team-match-stats.json"):
         if not (export_dir / required).is_file():
             raise RuntimeError(f"Missing required existing export file: {export_dir / required}")
-    if args.competition_id not in (0, *FORMAL_COMPETITION_IDS):
-        raise RuntimeError(f"Unsupported competition id {args.competition_id}; use 0 or one of {FORMAL_COMPETITION_IDS}")
-    comp_ids = set(FORMAL_COMPETITION_IDS if args.competition_id == 0 else (args.competition_id,))
+    all_fixtures = read_json(export_dir / "fixtures.json")
+    discovered_comp_ids, excluded_comp_ids, unclassified_comp_ids = discover_formal_competition_ids(
+        all_fixtures, args.team_id
+    )
+    if not discovered_comp_ids:
+        raise RuntimeError("Could not discover any formal first-team competition IDs from fixtures.json")
+    if args.competition_id != 0 and args.competition_id not in discovered_comp_ids:
+        raise RuntimeError(
+            f"Competition id {args.competition_id} is not in this save's discovered formal scope "
+            f"{sorted(discovered_comp_ids)}"
+        )
+    comp_ids = set(discovered_comp_ids if args.competition_id == 0 else (args.competition_id,))
+    if args.competition_id != 0:
+        excluded_comp_ids = set()
 
     fixtures, fixture_index = load_formal_fixtures(export_dir, args.team_id, comp_ids)
     if not fixtures:
@@ -1127,7 +1183,9 @@ def main() -> int:
     season_aggregates = load_season_aggregate_rows(export_dir, args.team_id)
     history_source = "player-match-stats-history-archive.json" if (export_dir / "player-match-stats-history-archive.json").is_file() else "player-match-stats.json"
     team_index = load_team_match_index(export_dir, args.team_id)
-    signature_map, cache = load_identity_cache(cache_path, args.team_id, args.club_uid, roster_names)
+    signature_map, cache = load_identity_cache(
+        cache_path, args.team_id, args.club_uid, roster_names, comp_ids
+    )
     rejected_cache_mappings = cache.get("rejected_mappings", [])
     rejected_cache_signatures = {str(x.get("signature", "")).lower() for x in rejected_cache_mappings if isinstance(x, dict)}
     if rejected_cache_mappings:
@@ -1346,7 +1404,8 @@ def main() -> int:
             "club_uid": args.club_uid,
             "competition_id_filter": 0 if args.competition_id == 0 else args.competition_id,
             "formal_competition_ids": sorted(comp_ids),
-            "excluded_non_competitive_ids": list(EXCLUDED_NON_COMPETITIVE_IDS),
+            "excluded_non_competitive_ids": sorted(excluded_comp_ids),
+            "unclassified_competition_ids": sorted(unclassified_comp_ids),
             **layout_meta,
             "signature_layout": {
                 "bytes": PLAYER_SIGNATURE_BYTES,
@@ -1676,7 +1735,8 @@ def main() -> int:
         "club_uid": args.club_uid,
         "competition_id": 0 if args.competition_id == 0 else args.competition_id,
         "formal_competition_ids": sorted(comp_ids),
-        "excluded_non_competitive_competition_ids": list(EXCLUDED_NON_COMPETITIVE_IDS),
+        "excluded_non_competitive_competition_ids": sorted(excluded_comp_ids),
+        "unclassified_competition_ids": sorted(unclassified_comp_ids),
         "source": probe_payload["source"],
         "scope": {
             "detailed_report_matches": len(reports),
@@ -1799,7 +1859,9 @@ def main() -> int:
             "duplicate_uid_within_match_rows": duplicate_uid_conflicts,
             "candidate_history_conflicts": candidate_history_conflicts,
             "formal_competitions_only": all(int(r["competition_id"]) in comp_ids for r in reports),
-            "excluded_competition_131_rows": sum(1 for r in reports if int(r["competition_id"]) in EXCLUDED_NON_COMPETITIVE_IDS),
+            "excluded_non_competitive_report_rows": sum(1 for r in reports if int(r["competition_id"]) in excluded_comp_ids),
+            "discovered_formal_competition_ids": sorted(discovered_comp_ids),
+            "unclassified_competition_ids": sorted(unclassified_comp_ids),
         },
     })
     write_csv(export_dir / "player-match-report-identified.csv", IDENTIFIED_FIELDS, identified_rows)
@@ -1848,9 +1910,10 @@ def main() -> int:
             for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "minutes", "rating", "rating_raw_hundredths")
         }
     write_json(export_dir / "player-match-report-formal-summary.json", {
-        "report_scope": "first-team formal competitions only",
+        "report_scope": "first-team formal competitions discovered from save-local fixture rules",
         "formal_competition_ids": sorted(comp_ids),
-        "excluded_non_competitive_competition_ids": list(EXCLUDED_NON_COMPETITIVE_IDS),
+        "excluded_non_competitive_competition_ids": sorted(excluded_comp_ids),
+        "unclassified_competition_ids": sorted(unclassified_comp_ids),
         "expected_fixtures": len(fixtures),
         "detailed_reports_found": len(reports),
         "raw_activity_rows_detected": appearance_count,
