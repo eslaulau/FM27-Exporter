@@ -23,6 +23,7 @@ jobs:
       - name: Checkout repository with write access
         uses: actions/checkout@v4
         with:
+          ref: main
           persist-credentials: true
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -135,6 +136,8 @@ jobs:
           if (-not (Test-Path -LiteralPath (Join-Path $destination 'cloud-export-manifest.json') -PathType Leaf)) {
             throw 'Report folder staging failed: manifest is missing.'
           }
+          $oversized = @(Get-ChildItem -LiteralPath $destination -File -Recurse | Where-Object { $_.Length -ge 100MB })
+          if ($oversized.Count -gt 0) { throw "GitHub repository file-size limit would be exceeded: $($oversized.FullName -join ', ')" }
 
           git -C $env:GITHUB_WORKSPACE config user.name 'github-actions[bot]'
           git -C $env:GITHUB_WORKSPACE config user.email '41898282+github-actions[bot]@users.noreply.github.com'
