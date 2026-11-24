@@ -46,11 +46,11 @@ try:
     )
 except Exception as exc:  # pragma: no cover - depends on the user's pinned environment
     print("ERROR: cannot import the pinned fmsave package / match-report reader.", file=sys.stderr)
-    print("Expected fmsave==0.12.4 in the exporter's Python environment.", file=sys.stderr)
+    print("Expected fmsave==0.14.3 in the exporter's Python environment.", file=sys.stderr)
     print(f"Import detail: {exc}", file=sys.stderr)
     raise SystemExit(2)
 
-SUPPORTED_FMSAVE_VERSION = "0.12.4"
+SUPPORTED_FMSAVE_VERSION = "0.14.3"
 SECTION = "match_stats_cfg"
 EXPECTED_BUILD = "27.0.1+2494687"
 REFERENCE_BUILD = "27.0.0+2486695"
@@ -69,7 +69,7 @@ SIGNATURE_LAYOUT_NOTE = (
 # Independently verified fields inside the player record window (window starts at
 # statistics_anchor - 100). These are not inferred from row order or season totals.
 # Existing validation counts below record the tested baseline; entered_at_minute is
-# additionally cross-checked dynamically against the named fmsave 0.12.4 history field.
+# additionally cross-checked dynamically against the named fmsave 0.14.3 history field.
 RAW_PLAYER_FIELD_OFFSETS = {
     "goals": 20,
     "assists": 56,
@@ -1218,8 +1218,8 @@ def main() -> int:
             match, layout_meta = resolve_match_layout(info)
             layout = match.layout
             seed_pattern = re.compile(b"(?=" + re.escape(layout.anchor_run) + b")")
-            with save._context.section(SECTION) as section:  # fmsave 0.12.4 private section accessor
-                # fmsave==0.12.4 exposes index_entries(section, layout, file_name).
+            with save._context.section(SECTION) as section:  # fmsave 0.14.3 private section accessor
+                # fmsave 0.14.3 exposes index_entries(section, layout, file_name); the optional borrowed-layout check remains off for this explicitly selected reference layout.
                 # Do not pass check_borrowed: that keyword belongs to a later API.
                 entries = index_entries(section, layout, info.file_name)
                 view = memoryview(section)
@@ -1693,7 +1693,7 @@ def main() -> int:
             "identified_unique_players": len({r["player_uid"] for r in identified_rows}),
             "detail_metrics": list(TEAM_SUM_FIELDS),
             "raw_player_fields": list(RAW_PLAYER_FIELD_OFFSETS) + ["rating_hundredths"],
-            "entered_at_minute_source": "fmsave==0.12.4 PlayerMatchStats.entered_at_minute; raw-window offset +71 is dynamically checked against same-match history where available.",
+            "entered_at_minute_source": "fmsave==0.14.3 PlayerMatchStats.entered_at_minute; raw-window offset +71 is dynamically checked against same-match history where available.",
             "minutes_rows_decoded": sum(1 for row in all_appearance_rows if row.get("minutes") not in (None, "")),
             "rating_rows_available": sum(1 for row in identified_rows if row.get("rating") not in (None, "")),
         },
@@ -1727,7 +1727,7 @@ def main() -> int:
                 "Minutes are decoded from raw entry/exit clocks only when the match duration is established by named-history votes, a unique exact category-aggregate solution, or a regular-time competition/stage rule. Otherwise they remain blank unless exact named history supplies them.",
                 "Match-report rating is uint16 little-endian at raw-window +136 (statistics_anchor +36), divided by 100 and rounded half-up to one decimal. It is enabled only after at least 25 same-match named-history rating checks pass with zero mismatches.",
                 "Rows with a verified zero-minute appearance are omitted from per-player CSV reports. Team-total reconciliation still uses every raw match-report row before this filter.",
-                "FM27 27.0.1+2494687 remains upstream-unregistered in fmsave 0.12.4; the compatibility audit records local checks only and does not change upstream known_build status.",
+                "FM27 27.0.1+2494687 remains unregistered as an exact build in fmsave 0.14.3; this helper explicitly selects the registered 27.0.0 schema-6 layout and records local checks without changing upstream known_build status.",
                 "Pre-season/non-competitive competition_id 131 is excluded from this report.",
             ],
         },
@@ -1745,7 +1745,7 @@ def main() -> int:
             "raw_player_field_offsets": RAW_PLAYER_FIELD_OFFSETS,
             "raw_player_field_reference_validation": RAW_PLAYER_FIELD_VALIDATION,
             "entered_at_minute_validation": {
-                "native_source": "fmsave 0.12.4 PlayerMatchStats.entered_at_minute",
+                "native_source": "fmsave 0.14.3 PlayerMatchStats.entered_at_minute",
                 "raw_window_offset": RAW_PLAYER_FIELD_OFFSETS["entered_at_minute"],
                 "same_match_crosscheck": raw_history_crosschecks.get("entered_at_minute", {"matched": 0, "tested": 0, "mismatches": 0}),
             },
@@ -1969,7 +1969,7 @@ def main() -> int:
         },
         "limitations": [
             "Local evidence applies only to this checked save/build/schema and does not confer upstream registration.",
-            "FM27 build 27.0.1+2494687 remains upstream-unverified in fmsave 0.12.4 and borrows the registered 27.0.0 schema-6 layout.",
+            "FM27 build 27.0.1+2494687 remains an unregistered exact build in fmsave 0.14.3; the helper uses the registered 27.0.0 schema-6 layout with explicit local checks.",
             "Structural and data reconciliation are not a substitute for semantic validation on other saves.",
         ],
     })
