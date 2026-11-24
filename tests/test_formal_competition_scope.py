@@ -79,6 +79,26 @@ class FormalCompetitionScopeTests(unittest.TestCase):
         self.assertEqual(families[661], {5})
         self.assertEqual(families[131], {1})
 
+    def test_parser_completeness_uses_reports_retained_by_native_reader(self):
+        native = {
+            (7, 503, 472, "2027-04-24", "20:00:00", 472): {},
+            (2945, 1166, 472, "2027-04-29", "20:00:00", 472): {},
+        }
+        reports = [
+            {"competition_id": 7, "date": "2027-04-24", "home_team_id": 503, "away_team_id": 472},
+            {"competition_id": 2945, "date": "2027-04-29", "home_team_id": 1166, "away_team_id": 472},
+        ]
+        audit = MODULE.audit_retained_report_coverage(native, reports)
+        self.assertTrue(audit["passed"])
+        self.assertEqual(audit["native_team_match_stats_matches_retained"], 2)
+        self.assertEqual(audit["decoded_reports_matching_native_retained_matches"], 2)
+
+        incomplete = MODULE.audit_retained_report_coverage(native, reports[:1])
+        self.assertFalse(incomplete["passed"])
+        self.assertEqual(incomplete["native_retained_matches_missing_player_detail"], [
+            [2945, "2027-04-29", 1166, 472]
+        ])
+
     def test_ignores_other_teams_competitions(self):
         fixtures = [
             {"competition_id": 777, "home_team_id": 100, "away_team_id": 101, "match_rules_template": [7, 61, 2]},
