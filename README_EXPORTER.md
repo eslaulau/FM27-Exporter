@@ -11,7 +11,7 @@ v1.5.0 runs on a GitHub-hosted Windows runner. The active workflow is [fm27-v1.5
 5. The complete, uncompressed report folder is committed to `season-reports/<save-name>/<workflow-run-id>/` on the repository's default branch. Repeated exports are stored in separate run-ID folders. No ZIP is created and no report Release asset is uploaded.
 6. The workflow verifies the committed report files against their Git blob IDs. Failure diagnostics are retained for 14 days as a workflow artifact.
 
-The GitHub-hosted Windows runner executes the v1.5.0 PowerShell exporter. The workflow uses the pinned `fmsave==0.12.4` dependency; automatic parser upgrades are disabled. Users do not need local Python, PowerShell, or a local export installation.
+The GitHub-hosted Windows runner executes the v1.5.0 PowerShell exporter. The workflow uses the pinned `fmsave==0.14.3` dependency; automatic parser upgrades are disabled. Users do not need local Python, PowerShell, or a local export installation.
 
 ## Scope and behavior
 
@@ -29,7 +29,7 @@ The GitHub-hosted Windows runner executes the v1.5.0 PowerShell exporter. The wo
 
 ## Compatibility note
 
-For FM27 build 27.0.1+2494687 and `match_stats_cfg` schema 6, an explicitly labelled experimental compatibility path is included. It borrows the registered 27.0.0 schema-6 layout and is not an upstream verification claim. Inspect `team-match-stats-compatibility.json` when present and compare its values against an in-game match report.
+For FM27 build 27.0.1+2494687 and `match_stats_cfg` schema 6, fmsave 0.14.3 can try a shared registered FM27 schema-6 layout even though this exact build remains unregistered. The player-report helper explicitly selects the registered 27.0.0 schema-6 layout. This is structural compatibility, not an upstream build-registration or in-game field-verification claim. Inspect `team-match-stats-compatibility.json` and compare its values against in-game match reports.
 
 ## Report location and validation
 
