@@ -25,6 +25,7 @@ The GitHub-hosted Windows runner executes the v1.5.0 PowerShell exporter. The wo
 - Excludes opponent player profiles, opponent player records and unrelated matches.
 - Tactical configurations, set-piece configurations, current tactic slots, historical tactic inference and role inference are deliberately not exported. The user supplies the tactic used for each match.
 - Detailed player match reports for formal competitions discovered from the managed team's save-local fixture rules; match-rule family 1 (friendlies/pre-season) is excluded. Competition IDs are never hardcoded.
+- Player-detail parser completeness is checked against the matches still retained by fmsave's native team-match-stats reader. The season schedule is reported separately because FM27 does not retain a detailed report for every played fixture.
 - Unresolved anonymous match rows remain unresolved; the exporter does not guess player identity.
 
 ## Compatibility note
