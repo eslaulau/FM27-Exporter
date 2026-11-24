@@ -1198,7 +1198,8 @@ def main() -> int:
             "section": SECTION,
             "section_schema": info.section_schemas.get(SECTION),
             "team_id": args.team_id,
-            "competition_id_filter": 0 if args.competition_id == 0 else args.competition_id,
+            "club_uid": args.club_uid,
+            "competition_id_filter: 0 if args.competition_id == 0 else args.competition_id,
             "formal_competition_ids": sorted(comp_ids),
             "excluded_non_competitive_ids": list(EXCLUDED_NON_COMPETITIVE_IDS),
             **layout_meta,
@@ -1512,6 +1513,7 @@ def main() -> int:
     write_json(export_dir / "player-report-identity-audit.json", {
         "audit_version": "1.9-formal-stale-cache-quarantine",
         "team_id": args.team_id,
+        "club_uid": args.club_uid,
         "competition_id": 0 if args.competition_id == 0 else args.competition_id,
         "formal_competition_ids": sorted(comp_ids),
         "excluded_non_competitive_competition_ids": list(EXCLUDED_NON_COMPETITIVE_IDS),
