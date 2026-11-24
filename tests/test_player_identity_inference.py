@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import importlib.util
 import json
 import shutil
 import subprocess
@@ -47,6 +48,21 @@ def main() -> None:
         for filename in fixture_files:
             with urllib.request.urlopen(base_url + filename, timeout=60) as response:
                 (export_dir / filename).write_bytes(response.read())
+        # Upgrade the archived probe's old hardcoded competition scope to the
+        # save-local scope used by the current helper before replaying identities.
+        helper = ROOT / "FM27_PlayerMatchReport_Recovery_v1.9_Formal.py"
+        spec = importlib.util.spec_from_file_location("fm27_report_recovery", helper)
+        module = importlib.util.module_from_spec(spec)
+        assert spec is not None and spec.loader is not None
+        spec.loader.exec_module(module)
+        formal_ids, _, _ = module.discover_formal_competition_ids(
+            read_json(export_dir / "fixtures.json"), TEAM_ID
+        )
+        probe_path = export_dir / "player-report-probe.json"
+        probe = read_json(probe_path)
+        probe.setdefault("source", {})["formal_competition_ids"] = sorted(formal_ids)
+        probe_path.write_text(json.dumps(probe, ensure_ascii=False), encoding="utf-8")
+
         cache_path = Path(temp) / "identity-cache.json"
         cache_path.write_text(
             json.dumps(
@@ -63,7 +79,6 @@ def main() -> None:
             encoding="utf-8",
         )
 
-        helper = ROOT / "FM27_PlayerMatchReport_Recovery_v1.9_Formal.py"
         command = [
             sys.executable,
             str(helper),

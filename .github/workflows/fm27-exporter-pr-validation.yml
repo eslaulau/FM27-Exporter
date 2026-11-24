@@ -45,6 +45,9 @@ jobs:
 
       - name: Replay real-save identity regression fixture
         run: python tests/test_player_identity_inference.py
+ 
+      - name: Test save-local formal competition discovery
+        run: python tests/test_formal_competition_scope.py
 
       - name: Parse Windows PowerShell exporter
         shell: powershell

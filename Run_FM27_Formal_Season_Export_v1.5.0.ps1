@@ -231,7 +231,7 @@ function Invoke-PlayerMatchReportRecovery {
     }
 
     Write-Host ''
-    Write-Host 'Recovering player detailed match reports across all formal competitions (7, 637, 661, 662; excluding pre-season 131)...' -ForegroundColor Cyan
+    Write-Host 'Recovering player detailed match reports across competitions discovered from this save (friendly/pre-season rules excluded)...' -ForegroundColor Cyan
     $result = Invoke-NativeCapture -FilePath $script:PythonExe -Arguments $helperArgs -Label 'player_match_report_recovery_formal'
     Add-Diagnostic -Title 'player match report recovery stdout' -Text $result.StdOut
     Add-Diagnostic -Title 'player match report recovery stderr' -Text $result.StdErr
@@ -578,7 +578,8 @@ try {
         'first-team player-season-stats, first-team player-match-stats and first-team selections,',
         'managed-club.json, save-info, parser validation and first-team-scope.json.',
         'Per-player detailed match-report outputs: player-report-probe.json, player-match-report-identified.csv/json, player-match-report-unresolved.csv, player-match-report-formal-all.csv and player-match-report-formal-summary.json.',
-        'These detailed reports cover formal competitions 7, 637, 661 and 662; pre-season/non-competitive competition 131 is excluded.',
+        'Formal competitions are discovered dynamically from this save because competition IDs are save-local; friendly/pre-season match-rule family 1 is excluded.',
+        'Player-detail extraction is reconciled against reports retained by the native team-match-stats reader; not every played fixture remains stored in an FM27 save.',
         'The match-report helper performs a targeted read-only pass over match_stats_cfg with fmsave==0.14.3.',
         'Identities use a persisted four-byte signature cache seeded from the validated full-season league report; cross-competition transfer limitations are recorded in the identity audit.',
         'Unmapped player rows remain anonymous and are written to player-match-report-unresolved.csv.',
