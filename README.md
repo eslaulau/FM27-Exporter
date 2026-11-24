@@ -17,7 +17,7 @@
 5. The complete, uncompressed report folder is committed to `season-reports/<save-name>/<workflow-run-id>/` on the repository's default branch. Each run gets a separate folder, so re-exporting a save does not overwrite an earlier report. No report ZIP or report Release asset is generated.
 6. The workflow verifies that the committed report files match their local Git blobs. Failure diagnostics are retained as a 14-day workflow artifact.
 
-The workflow uses the v1.5.0 exporter and its pinned `fmsave==0.12.4` dependency. The original save is read-only. No fixed club UID or team ID is assumed.
+The workflow uses the v1.5.0 exporter and its pinned `fmsave==0.14.3` dependency. The original save is read-only. No fixed club UID or team ID is assumed.
 
 ## Export scope
 
