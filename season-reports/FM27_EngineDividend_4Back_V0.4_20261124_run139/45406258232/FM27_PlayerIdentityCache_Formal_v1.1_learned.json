@@ -1,0 +1,2392 @@
+{
+  "cache_version": "1.2-managed-club-scoped",
+  "game": "FM27",
+  "team_id": 472,
+  "club_uid": 618,
+  "competition_id": 0,
+  "scope": "single save run; exact managed club UID and owned first-team ID; no cross-club seed mappings",
+  "seed_source": null,
+  "mappings": {
+    "02001600": {
+      "player_uid": 37076335,
+      "player_name": "巴尔特·费尔布鲁亨",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 37076335,
+          "player_name": "巴尔特·费尔布鲁亨",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 34,
+            "passes_completed": 32
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37076335,
+          "player_name": "巴尔特·费尔布鲁亨",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 35,
+            "passes_completed": 32
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37076335,
+          "player_name": "巴尔特·费尔布鲁亨",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 32,
+            "passes_completed": 24
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37076335,
+          "player_name": "巴尔特·费尔布鲁亨",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 25,
+            "passes_completed": 22
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37076335,
+          "player_name": "巴尔特·费尔布鲁亨",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 21,
+            "passes_completed": 20
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02bc0a00": {
+      "player_uid": 18110459,
+      "player_name": "马克西姆·德屈佩",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 18110459,
+          "player_name": "马克西姆·德屈佩",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 87,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 53,
+            "passes_completed": 51
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 18110459,
+          "player_name": "马克西姆·德屈佩",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 51,
+            "passes_completed": 45
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 18110459,
+          "player_name": "马克西姆·德屈佩",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 56,
+            "passes_completed": 52
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 18110459,
+          "player_name": "马克西姆·德屈佩",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 86,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 1,
+            "passes_attempted": 60,
+            "passes_completed": 48
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "028a1000": {
+      "player_uid": 29032618,
+      "player_name": "刘易斯·邓克",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 29032618,
+          "player_name": "刘易斯·邓克",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 27,
+            "passes_completed": 26
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 29032618,
+          "player_name": "刘易斯·邓克",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 1,
+            "assists": 0,
+            "passes_attempted": 53,
+            "passes_completed": 52
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 29032618,
+          "player_name": "刘易斯·邓克",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 39,
+            "passes_completed": 36
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 29032618,
+          "player_name": "刘易斯·邓克",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 38,
+            "passes_completed": 36
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 29032618,
+          "player_name": "刘易斯·邓克",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 37,
+            "passes_completed": 35
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02be2600": {
+      "player_uid": 2000262615,
+      "player_name": "卢卡·武什科维奇",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 2000262615,
+          "player_name": "卢卡·武什科维奇",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 47,
+            "passes_completed": 46
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000262615,
+          "player_name": "卢卡·武什科维奇",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 74,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 64,
+            "passes_completed": 61
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000262615,
+          "player_name": "卢卡·武什科维奇",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 68,
+            "passes_completed": 66
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02481700": {
+      "player_uid": 49038961,
+      "player_name": "萨沙·博伊",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 49038961,
+          "player_name": "萨沙·博伊",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 60,
+            "passes_completed": 55
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 49038961,
+          "player_name": "萨沙·博伊",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 0,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 6,
+            "passes_completed": 6
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 49038961,
+          "player_name": "萨沙·博伊",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 29,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 13,
+            "passes_completed": 9
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 49038961,
+          "player_name": "萨沙·博伊",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 57,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 49,
+            "passes_completed": 45
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02ab2500": {
+      "player_uid": 2000219732,
+      "player_name": "切马",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 2000219732,
+          "player_name": "切马",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 87,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 47,
+            "passes_completed": 41
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000219732,
+          "player_name": "切马",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 72,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 35,
+            "passes_completed": 34
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000219732,
+          "player_name": "切马",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 52,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 29,
+            "passes_completed": 28
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000219732,
+          "player_name": "切马",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 51,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 40,
+            "passes_completed": 38
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "025a1e00": {
+      "player_uid": 92016698,
+      "player_name": "帕斯卡·格罗斯",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 92016698,
+          "player_name": "帕斯卡·格罗斯",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 71,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 56,
+            "passes_completed": 44
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 92016698,
+          "player_name": "帕斯卡·格罗斯",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 74,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 69,
+            "passes_completed": 62
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 92016698,
+          "player_name": "帕斯卡·格罗斯",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 18,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 15,
+            "passes_completed": 14
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 92016698,
+          "player_name": "帕斯卡·格罗斯",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 61,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 57,
+            "passes_completed": 53
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02f71600": {
+      "player_uid": 45111868,
+      "player_name": "三笘薫",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 45111868,
+          "player_name": "三笘薫",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 38,
+            "passes_completed": 32
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 45111868,
+          "player_name": "三笘薫",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 28,
+            "passes_completed": 21
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 45111868,
+          "player_name": "三笘薫",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 88,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 1,
+            "assists": 2,
+            "passes_attempted": 41,
+            "passes_completed": 34
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02651700": {
+      "player_uid": 49048357,
+      "player_name": "乔治尼奥·鲁特",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 49048357,
+          "player_name": "乔治尼奥·鲁特",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 71,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 37,
+            "passes_completed": 31
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 49048357,
+          "player_name": "乔治尼奥·鲁特",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 41,
+            "passes_completed": 38
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 49048357,
+          "player_name": "乔治尼奥·鲁特",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 43,
+            "passes_completed": 41
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 49048357,
+          "player_name": "乔治尼奥·鲁特",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 86,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 30,
+            "passes_completed": 27
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "022d1500": {
+      "player_uid": 31042288,
+      "player_name": "费米·阿泽兹",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 31042288,
+          "player_name": "费米·阿泽兹",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 57,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 37,
+            "passes_completed": 30
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 31042288,
+          "player_name": "费米·阿泽兹",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 62,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 1,
+            "passes_attempted": 36,
+            "passes_completed": 33
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 31042288,
+          "player_name": "费米·阿泽兹",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 61,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 32,
+            "passes_completed": 28
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 31042288,
+          "player_name": "费米·阿泽兹",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 59,
+            "passes_completed": 52
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 31042288,
+          "player_name": "费米·阿泽兹",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 51,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 19,
+            "passes_completed": 14
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "020b1b00": {
+      "player_uid": 67211695,
+      "player_name": "米克尔·梅里诺",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 67211695,
+          "player_name": "米克尔·梅里诺",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 20,
+            "passes_completed": 18
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 67211695,
+          "player_name": "米克尔·梅里诺",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 60,
+            "passes_completed": 56
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 67211695,
+          "player_name": "米克尔·梅里诺",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 2,
+            "assists": 0,
+            "passes_attempted": 29,
+            "passes_completed": 22
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 67211695,
+          "player_name": "米克尔·梅里诺",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 2,
+            "assists": 0,
+            "passes_attempted": 20,
+            "passes_completed": 18
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 67211695,
+          "player_name": "米克尔·梅里诺",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 35,
+            "passes_completed": 32
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "026c2600": {
+      "player_uid": 2000250240,
+      "player_name": "易卜拉欣·奥斯曼",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 2000250240,
+          "player_name": "易卜拉欣·奥斯曼",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 33,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 1,
+            "assists": 0,
+            "passes_attempted": 17,
+            "passes_completed": 14
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000250240,
+          "player_name": "易卜拉欣·奥斯曼",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 28,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 6,
+            "passes_completed": 5
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000250240,
+          "player_name": "易卜拉欣·奥斯曼",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 29,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 8,
+            "passes_completed": 7
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000250240,
+          "player_name": "易卜拉欣·奥斯曼",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 87,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 1,
+            "assists": 0,
+            "passes_attempted": 31,
+            "passes_completed": 23
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000250240,
+          "player_name": "易卜拉欣·奥斯曼",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 52,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 18,
+            "passes_completed": 18
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000250240,
+          "player_name": "易卜拉欣·奥斯曼",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 80,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 32,
+            "passes_completed": 27
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02c11500": {
+      "player_uid": 37059387,
+      "player_name": "帕斯卡尔·斯特鲁伊克",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 37059387,
+          "player_name": "帕斯卡尔·斯特鲁伊克",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 3,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 6,
+            "passes_completed": 6
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37059387,
+          "player_name": "帕斯卡尔·斯特鲁伊克",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 36,
+            "passes_completed": 34
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37059387,
+          "player_name": "帕斯卡尔·斯特鲁伊克",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 4,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 6,
+            "passes_completed": 6
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37059387,
+          "player_name": "帕斯卡尔·斯特鲁伊克",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 65,
+            "passes_completed": 55
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02e91500": {
+      "player_uid": 37071126,
+      "player_name": "马茨·魏费尔",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 37071126,
+          "player_name": "马茨·魏费尔",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 19,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 18,
+            "passes_completed": 17
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37071126,
+          "player_name": "马茨·魏费尔",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 28,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 23,
+            "passes_completed": 21
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37071126,
+          "player_name": "马茨·魏费尔",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 72,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 61,
+            "passes_completed": 50
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37071126,
+          "player_name": "马茨·魏费尔",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 52,
+            "passes_completed": 47
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37071126,
+          "player_name": "马茨·魏费尔",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 48,
+            "passes_completed": 38
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02072700": {
+      "player_uid": 2000273835,
+      "player_name": "哈拉兰波斯·科斯图拉斯",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 2000273835,
+          "player_name": "哈拉兰波斯·科斯图拉斯",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 19,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 1,
+            "passes_attempted": 9,
+            "passes_completed": 8
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000273835,
+          "player_name": "哈拉兰波斯·科斯图拉斯",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 1,
+            "assists": 1,
+            "passes_attempted": 27,
+            "passes_completed": 22
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000273835,
+          "player_name": "哈拉兰波斯·科斯图拉斯",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 28,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 7,
+            "passes_completed": 6
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000273835,
+          "player_name": "哈拉兰波斯·科斯图拉斯",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 4,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 5,
+            "passes_completed": 5
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02401f00": {
+      "player_uid": 98034373,
+      "player_name": "丹尼斯·扎卡里亚",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 98034373,
+          "player_name": "丹尼斯·扎卡里亚",
+          "competition_id": 7,
+          "date": "2027-02-21",
+          "opponent_team_id": 581,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 3,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 5,
+            "passes_completed": 5
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 98034373,
+          "player_name": "丹尼斯·扎卡里亚",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 16,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 19,
+            "passes_completed": 19
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 98034373,
+          "player_name": "丹尼斯·扎卡里亚",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 18,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 15,
+            "passes_completed": 13
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 98034373,
+          "player_name": "丹尼斯·扎卡里亚",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 28,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 31,
+            "passes_completed": 29
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 98034373,
+          "player_name": "丹尼斯·扎卡里亚",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 29,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 31,
+            "passes_completed": 26
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 98034373,
+          "player_name": "丹尼斯·扎卡里亚",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 39,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 20,
+            "passes_completed": 19
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02c41500": {
+      "player_uid": 37059627,
+      "player_name": "费迪·卡迪奥卢",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 37059627,
+          "player_name": "费迪·卡迪奥卢",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 62,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 54,
+            "passes_completed": 50
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37059627,
+          "player_name": "费迪·卡迪奥卢",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 61,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 41,
+            "passes_completed": 32
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37059627,
+          "player_name": "费迪·卡迪奥卢",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 87,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 56,
+            "passes_completed": 49
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 37059627,
+          "player_name": "费迪·卡迪奥卢",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 56,
+            "passes_completed": 48
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "025b0a00": {
+      "player_uid": 16191724,
+      "player_name": "迈克尔·斯沃博达",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 16191724,
+          "player_name": "迈克尔·斯沃博达",
+          "competition_id": 7,
+          "date": "2027-02-28",
+          "opponent_team_id": 520,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 16,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 15,
+            "passes_completed": 14
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 16191724,
+          "player_name": "迈克尔·斯沃博达",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 51,
+            "passes_completed": 46
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 16191724,
+          "player_name": "迈克尔·斯沃博达",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 62,
+            "passes_completed": 55
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 16191724,
+          "player_name": "迈克尔·斯沃博达",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 47,
+            "passes_completed": 43
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02342000": {
+      "player_uid": 2000035859,
+      "player_name": "迭戈·戈麦斯",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 2000035859,
+          "player_name": "迭戈·戈麦斯",
+          "competition_id": 7,
+          "date": "2027-03-03",
+          "opponent_team_id": 507,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 2,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 3,
+            "passes_completed": 3
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000035859,
+          "player_name": "迭戈·戈麦斯",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 62,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 1,
+            "passes_attempted": 14,
+            "passes_completed": 13
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000035859,
+          "player_name": "迭戈·戈麦斯",
+          "competition_id": 7,
+          "date": "2027-03-14",
+          "opponent_team_id": 524,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 38,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 1,
+            "passes_attempted": 21,
+            "passes_completed": 20
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000035859,
+          "player_name": "迭戈·戈麦斯",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 39,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 12,
+            "passes_completed": 10
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02ac0600": {
+      "player_uid": 5108096,
+      "player_name": "贾森·斯蒂尔",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 5108096,
+          "player_name": "贾森·斯蒂尔",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 24,
+            "passes_completed": 23
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02ca1e00": {
+      "player_uid": 93141010,
+      "player_name": "亚辛·阿亚里",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 93141010,
+          "player_name": "亚辛·阿亚里",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 62,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 62,
+            "passes_completed": 57
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 93141010,
+          "player_name": "亚辛·阿亚里",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 51,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 32,
+            "passes_completed": 28
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "021f0f00": {
+      "player_uid": 28115793,
+      "player_name": "菲萨约·德勒-巴舒卢",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 28115793,
+          "player_name": "菲萨约·德勒-巴舒卢",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 41,
+            "passes_completed": 33
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 28115793,
+          "player_name": "菲萨约·德勒-巴舒卢",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 90,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 34,
+            "passes_completed": 29
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02581f00": {
+      "player_uid": 2000005990,
+      "player_name": "Jaouen Hadjam",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 2000005990,
+          "player_name": "Jaouen Hadjam",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 33,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 21,
+            "passes_completed": 17
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02fb2500": {
+      "player_uid": 2000227357,
+      "player_name": "斯特法诺斯·齐马斯",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 2000227357,
+          "player_name": "斯特法诺斯·齐马斯",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 3,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 4,
+            "passes_completed": 3
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        },
+        {
+          "player_uid": 2000227357,
+          "player_name": "斯特法诺斯·齐马斯",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 10,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 5,
+            "passes_completed": 5
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02c21c00": {
+      "player_uid": 83243060,
+      "player_name": "科斯蒂尼亚",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 83243060,
+          "player_name": "科斯蒂尼亚",
+          "competition_id": 661,
+          "date": "2027-03-06",
+          "opponent_team_id": 499,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 3,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 7,
+            "passes_completed": 7
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    },
+    "02cb2300": {
+      "player_uid": 2000159635,
+      "player_name": "普罗米斯·戴维",
+      "evidence": "unique_exact_same_match_stat_vector",
+      "confidence": "high",
+      "seed_competition_id": null,
+      "derived_from_matches": [
+        {
+          "player_uid": 2000159635,
+          "player_name": "普罗米斯·戴维",
+          "competition_id": 7,
+          "date": "2027-03-21",
+          "opponent_team_id": 493,
+          "same_match_history_has_stats": true,
+          "same_match_minutes": 39,
+          "exact_stat_vector_match": true,
+          "matched_fields": [
+            "goals",
+            "assists",
+            "passes_attempted",
+            "passes_completed"
+          ],
+          "raw_stat_vector": {
+            "goals": 0,
+            "assists": 0,
+            "passes_attempted": 10,
+            "passes_completed": 8
+          },
+          "reason": "unique_exact_four_field_same_match_stat_vector"
+        }
+      ]
+    }
+  },
+  "rejected_mappings": [],
+  "updated_from_report": {
+    "output_directory": "FM27_Analysis_20261124_134307",
+    "derived_signature_count": 26,
+    "derived_exact_stat_vector_signature_count": 26,
+    "derived_singleton_signature_count": 0,
+    "unresolved_signature_count": 0
+  }
+}
