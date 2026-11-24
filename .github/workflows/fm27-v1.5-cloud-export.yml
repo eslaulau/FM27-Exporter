@@ -10,7 +10,6 @@ on:
 
 permissions:
   contents: write
-  actions: write
 
 concurrency:
   group: fm27-v150-cloud-export
@@ -21,14 +20,16 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 240
     steps:
-      - name: Checkout v1.5.0 exporter
+      - name: Checkout repository with write access
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           architecture: x64
-      - name: Download, verify, export, validate and publish one save
+      - name: Download, verify, export, validate and commit report folder
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -41,17 +42,17 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $repo = $env:REPOSITORY
           $sourceTag = 'fm27-saves'
-          $resultsTag = 'fm27-exports'
           $name = $env:SOURCE_ASSET.Trim()
-          if ([string]::IsNullOrWhiteSpace($name) -or [IO.Path]::GetExtension($name) -cne '.fm') {
-            throw "Enter the exact .fm asset filename. Received: '$name'"
+          if ([string]::IsNullOrWhiteSpace($name) -or [IO.Path]::GetExtension($name) -cne '.fm' -or [IO.Path]::GetFileName($name) -cne $name) {
+            throw "Enter the exact .fm asset filename, without a path. Received: '$name'"
           }
 
           $root = Join-Path $env:RUNNER_TEMP ('FM27-v1.5.0-' + $env:RUN_ID)
           $downloads = Join-Path $root 'downloads'
           $outputs = Join-Path $root 'outputs'
-          $assetWork = Join-Path $downloads ([IO.Path]::GetFileNameWithoutExtension($name))
-          $slot = Join-Path $outputs ([IO.Path]::GetFileNameWithoutExtension($name))
+          $baseName = [IO.Path]::GetFileNameWithoutExtension($name)
+          $assetWork = Join-Path $downloads $baseName
+          $slot = Join-Path $outputs $baseName
           New-Item -ItemType Directory -Path $assetWork,$slot -Force | Out-Null
 
           $releaseJson = & gh api "repos/$repo/releases/tags/$sourceTag"
@@ -113,13 +114,6 @@ jobs:
           if ([int]$scope.team_id -le 0 -or [int]$scope.club_uid -le 0) { throw 'Dynamic first-team scope validation failed.' }
           $null = Get-Content -LiteralPath (Join-Path $reportFolder 'validation.json') -Raw | ConvertFrom-Json
 
-          $zipName = ([IO.Path]::GetFileNameWithoutExtension($name)) + '_v1.5.0_' + $env:RUN_ID + '.zip'
-          $zipPath = Join-Path $outputs $zipName
-          Compress-Archive -Path (Join-Path $reportFolder '*') -DestinationPath $zipPath -CompressionLevel Optimal
-          if (-not (Test-Path -LiteralPath $zipPath -PathType Leaf) -or (Get-Item -LiteralPath $zipPath).Length -le 0) { throw 'Report ZIP was not created or is empty.' }
-          $zipSha = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
-
-          $summaryPath = Join-Path $outputs ('FM27_v1.5.0_CloudExport_Summary_' + $env:RUN_ID + '.json')
           $summary = [ordered]@{
             status = 'exported_and_structurally_validated'
             exporter_version = '1.5.0'
@@ -130,52 +124,42 @@ jobs:
             club_name = [string]$scope.club_name
             club_uid = [int]$scope.club_uid
             first_team_id = [int]$scope.team_id
-            report_folder = [IO.Path]::GetRelativePath($outputs, $reportFolder)
-            report_zip = $zipName
-            report_zip_sha256 = $zipSha
+            report_folder = "season-reports/$baseName/$($env:RUN_ID)/$($analysis[0].Name)"
           }
-          $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
-          $summarySha = (Get-FileHash -LiteralPath $summaryPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $reportFolder 'cloud-export-summary.json') -Encoding UTF8
 
-          & gh release view $resultsTag --repo $repo *> $null
-          if ($LASTEXITCODE -ne 0) {
-            & gh release create $resultsTag --repo $repo --target main --title 'FM27 v1.5.0 Cloud Exports' --notes 'Cloud-generated read-only first-team season exports produced by the v1.5.0 exporter.'
-            if ($LASTEXITCODE -ne 0) { throw 'Could not create report release.' }
-          }
-          & gh release upload $resultsTag $zipPath $summaryPath --repo $repo --clobber
-          if ($LASTEXITCODE -ne 0) { throw 'Could not publish report ZIP and summary.' }
-
-          $publishedJson = & gh api "repos/$repo/releases/tags/$resultsTag"
-          if ($LASTEXITCODE -ne 0) { throw "Could not read back published Release $resultsTag." }
-          $published = ($publishedJson -join "`n") | ConvertFrom-Json
-          $expectedUploads = @(
-            @{ name = $zipName; path = $zipPath; sha = $zipSha },
-            @{ name = [IO.Path]::GetFileName($summaryPath); path = $summaryPath; sha = $summarySha }
-          )
-          foreach ($item in $expectedUploads) {
-            $remote = @($published.assets | Where-Object { $_.name -ceq $item.name })
-            if ($remote.Count -ne 1) { throw "Published asset readback failed for '$($item.name)'." }
-            if ([long]$remote[0].size -ne (Get-Item -LiteralPath $item.path).Length) { throw "Published asset size mismatch: $($item.name)" }
-            $remoteSha = ([string]$remote[0].digest -replace '^sha256:', '').ToLowerInvariant()
-            if ($remoteSha -cne $item.sha) { throw "Published asset SHA-256 mismatch: $($item.name)" }
-            Write-Host "Published asset verified: $($item.name) | sha256:$remoteSha"
+          $relativeReportPath = "season-reports/$baseName/$($env:RUN_ID)"
+          $destination = Join-Path $env:GITHUB_WORKSPACE ($relativeReportPath -replace '/', [IO.Path]::DirectorySeparatorChar)
+          New-Item -ItemType Directory -Path $destination -Force | Out-Null
+          Get-ChildItem -LiteralPath $reportFolder -Force | Copy-Item -Destination $destination -Recurse -Force
+          if (-not (Test-Path -LiteralPath (Join-Path $destination 'cloud-export-manifest.json') -PathType Leaf)) {
+            throw 'Report folder staging failed: manifest is missing.'
           }
 
-          Write-Host "Cloud export complete and Release readback verified."
+          git -C $env:GITHUB_WORKSPACE config user.name 'github-actions[bot]'
+          git -C $env:GITHUB_WORKSPACE config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C $env:GITHUB_WORKSPACE add -- $relativeReportPath
+          if ($LASTEXITCODE -ne 0) { throw 'Could not stage the season report folder.' }
+          git -C $env:GITHUB_WORKSPACE commit -m "Add FM27 season report: $baseName (run $($env:RUN_ID))"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not commit the season report folder.' }
+          git -C $env:GITHUB_WORKSPACE push origin HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Could not push the season report folder to the repository.' }
+
+          $verifyFiles = @($required + @('cloud-export-manifest.json','cloud-export-summary.json'))
+          foreach ($file in $verifyFiles) {
+            $localFile = Join-Path $destination $file
+            if (-not (Test-Path -LiteralPath $localFile -PathType Leaf)) { throw "Committed report file is missing locally: $file" }
+            $localBlob = (git -C $env:GITHUB_WORKSPACE hash-object -- $localFile).Trim()
+            $repoPath = "$relativeReportPath/$file"
+            $remoteBlob = (git -C $env:GITHUB_WORKSPACE rev-parse "HEAD:$repoPath" 2>$null).Trim()
+            if ($LASTEXITCODE -ne 0 -or $localBlob -cne $remoteBlob) { throw "Repository readback verification failed: $repoPath" }
+          }
+
+          Write-Host "Cloud export complete; uncompressed report folder committed and verified."
           Write-Host "Source: $name"
           Write-Host "Club: $($scope.club_name) | first-team ID: $($scope.team_id)"
-          Write-Host "Reports: https://github.com/$repo/releases/tag/$resultsTag"
+          Write-Host "Repository folder: https://github.com/$repo/tree/main/$relativeReportPath"
 
-      - name: Upload complete export folders and ZIPs as a browsable workflow artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: FM27-v1.5.0-Full-Export-${{ github.run_id }}
-          path: ${{ runner.temp }}/FM27-v1.5.0-${{ github.run_id }}/outputs/
-          if-no-files-found: error
-          include-hidden-files: true
-          compression-level: 0
-          retention-days: 30
       - name: Preserve runner diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
