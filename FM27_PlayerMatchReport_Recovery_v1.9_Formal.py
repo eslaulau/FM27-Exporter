@@ -1199,7 +1199,7 @@ def main() -> int:
             "section_schema": info.section_schemas.get(SECTION),
             "team_id": args.team_id,
             "club_uid": args.club_uid,
-            "competition_id_filter: 0 if args.competition_id == 0 else args.competition_id,
+            "competition_id_filter": 0 if args.competition_id == 0 else args.competition_id,
             "formal_competition_ids": sorted(comp_ids),
             "excluded_non_competitive_ids": list(EXCLUDED_NON_COMPETITIVE_IDS),
             **layout_meta,
