@@ -1,0 +1,22 @@
+{
+  "cache_version": "1.1-formal-cross-competition",
+  "game": "FM27",
+  "team_id": 472,
+  "competition_id": 0,
+  "scope": "formal cross-competition identity cache; isolated to the currently resolved managed first team",
+  "seed_source": null,
+  "mappings": {},
+  "rejected_mappings": [],
+  "cache_reset": {
+    "reason": "seed_cache_scope_mismatch",
+    "seed_team_id": 539,
+    "requested_team_id": 472,
+    "seed_competition_id": 0,
+    "action": "discarded all seed mappings; rebuild identities only from this save's roster and guarded same-match evidence"
+  },
+  "updated_from_report": {
+    "output_directory": "FM27_Analysis_20261124_132406",
+    "derived_signature_count": 0,
+    "unresolved_signature_count": 26
+  }
+}
