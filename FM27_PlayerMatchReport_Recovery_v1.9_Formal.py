@@ -333,6 +333,47 @@ def load_team_match_index(export_dir: Path, team_id: int) -> dict[tuple[int, int
     return result
 
 
+def audit_retained_report_coverage(
+    team_index: dict[tuple[int, int, int, str, str, int], dict[str, Any]],
+    reports: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Compare custom player-report decoding with matches the native reader retained.
+
+    A save does not retain a detailed report for every played fixture. Season schedule
+    coverage is therefore not a parser-completeness test; the native team-match-stats
+    reader is the independent index of match reports still present in this save.
+    """
+    native_keys = {
+        (key[0], key[3], key[1], key[2])
+        for key in team_index
+    }
+    parsed_list = [
+        (
+            as_int(row.get("competition_id")),
+            str(row.get("date", "")),
+            as_int(row.get("home_team_id")),
+            as_int(row.get("away_team_id")),
+        )
+        for row in reports
+    ]
+    parsed_keys = {key for key in parsed_list if None not in key}
+    parsed_counts = Counter(key for key in parsed_list if None not in key)
+    native_missing = sorted(native_keys - parsed_keys)
+    parsed_unbacked = sorted(parsed_keys - native_keys)
+    duplicates = sorted(key for key, count in parsed_counts.items() if count > 1)
+    passed = not native_missing and not parsed_unbacked and not duplicates
+    return {
+        "native_team_match_stats_matches_retained": len(native_keys),
+        "player_detail_reports_decoded": len(parsed_keys),
+        "decoded_reports_matching_native_retained_matches": len(native_keys & parsed_keys),
+        "native_retained_matches_missing_player_detail": [list(key) for key in native_missing],
+        "player_detail_reports_without_native_match_stats_row": [list(key) for key in parsed_unbacked],
+        "duplicate_player_detail_report_keys": [list(key) for key in duplicates],
+        "passed": passed,
+        "note": "Compares player-detail extraction against reports retained by the native team-match-stats reader; it does not claim every played fixture remains stored in the save.",
+    }
+
+
 def load_roster_names(export_dir: Path, team_id: int) -> dict[int, str]:
     result: dict[int, str] = {}
     path = export_dir / "player-season-stats.csv"
@@ -1931,6 +1972,7 @@ def main() -> int:
             }
             for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "minutes", "rating", "rating_raw_hundredths")
         }
+    retained_report_coverage = audit_retained_report_coverage(team_index, reports)
     write_json(export_dir / "player-match-report-formal-summary.json", {
         "report_scope": "first-team formal competitions discovered from save-local fixture rules",
         "formal_competition_ids": sorted(comp_ids),
@@ -1938,6 +1980,7 @@ def main() -> int:
         "unclassified_competition_ids": sorted(unclassified_comp_ids),
         "expected_fixtures": len(fixtures),
         "detailed_reports_found": len(reports),
+        "retained_report_coverage": retained_report_coverage,
         "raw_activity_rows_detected": appearance_count,
         "active_player_appearances": len(all_appearance_rows),
         "excluded_zero_minute_rows": len(zero_minute_exclusions),
@@ -1997,7 +2040,7 @@ def main() -> int:
         elif isinstance(exported_team_rows, dict):
             team_rows = [value for value in exported_team_rows.values() if isinstance(value, dict)]
     own_team_rows = [row for row in team_rows if as_int(row.get("team_id")) == args.team_id]
-    fixture_check_passed = not missing_keys and not unexpected_keys and not duplicate_keys
+    fixture_check_passed = bool(retained_report_coverage["passed"])
     total_check_passed = team_checks["mismatches"] == 0 and team_checks["missing"] == 0
     reader_passed = bool(team_reader and team_reader.get("status") == "ok")
     local_passed = reader_passed and fixture_check_passed and total_check_passed
@@ -2029,14 +2072,13 @@ def main() -> int:
         "local_checks": {
             "team_match_stats_reader_passed": reader_passed,
             "managed_first_team_team_match_stats_rows": len(own_team_rows),
-            "formal_fixture_coverage": {
-                "expected": len(fixtures),
-                "decoded": len(reports),
-                "missing": len(missing_keys),
-                "unexpected": len(unexpected_keys),
-                "duplicates": len(duplicate_keys),
-                "passed": fixture_check_passed,
+            "formal_fixture_schedule_coverage": {
+                "played_formal_fixtures_in_schedule": len(fixtures),
+                "retained_player_detail_reports_decoded": len(reports),
+                "fixtures_without_a_retained_player_detail_report": len(missing_keys),
+                "note": "This is schedule coverage, not a parser pass/fail check: FM27 saves retain reports for only some played fixtures.",
             },
+            "retained_report_coverage": retained_report_coverage,
             "player_team_total_reconciliation": team_checks,
             "raw_player_field_crosschecks": {
                 field: raw_history_crosschecks.get(field, {"matched": 0, "tested": 0, "mismatches": 0})
