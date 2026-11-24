@@ -1,0 +1,109 @@
+{
+  "audit_version": "1.1-v1.5-retained-report-coverage",
+  "game": "FM27",
+  "save_build": "27.0.1+2494687",
+  "save_known_build_upstream": false,
+  "fmsave_version": "0.14.3",
+  "section": "match_stats_cfg",
+  "save_section_schema": 6,
+  "reader": {
+    "name": "team_match_stats",
+    "status": "ok",
+    "record_count": 270,
+    "layout_region": "match_stats_cfg",
+    "layout_source_build": "27.0.0+2486695",
+    "layout_source_schema": 6,
+    "save_schema": 6,
+    "layout_borrowed": true
+  },
+  "upstream_registration": {
+    "status": "unverified_borrowed_layout",
+    "registered_reference_build": "27.0.0+2486695",
+    "note": "This local audit does not alter fmsave known_build or make the save build upstream-registered."
+  },
+  "local_assessment": "passed",
+  "local_checks": {
+    "team_match_stats_reader_passed": true,
+    "managed_first_team_team_match_stats_rows": 9,
+    "formal_fixture_schedule_coverage": {
+      "played_formal_fixtures_in_schedule": 46,
+      "retained_player_detail_reports_decoded": 9,
+      "fixtures_without_a_retained_player_detail_report": 37,
+      "note": "This is schedule coverage, not a parser pass/fail check: FM27 saves retain reports for only some played fixtures."
+    },
+    "retained_report_coverage": {
+      "native_team_match_stats_matches_retained": 9,
+      "player_detail_reports_decoded": 9,
+      "decoded_reports_matching_native_retained_matches": 9,
+      "native_retained_matches_missing_player_detail": [],
+      "player_detail_reports_without_native_match_stats_row": [],
+      "duplicate_player_detail_report_keys": [],
+      "passed": true,
+      "note": "Compares player-detail extraction against reports retained by the native team-match-stats reader; it does not claim every played fixture remains stored in the save."
+    },
+    "player_team_total_reconciliation": {
+      "comparisons": 171,
+      "matches": 171,
+      "mismatches": 0,
+      "missing": 0
+    },
+    "raw_player_field_crosschecks": {
+      "goals": {
+        "matched": 95,
+        "tested": 95,
+        "mismatches": 0
+      },
+      "assists": {
+        "matched": 95,
+        "tested": 95,
+        "mismatches": 0
+      },
+      "passes_attempted": {
+        "matched": 95,
+        "tested": 95,
+        "mismatches": 0
+      },
+      "passes_completed": {
+        "matched": 95,
+        "tested": 95,
+        "mismatches": 0
+      },
+      "entered_at_minute": {
+        "matched": 29,
+        "tested": 29,
+        "mismatches": 0
+      },
+      "left_at_minute": {
+        "matched": 29,
+        "tested": 29,
+        "mismatches": 0
+      },
+      "minutes": {
+        "matched": 95,
+        "tested": 95,
+        "mismatches": 0
+      },
+      "rating": {
+        "matched": 86,
+        "tested": 86,
+        "mismatches": 0
+      }
+    },
+    "rating_field_crosscheck": {
+      "raw_window_offset": 136,
+      "anchor_relative_offset": 36,
+      "encoding": "uint16 little-endian hundredths; /100; half-up to one decimal",
+      "minimum_required": 25,
+      "matched": 86,
+      "tested": 86,
+      "mismatches": 0,
+      "passed": true
+    },
+    "zero_minute_rows_excluded": 1
+  },
+  "limitations": [
+    "Local evidence applies only to this checked save/build/schema and does not confer upstream registration.",
+    "FM27 build 27.0.1+2494687 remains an unregistered exact build in fmsave 0.14.3; the helper uses the registered 27.0.0 schema-6 layout with explicit local checks.",
+    "Structural and data reconciliation are not a substitute for semantic validation on other saves."
+  ]
+}
