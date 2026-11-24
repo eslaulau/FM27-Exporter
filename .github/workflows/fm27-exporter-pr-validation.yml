@@ -30,7 +30,7 @@ jobs:
           architecture: x64
 
       - name: Install pinned reader
-        run: python -m pip install "fmsave==0.12.4"
+        run: python -m pip install "fmsave==0.14.3"
 
       - name: Compile exporter helpers
         run: |
