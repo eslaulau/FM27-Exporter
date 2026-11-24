@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import unittest
 from pathlib import Path
 
@@ -44,6 +45,26 @@ class FormalCompetitionScopeTests(unittest.TestCase):
         self.assertEqual(formal, {999})
         self.assertEqual(excluded, set())
         self.assertEqual(unclassified, {999})
+
+    def test_brighton_run100_real_export_includes_continental_competition(self):
+        fixture_path = (
+            ROOT / "season-reports" / "Brighton_V3_1_Compact_HighPress_20261124_run100"
+            / "45318755045" / "fixtures.json"
+        )
+        with fixture_path.open("r", encoding="utf-8") as stream:
+            fixtures = json.load(stream)
+        formal, excluded, unclassified = MODULE.discover_formal_competition_ids(fixtures, 472)
+        self.assertEqual(formal, {7, 661, 662, 2945})
+        self.assertIn(131, excluded)
+        self.assertIn(395, excluded)
+        played_formal = [
+            row for row in fixtures
+            if row.get("played") is True
+            and row.get("competition_id") in formal
+            and 472 in (row.get("home_team_id"), row.get("away_team_id"))
+        ]
+        self.assertEqual(len(played_formal), 55)
+        self.assertEqual(unclassified, set())
 
     def test_rule_family_groups_are_save_local(self):
         fixtures = [
