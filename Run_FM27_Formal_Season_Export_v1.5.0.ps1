@@ -384,12 +384,35 @@ function Invoke-PlayerMatchReportRecovery {
     param()
 
     $helperPath = Join-Path $script:BundleRoot 'FM27_PlayerMatchReport_Recovery_v1.9_Formal.py'
-    $cachePath = Join-Path $script:BundleRoot 'FM27_PlayerIdentityCache_Formal_v1.1.json'
-    if (-not (Test-Path -LiteralPath $helperPath) -or -not (Test-Path -LiteralPath $cachePath)) {
-        $script:Errors.Add('formal per-player match report recovery helper or identity cache missing')
-        Write-Host 'WARNING: formal detailed-report helper/cache is missing; base first-team export will still be kept.' -ForegroundColor Yellow
-        return
+    if (-not (Test-Path -LiteralPath $helperPath)) {
+        throw ('Required companion file missing: ' + $helperPath)
     }
+
+    # Identity caches are scoped to BOTH the dynamically resolved club UID and first-team ID.
+    # Never load the repository-wide historical cache as a generic seed.
+    $cachePath = Join-Path $script:TempDir ('FM27_PlayerIdentityCache_Formal_v1.1_team-{0}_club-{1}.json' -f $script:TeamId, $script:ClubUid)
+    $cacheObject = [ordered]@{
+        cache_version = '1.2-managed-club-scoped'
+        game = 'FM27'
+        team_id = [int]$script:TeamId
+        club_uid = [int]$script:ClubUid
+        competition_id = 0
+        scope = 'single save run; exact managed club UID and owned first-team ID; no cross-club seed mappings'
+        seed_source = $null
+        mappings = @{}
+        rejected_mappings = @()
+    }
+    if ($script:ReuseMode) {
+        $priorCachePath = Join-Path $script:OutDir 'FM27_PlayerIdentityCache_Formal_v1.1_learned.json'
+        if (Test-Path -LiteralPath $priorCachePath -PathType Leaf) {
+            $priorCache = Get-Content -LiteralPath $priorCachePath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ([int]$priorCache.team_id -ne $script:TeamId -or [int]$priorCache.club_uid -ne $script:ClubUid) {
+                throw ('Refusing identity cache reuse: cached club/team {0}/{1}, current club/team {2}/{3}.' -f $priorCache.club_uid, $priorCache.team_id, $script:ClubUid, $script:TeamId)
+            }
+            $cacheObject = $priorCache
+        }
+    }
+    $cacheObject | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $cachePath -Encoding UTF8
 
     if ($script:ReuseMode) {
         $priorReportFiles = @(
@@ -421,6 +444,7 @@ function Invoke-PlayerMatchReportRecovery {
         $script:OutDir,
         '--cache-file', $cachePath,
         '--team-id', [string]$script:TeamId,
+        '--club-uid', [string]$script:ClubUid,
         '--competition-id', '0'
     )
     $existingProbePath = Join-Path $script:OutDir 'player-report-probe.json'
