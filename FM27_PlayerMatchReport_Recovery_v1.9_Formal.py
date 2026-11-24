@@ -1774,8 +1774,26 @@ def main() -> int:
                 field: sum(1 for row in all_appearance_rows if row.get(field) not in (None, ""))
                 for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "minutes", "rating", "rating_raw_hundredths")
             },
-            "named_history_match_count": 0,
-            "named_history_matches_passed": 0,
+            "named_history_match_count": sum(
+                1 for report in reports
+                if report.get("candidate_player_history_rows")
+            ),
+            "named_history_matches_passed": sum(
+                1 for report in reports
+                if any(
+                    row.get("date") == report.get("date")
+                    and as_int(row.get("competition_id")) == as_int(report.get("competition_id"))
+                    and as_int(row.get("opponent_team_id")) == as_int(report.get("opponent_team_id"))
+                    for row in all_appearance_rows
+                )
+                and all(
+                    row.get("identity_status") == "identified"
+                    for row in all_appearance_rows
+                    if row.get("date") == report.get("date")
+                    and as_int(row.get("competition_id")) == as_int(report.get("competition_id"))
+                    and as_int(row.get("opponent_team_id")) == as_int(report.get("opponent_team_id"))
+                )
+            ),
         "named_history_source": history_source,
             "named_history_note": "Named history supplies positions and cross-checks ratings/entry clocks; the raw match-report player record supplies detailed ratings plus goals, assists, entry/exit clocks and passing counts.",
             "duplicate_uid_within_match_rows": duplicate_uid_conflicts,
