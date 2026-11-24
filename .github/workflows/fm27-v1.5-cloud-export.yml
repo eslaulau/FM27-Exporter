@@ -124,7 +124,7 @@ jobs:
           if ($identified -le 0 -or $identified -ne $actualAppearances -or $unresolved -ne 0) {
             throw "Player identity coverage failed: identified=$identified / appearances=$actualAppearances; unresolved=$unresolved. Refusing to publish an apparently successful report."
           }
-          if ($identityCache.mappings.Count -le 0) { throw 'Learned identity cache contains no verified mappings.' }
+          if (@($identityCache.mappings.PSObject.Properties).Count -le 0) { throw 'Learned identity cache contains no verified mappings.' }
 
           $summary = [ordered]@{
             status = 'exported_and_structurally_validated'
