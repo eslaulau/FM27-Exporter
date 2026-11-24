@@ -79,6 +79,35 @@ class FormalCompetitionScopeTests(unittest.TestCase):
         self.assertEqual(families[661], {5})
         self.assertEqual(families[131], {1})
 
+    def test_latest_run139_save_scope_and_retained_report_baseline(self):
+        report_dir = (
+            ROOT / "season-reports" / "FM27_EngineDividend_4Back_V0.4_20261124_run139"
+            / "45402984200"
+        )
+        with (report_dir / "fixtures.json").open("r", encoding="utf-8-sig") as stream:
+            fixtures = json.load(stream)
+        formal, excluded, unclassified = MODULE.discover_formal_competition_ids(fixtures, 472)
+        self.assertEqual(formal, {7, 661, 662, 2945})
+        self.assertIn(131, excluded)
+        self.assertIn(395, excluded)
+        played_formal = [
+            row for row in fixtures
+            if row.get("played") is True
+            and row.get("competition_id") in formal
+            and 472 in (row.get("home_team_id"), row.get("away_team_id"))
+        ]
+        self.assertEqual(len(played_formal), 46)
+
+        with (report_dir / "team-match-stats.json").open("r", encoding="utf-8-sig") as stream:
+            team_rows = [row for row in json.load(stream) if row.get("team_id") == 472]
+        native_keys = {
+            (row["competition_id"], row["date"], row["home_team_id"], row["away_team_id"])
+            for row in team_rows
+        }
+        self.assertEqual(len(native_keys), 9)
+        self.assertEqual(sum(1 for key in native_keys if key[0] == 2945), 3)
+        self.assertEqual(unclassified, set())
+
     def test_parser_completeness_uses_reports_retained_by_native_reader(self):
         native = {
             (7, 503, 472, "2027-04-24", "20:00:00", 472): {},
