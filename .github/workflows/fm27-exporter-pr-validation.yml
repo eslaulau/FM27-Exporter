@@ -7,6 +7,7 @@ on:
       - "Run_FM27_Formal_Season_Export_v1.5.0.ps1"
       - "FM27_PlayerMatchReport_Recovery_v1.9_Formal.py"
       - "FM27_FormalPlayerReport_Enrichment_v1.1.py"
+      - "FM27_CloudExport_IdentityPolicy.py"
       - "tests/**"
       - ".github/workflows/**"
   push:
@@ -37,6 +38,10 @@ jobs:
           python -m py_compile FM27_PlayerMatchReport_Recovery_v1.9_Formal.py
           python -m py_compile FM27_FormalPlayerReport_Enrichment_v1.1.py
           python -m py_compile FM27_FirstTeam_Filter_v1.3.0.py
+          python -m py_compile FM27_CloudExport_IdentityPolicy.py
+
+      - name: Test cloud identity publication policy
+        run: python tests/test_cloud_identity_policy.py
 
       - name: Replay real-save identity regression fixture
         run: python tests/test_player_identity_inference.py
