@@ -63,7 +63,7 @@ class FormalCompetitionScopeTests(unittest.TestCase):
             and row.get("competition_id") in formal
             and 472 in (row.get("home_team_id"), row.get("away_team_id"))
         ]
-        self.assertEqual(len(played_formal), 55)
+        self.assertEqual(len(played_formal), 57)
         self.assertEqual(unclassified, set())
 
     def test_rule_family_groups_are_save_local(self):
