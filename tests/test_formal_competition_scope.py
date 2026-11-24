@@ -45,6 +45,19 @@ class FormalCompetitionScopeTests(unittest.TestCase):
         self.assertEqual(excluded, set())
         self.assertEqual(unclassified, {999})
 
+    def test_rule_family_groups_are_save_local(self):
+        fixtures = [
+            {"competition_id": 7, "home_team_id": 472, "away_team_id": 501, "match_rules_template": [2, 58, 0]},
+            {"competition_id": 2945, "home_team_id": 472, "away_team_id": 502, "match_rules_template": [7, 61, 2]},
+            {"competition_id": 661, "home_team_id": 472, "away_team_id": 503, "match_rules_template": [5, 63, 0]},
+            {"competition_id": 131, "home_team_id": 472, "away_team_id": 504, "match_rules_template": [1, 18, 0]},
+        ]
+        families = MODULE.discover_competition_rule_families(fixtures, 472)
+        self.assertEqual(families[7], {2})
+        self.assertEqual(families[2945], {7})
+        self.assertEqual(families[661], {5})
+        self.assertEqual(families[131], {1})
+
     def test_ignores_other_teams_competitions(self):
         fixtures = [
             {"competition_id": 777, "home_team_id": 100, "away_team_id": 101, "match_rules_template": [7, 61, 2]},
