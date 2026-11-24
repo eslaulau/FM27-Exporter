@@ -579,6 +579,7 @@ try {
         'managed-club.json, save-info, parser validation and first-team-scope.json.',
         'Per-player detailed match-report outputs: player-report-probe.json, player-match-report-identified.csv/json, player-match-report-unresolved.csv, player-match-report-formal-all.csv and player-match-report-formal-summary.json.',
         'Formal competitions are discovered dynamically from this save because competition IDs are save-local; friendly/pre-season match-rule family 1 is excluded.',
+        'Player-detail extraction is reconciled against reports retained by the native team-match-stats reader; not every played fixture remains stored in an FM27 save.',
         'The match-report helper performs a targeted read-only pass over match_stats_cfg with fmsave==0.14.3.',
         'Identities use a persisted four-byte signature cache seeded from the validated full-season league report; cross-competition transfer limitations are recorded in the identity audit.',
         'Unmapped player rows remain anonymous and are written to player-match-report-unresolved.csv.',
