@@ -1,0 +1,98 @@
+
+FM27 Save Batch Exporter
+Read-only: the save file will not be modified.
+fmsave 0.14.3 can try a shared FM27 schema-matched layout for unregistered builds; review validation and compatibility audit.
+
+Python detected: Python 3.12.10
+Using FM27 save: D:\a\_temp\FM27-v1.5.0-45409993904\downloads\FM27_EngineDividend_4Back_V0.4_20261124_run139\FM27_EngineDividend_4Back_V0.4_20261124_run139.fm
+
+Installing/checking pinned fmsave 0.14.3 (automatic upgrades disabled)...
+Collecting fmsave==0.14.3
+  Downloading fmsave-0.14.3-py3-none-any.whl.metadata (14 kB)
+Collecting backports-zstd>=1.7 (from fmsave==0.14.3)
+  Downloading backports_zstd-1.8.0-cp312-cp312-win_amd64.whl.metadata (7.0 kB)
+Downloading fmsave-0.14.3-py3-none-any.whl (544 kB)
+   ---------------------------------------- 544.4/544.4 kB 6.0 MB/s  0:00:00
+Downloading backports_zstd-1.8.0-cp312-cp312-win_amd64.whl (330 kB)
+Installing collected packages: backports-zstd, fmsave
+
+Successfully installed backports-zstd-1.8.0 fmsave-0.14.3
+Confirmed fmsave 0.14.3; automatic upgrades are disabled.
+Managed club resolved: 布莱顿及霍夫足球俱乐部 | UID 618 | first-team ID 472
+
+Reading save metadata...
+Validating readable sections...
+Exporting: fixtures
+Note: fixtures produced parser warnings; see native-diagnostics.txt.
+Exporting: team-match-stats
+Note: team-match-stats produced parser warnings; see native-diagnostics.txt.
+Exporting: players
+Note: players produced parser warnings; see native-diagnostics.txt.
+Exporting: player-season-stats
+Note: player-season-stats produced parser warnings; see native-diagnostics.txt.
+Exporting: player-match-stats
+Note: player-match-stats produced parser warnings; see native-diagnostics.txt.
+Exporting: selections
+Note: selections produced parser warnings; see native-diagnostics.txt.
+FIRST-TEAM FILTER v1.3.0 COMPLETE
+Club: σ╕âΦÄ▒Θí┐σÅèΘ£ìσñ½Φ╢│τÉâΣ┐▒Σ╣ÉΘâ¿ (UID 618) | first-team ID: 472
+Fixtures: 62 | player profiles: 29 | tracked players: 37
+Team stats: 18 rows across 9 matches; both home/away rows validated
+Tactical configuration extraction/inference disabled; opponent player data excluded.
+Using save-scoped named match-history archives: D:\a\_temp\FM27-v1.5.0-45409993904\downloads\FM27_EngineDividend_4Back_V0.4_20261124_run139\FM27_PlayerMatchHistoryArchives
+
+PLAYER MATCH HISTORY ARCHIVE OK
+{
+  "archive_dir": "D:\\a\\_temp\\FM27-v1.5.0-45409993904\\downloads\\FM27_EngineDividend_4Back_V0.4_20261124_run139\\FM27_PlayerMatchHistoryArchives\\FM27_EngineDividend_4Back_V0.4_20261124_run139_ed12e5fc08d0",
+  "archive_rows": 459,
+  "archive_fixture_keys": 17,
+  "source_snapshots": 1,
+  "rows_added_this_run": 459,
+  "current_snapshot_history_fixture_keys": 17,
+  "current_snapshot_formal_fixture_keys": 34,
+  "ignored_rows": 171,
+  "branch_guard": "passed"
+}
+HISTORY ARCHIVE ROUTE OK
+{
+  "archive_dir": "D:\\a\\_temp\\FM27-v1.5.0-45409993904\\downloads\\FM27_EngineDividend_4Back_V0.4_20261124_run139\\FM27_PlayerMatchHistoryArchives\\FM27_EngineDividend_4Back_V0.4_20261124_run139_ed12e5fc08d0",
+  "route_file": "D:\\a\\_temp\\FM27-v1.5.0-45409993904\\downloads\\FM27_EngineDividend_4Back_V0.4_20261124_run139\\FM27_PlayerMatchHistoryArchives\\.routes\\ed12e5fc08d0135ef929f2bc286b725bbb12fa944b90d25922b3406ac77d63ea.json",
+  "branch_number": 1,
+  "source": "new_save_archive",
+  "branch_guard": "passed"
+}
+
+Recovering player detailed match reports across all formal competitions (7, 637, 661, 662; excluding pre-season 131)...
+Enrichment complete: 94 identified rows; 94 retained-history ratings; 0 unresolved identities.
+Position candidates: {'GK': 6, 'DL': 9, 'DC': 13, 'DR': 9, 'DMC': 21, 'AML': 9, 'AMC': 8, 'AMR': 11, 'ST': 8}
+Role codes preserved raw: {'12': 6, '2': 9, '24': 6, '1': 7, '3': 9, '35': 9, '15': 12, '27': 9, '41': 8, '45': 11, '40': 8}
+Outputs written to: D:\a\_temp\FM27-v1.5.0-45409993904\downloads\FM27_EngineDividend_4Back_V0.4_20261124_run139\FM27_Analysis_20261124_140430
+Formal competitions: 7,637,661,662
+Formal fixtures expected: 34 | detailed reports found: 6 | missing: 28
+Player appearances: 94 | raw activity rows: 95 | zero-minute rows skipped: 1
+Identified: 94 | unresolved: 0
+Ratings recovered: 94 | raw rating cross-check: 86/86
+Team-total reconciliation: 114/114 matched; 0 mismatches; 0 missing
+Outputs written to: D:\a\_temp\FM27-v1.5.0-45409993904\downloads\FM27_EngineDividend_4Back_V0.4_20261124_run139\FM27_Analysis_20261124_140430
+python.exe : D:\a\FM27-Exporter\FM27-Exporter\FM27_PlayerMatchReport_Recovery_v1.9_Formal.py:1213: 
+UnknownBuildWarning: FM27_EngineDividend_4Back_V0.4_20261124_run139.fm was saved by FM27 build 
+27.0.1+2494687, an unverified build: fmsave 0.14.3 has no full set of layouts for it. It borrows matching 
+layouts from 27.0.0+2486695 where it has no build-specific layout, and tries an available FM27 layout when 
+the schema differs. Readers warn about failed checks by default. Please report problems at 
+https://github.com/rhiever/fmsave/issues. FM27 coverage: structural checks are not semantic or in-game 
+verification. Run fmsave validate SAVE --json for FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:65 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\a\FM27-Expor...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  save = fmsave.open(str(save_path))
+WARNING: coverage/team totals require review; the audit records the exact blockers.
+Detailed player rows identified: 94; unresolved: 0
+Team-stat reconciliation: 114/114; named-history cross-check: 6/6
+WARNING: recovery output is partial or has checks to review; unresolved rows were not guessed.
+
+Export bundle created with warnings. See export-warnings.txt.
+Output folder: D:\a\_temp\FM27-v1.5.0-45409993904\downloads\FM27_EngineDividend_4Back_V0.4_20261124_run139\FM27_Analysis_20261124_140430
+ZIP file: D:\a\_temp\FM27-v1.5.0-45409993904\downloads\FM27_EngineDividend_4Back_V0.4_20261124_run139\FM27_Analysis_20261124_140430.zip
