@@ -6,6 +6,7 @@
 - First-team filter: [FM27_FirstTeam_Filter_v1.3.0.py](FM27_FirstTeam_Filter_v1.3.0.py)
 - Full export contract: [README_EXPORTER.md](README_EXPORTER.md)
 - Cloud workflow: [.github/workflows/fm27-v1.5-cloud-export.yml](.github/workflows/fm27-v1.5-cloud-export.yml)
+- Season data reports: [season-reports/](season-reports/)
 
 ## How cloud export runs
 
@@ -13,8 +14,8 @@
 2. When you want an export, manually start **Actions → FM27 v1.5.0 Cloud Season Export → Run workflow**.
 3. Enter the exact `.fm` asset filename. Each run processes exactly one requested save; there is no automatic Release trigger and no blank-input "export all" mode.
 4. The GitHub-hosted Windows runner verifies the Release asset's SHA-256 digest and byte length before parsing, runs the v1.5.0 exporter in a save-specific working directory, and validates the required outputs and managed first-team scope.
-5. The workflow publishes the report ZIP and summary JSON to the `fm27-exports` Release, then reads the Release back and verifies each uploaded asset's size and SHA-256 digest.
-6. On success, the complete report folder is also retained as a 30-day workflow artifact. On failure, runner diagnostics are retained as a 14-day artifact.
+5. The complete, uncompressed report folder is committed to `season-reports/<save-name>/<workflow-run-id>/` on the repository's default branch. Each run gets a separate folder, so re-exporting a save does not overwrite an earlier report. No report ZIP or report Release asset is generated.
+6. The workflow verifies that the committed report files match their local Git blobs. Failure diagnostics are retained as a 14-day workflow artifact.
 
 The workflow uses the v1.5.0 exporter and its pinned `fmsave==0.12.4` dependency. The original save is read-only. No fixed club UID or team ID is assumed.
 
@@ -24,7 +25,7 @@ The exporter resolves the managed club and its owned first team dynamically. It 
 
 ## Validation boundary
 
-A workflow success means the source asset integrity check, required output checks, dynamic first-team scope check, and published asset readback checks passed. It does not prove every decoded statistic is semantically correct for every FM27 build; inspect each report's validation and diagnostics.
+A workflow success means the source asset integrity check, required output checks, dynamic first-team scope check, repository commit, and Git blob readback checks passed. It does not prove every decoded statistic is semantically correct for every FM27 build; inspect each report's validation and diagnostics.
 
 ## Historical material
 
@@ -32,4 +33,4 @@ Old exporter scripts and workflows are preserved under `archive/` for historical
 
 ## Public-data notice
 
-Source `.fm` saves and report ZIPs published in Releases are publicly downloadable.
+Source `.fm` saves published in Releases and report files committed under `season-reports/` are publicly downloadable.
