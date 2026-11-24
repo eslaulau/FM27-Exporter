@@ -28,6 +28,7 @@ import math
 import re
 import sys
 import subprocess
+import traceback
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
@@ -1825,5 +1826,6 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
         raise SystemExit(2)
