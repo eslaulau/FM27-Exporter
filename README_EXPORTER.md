@@ -1,16 +1,17 @@
 # FM27 managed first-team + opponent match-stat exporter v1.5.0
 
-## Official execution: GitHub Actions cloud workflow
+## Official execution: manually triggered GitHub Actions cloud workflow
 
-v1.5.0 is executed in the cloud, not as a required local PowerShell workflow. The active workflow is [fm27-v1.5-cloud-export.yml](.github/workflows/fm27-v1.5-cloud-export.yml).
+v1.5.0 runs on a GitHub-hosted Windows runner. The active workflow is [fm27-v1.5-cloud-export.yml](.github/workflows/fm27-v1.5-cloud-export.yml).
 
-- Publishing a GitHub Release tagged `fm27-saves` automatically triggers cloud export of its non-empty `.fm` assets.
-- A manual run is available under **Actions → FM27 v1.5.0 Cloud Season Export → Run workflow**.
-- Enter an exact `.fm` asset name to process one save; leave it blank to process all `.fm` assets in `fm27-saves`.
-- The GitHub-hosted Windows runner executes this v1.5.0 PowerShell exporter and publishes report ZIPs to Release `fm27-exports`.
-- Users do not need local Python, PowerShell, or a local export installation.
+1. Upload the source `.fm` save to Release `fm27-saves`.
+2. When you request an export, start **Actions → FM27 v1.5.0 Cloud Season Export → Run workflow**.
+3. Supply the exact `.fm` asset filename. One workflow run exports exactly one save; automatic Release publishing triggers are disabled.
+4. Before parsing, the workflow checks the downloaded file's byte length and SHA-256 against the source Release asset metadata. Each save is downloaded and exported inside its own isolated working directory.
+5. The workflow validates required output files and dynamic managed first-team scope, then publishes the report ZIP and summary JSON to `fm27-exports`.
+6. It reads the published Release back and verifies each uploaded asset's server-reported size and SHA-256. Successful full report folders are retained as a 30-day workflow artifact; failure diagnostics are retained for 14 days.
 
-The workflow installs and verifies pinned `fmsave==0.12.4`; automatic parser upgrades are disabled.
+The GitHub-hosted Windows runner executes the v1.5.0 PowerShell exporter. The workflow uses the pinned `fmsave==0.12.4` dependency; automatic parser upgrades are disabled. Users do not need local Python, PowerShell, or a local export installation.
 
 ## Scope and behavior
 
@@ -34,7 +35,7 @@ For FM27 build 27.0.1+2494687 and `match_stats_cfg` schema 6, an explicitly labe
 
 Download the generated ZIP packages from the [fm27-exports Release](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-exports). Review `managed-club.json`, `validation.json`, `first-team-scope.json`, `player-report-identity-audit.json`, `team-match-stats-compatibility.json` (if present), `export-warnings.txt` (if present), and `native-diagnostics.txt`.
 
-A completed workflow means the cloud job completed and required files plus dynamic first-team scope passed structural checks. Paired-row checks prove two-sided structure and fixture joins, not semantic accuracy of every decoded statistic.
+A completed workflow means the source asset integrity check, required output checks, dynamic first-team scope check, and published asset readback checks passed. Paired-row checks prove two-sided structure and fixture joins, not semantic accuracy of every decoded statistic.
 
 ## Local development
 
