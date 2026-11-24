@@ -105,7 +105,7 @@ jobs:
           }
           $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $reportFolder 'cloud-export-manifest.json') -Encoding UTF8
 
-          $required = @('save-info.json','validation.json','first-team-scope.json','fixtures.json','team-match-stats.json','team-match-stats-compatibility.json','players.json','player-season-stats.csv','player-match-report-formal-all.csv','player-match-report-formal-summary.json','player-report-identity-audit.json','player-match-report-enrichment-audit.json','FM27_PlayerIdentityCache_Formal_v1.1_learned.json')
+          $required = @('save-info.json','validation.json','first-team-scope.json','fixtures.json','team-match-stats.json','team-match-stats-compatibility.json','players.json','player-season-stats.csv','player-match-report-formal-all.csv','player-match-report-formal-summary.json','player-report-identity-audit.json','player-match-report-unresolved.csv','player-match-report-enrichment-audit.json','FM27_PlayerIdentityCache_Formal_v1.1_learned.json')
           $missing = @($required | Where-Object { -not (Test-Path -LiteralPath (Join-Path $reportFolder $_) -PathType Leaf) })
           if ($missing.Count -gt 0) { throw "Export is missing required outputs: $($missing -join ', ')" }
           foreach ($file in $required) {
@@ -120,13 +120,15 @@ jobs:
           $enrichmentAudit = Get-Content -LiteralPath (Join-Path $reportFolder 'player-match-report-enrichment-audit.json') -Raw | ConvertFrom-Json
           if ([int]$identityAudit.team_id -ne [int]$scope.team_id) { throw "Identity audit team_id ($($identityAudit.team_id)) differs from managed first-team ID ($($scope.team_id))." }
           if ([int]$identityCache.team_id -ne [int]$scope.team_id -or [int]$identityCache.club_uid -ne [int]$scope.club_uid) { throw 'Learned identity cache does not match the dynamically resolved managed club/team.' }
-          $identified = [int]$identityAudit.scope.identified_appearance_rows
-          $actualAppearances = [int]$identityAudit.scope.actual_appearance_rows
-          $unresolved = [int]$identityAudit.scope.unresolved_appearance_rows
-          if ($identified -le 0 -or $identified -ne $actualAppearances -or $unresolved -ne 0) {
-            throw "Player identity coverage failed: identified=$identified / appearances=$actualAppearances; unresolved=$unresolved. Refusing to publish an apparently successful report."
-          }
-          if (@($identityCache.mappings.PSObject.Properties).Count -le 0) { throw 'Learned identity cache contains no verified mappings.' }
+
+          $identityPolicyScript = Join-Path $env:GITHUB_WORKSPACE 'FM27_CloudExport_IdentityPolicy.py'
+          $identityPolicyOutput = & python $identityPolicyScript (Join-Path $reportFolder 'player-report-identity-audit.json')
+          if ($LASTEXITCODE -ne 0) { throw "Player identity coverage validation failed: $($identityPolicyOutput -join ' ')" }
+          $identityPolicy = ($identityPolicyOutput -join "`n") | ConvertFrom-Json
+          $identified = [int]$identityPolicy.identified_appearances
+          $actualAppearances = [int]$identityPolicy.actual_appearances
+          $unresolved = [int]$identityPolicy.unresolved_appearances
+          $identityComplete = [bool]$identityPolicy.complete
 
           $expectedFormalFixtures = [int]$identityAudit.scope.played_first_team_formal_competition_fixtures
           $teamStatsMatches = [int]$teamStatsAudit.local_checks.managed_first_team_team_match_stats_rows
@@ -135,10 +137,14 @@ jobs:
             $teamStatsMatches -lt $expectedFormalFixtures -or
             $playerDetailMatches -lt $expectedFormalFixtures
           )
-          $exportStatus = if ($partialNativeReportCoverage) {
-            'exported_with_partial_native_match_report_coverage'
+          if ($partialNativeReportCoverage -and -not $identityComplete) {
+            $exportStatus = 'exported_with_partial_identity_and_native_report_coverage'
+          } elseif (-not $identityComplete) {
+            $exportStatus = 'exported_with_partial_identity_coverage'
+          } elseif ($partialNativeReportCoverage) {
+            $exportStatus = 'exported_with_partial_native_match_report_coverage'
           } else {
-            'exported_and_structurally_validated'
+            $exportStatus = 'exported_and_structurally_validated'
           }
 
           $summary = [ordered]@{
@@ -161,12 +167,7 @@ jobs:
               played_formal_fixtures = $expectedFormalFixtures
               missing_saved_reports = [Math]::Max(0, $expectedFormalFixtures - $playerDetailMatches)
             }
-            player_identity_coverage = [ordered]@{
-              identified_appearances = $identified
-              actual_appearances = $actualAppearances
-              unresolved_appearances = $unresolved
-              learned_signature_mappings = @($identityCache.mappings.PSObject.Properties).Count
-            }
+            player_identity_coverage = $identityPolicy
             position_mapping = $enrichmentAudit.position_candidate_row_counts
             role_code_mapping = 'raw_codes_preserved_meaning_unconfirmed'
             native_report_retention_note = 'FM27 retains detailed match reports for only some played fixtures, mostly recent ones; missing reports cannot be reconstructed by the exporter.'
@@ -206,6 +207,7 @@ jobs:
           Write-Host "Cloud export complete; uncompressed report folder committed and verified."
           Write-Host "Source: $name"
           Write-Host "Club: $($scope.club_name) | first-team ID: $($scope.team_id)"
+          Write-Host "Identity coverage: $identified/$actualAppearances; unresolved=$unresolved; status=$($identityPolicy.status)"
           Write-Host "Repository folder: https://github.com/$repo/tree/main/$relativeReportPath"
 
       - name: Preserve runner diagnostics on failure
