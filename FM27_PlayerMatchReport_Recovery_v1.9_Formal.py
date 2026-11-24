@@ -2046,7 +2046,7 @@ def main() -> int:
     local_passed = reader_passed and fixture_check_passed and total_check_passed
     team_layout = (team_reader or {}).get("layout") or {}
     write_json(export_dir / "team-match-stats-compatibility.json", {
-        "audit_version": "1.0-v1.4.3-local-compatibility",
+        "audit_version": "1.1-v1.5-retained-report-coverage",
         "game": source_meta.get("game"),
         "save_build": source_meta.get("game_build") or source_meta.get("build"),
         "save_known_build_upstream": source_meta.get("known_build"),
