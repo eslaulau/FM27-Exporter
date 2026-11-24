@@ -283,6 +283,21 @@ def discover_formal_competition_ids(
     return formal, excluded, unclassified
 
 
+def discover_competition_rule_families(
+    fixtures: list[dict[str, Any]], team_id: int
+) -> dict[int, set[int]]:
+    families: dict[int, set[int]] = defaultdict(set)
+    for row in fixtures:
+        if team_id not in (as_int(row.get("home_team_id")), as_int(row.get("away_team_id"))):
+            continue
+        comp = as_int(row.get("competition_id"))
+        template = row.get("match_rules_template")
+        family = as_int(template[0]) if isinstance(template, list) and template else None
+        if comp is not None and family is not None:
+            families[comp].add(family)
+    return dict(families)
+
+
 def load_formal_fixtures(export_dir: Path, team_id: int, comp_ids: set[int]) -> tuple[list[dict[str, Any]], dict[tuple[int, str, int, int], dict[str, Any]]]:
     fixtures = read_json(export_dir / "fixtures.json")
     selected: list[dict[str, Any]] = []
@@ -701,6 +716,7 @@ def infer_match_durations(
     reports: list[dict[str, Any]],
     signature_map: dict[str, dict[str, Any]],
     season_aggregates: dict[str, dict[int, dict[str, int]]],
+    competition_families: dict[int, set[int]],
 ) -> tuple[dict[tuple[int, str, int], dict[str, Any]], dict[str, Any]]:
     """Infer match duration from named same-match history, then validate against season sums.
 
@@ -753,12 +769,15 @@ def infer_match_durations(
                 "vote_count": len(values),
             }
 
-    # Cup totals provide a strong independent check for fixtures missing from the
-    # rolling named-history window. Current first-team cup category combines IDs 661/662.
+    # Cup and continental IDs vary between saves. Derive their groups from the
+    # match-rule family stored on this save's own fixture rows.
     raw_rows = _raw_rows_by_uid(reports, signature_map)
+    cup_ids = {comp for comp, families in competition_families.items() if 5 in families}
+    continental_ids = {comp for comp, families in competition_families.items() if families.intersection({6, 7})}
+    league_ids = {comp for comp, families in competition_families.items() if 2 in families}
     category_specs = (
-        ("cup", {661, 662}),
-        ("continental", {637}),
+        ("cup", cup_ids),
+        ("continental", continental_ids),
     )
     aggregate_solver_audit: dict[str, Any] = {}
     for category, comp_ids in category_specs:
@@ -818,9 +837,9 @@ def infer_match_durations(
             continue
         comp = int(report["competition_id"])
         round_name = str(report.get("round") or "").lower()
-        if comp == 7:
+        if comp in league_ids:
             durations[key] = {"minutes_played": 90, "source": "league_regulation_time", "vote_count": 0}
-        elif comp == 637 and round_name not in {"final", "semi_final", "quarter_final"}:
+        elif comp in continental_ids and round_name not in {"final", "semi_final", "quarter_final"}:
             durations[key] = {"minutes_played": 90, "source": "continental_non_knockout_regulation_time", "vote_count": 0}
 
     audit = {
@@ -1162,6 +1181,7 @@ def main() -> int:
     discovered_comp_ids, excluded_comp_ids, unclassified_comp_ids = discover_formal_competition_ids(
         all_fixtures, args.team_id
     )
+    competition_families = discover_competition_rule_families(all_fixtures, args.team_id)
     if not discovered_comp_ids:
         raise RuntimeError("Could not discover any formal first-team competition IDs from fixtures.json")
     if args.competition_id != 0 and args.competition_id not in discovered_comp_ids:
@@ -1443,7 +1463,9 @@ def main() -> int:
     # Attach match-duration evidence after singleton identity recovery so every trusted
     # signature mapping can contribute. This enables direct per-match minutes on rows
     # whose rolling named history has already expired.
-    duration_map, duration_audit = infer_match_durations(reports, signature_map, season_aggregates)
+    duration_map, duration_audit = infer_match_durations(
+        reports, signature_map, season_aggregates, competition_families
+    )
     raw_history_crosschecks = audit_raw_history_crosschecks(reports, signature_map, duration_map)
     rating_crosscheck = raw_history_crosschecks.get("rating", {"matched": 0, "tested": 0, "mismatches": 0})
     rating_raw_enabled = (
@@ -1788,7 +1810,7 @@ def main() -> int:
                 "Match-report rating is uint16 little-endian at raw-window +136 (statistics_anchor +36), divided by 100 and rounded half-up to one decimal. It is enabled only after at least 25 same-match named-history rating checks pass with zero mismatches.",
                 "Rows with a verified zero-minute appearance are omitted from per-player CSV reports. Team-total reconciliation still uses every raw match-report row before this filter.",
                 "FM27 27.0.1+2494687 remains unregistered as an exact build in fmsave 0.14.3; this helper explicitly selects the registered 27.0.0 schema-6 layout and records local checks without changing upstream known_build status.",
-                "Pre-season/non-competitive competition_id 131 is excluded from this report.",
+                "Friendly/pre-season competitions are excluded dynamically by match-rule family 1; their save-local IDs are listed in the scope audit.",
             ],
         },
         "validation": {
