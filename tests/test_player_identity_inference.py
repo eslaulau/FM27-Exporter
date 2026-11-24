@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.request
 from pathlib import Path
 
 
@@ -26,12 +27,26 @@ def read_json(path: Path):
 
 
 def main() -> None:
-    if not REPORT.is_dir():
-        raise AssertionError(f"Regression report fixture is missing: {REPORT}")
-
     with tempfile.TemporaryDirectory(prefix="fm27-identity-regression-") as temp:
         export_dir = Path(temp) / "report"
-        shutil.copytree(REPORT, export_dir)
+        export_dir.mkdir(parents=True)
+        fixture_files = (
+            "fixtures.json",
+            "player-match-stats-history-archive.json",
+            "player-match-stats.json",
+            "player-season-stats.csv",
+            "team-match-stats.json",
+            "player-report-probe.json",
+            "save-info.json",
+            "validation.json",
+        )
+        base_url = (
+            "https://raw.githubusercontent.com/eslaulau/FM27-Exporter/main/"
+            "season-reports/FM27_EngineDividend_4Back_V0.4_20261124_run139/45402984200/"
+        )
+        for filename in fixture_files:
+            with urllib.request.urlopen(base_url + filename, timeout=60) as response:
+                (export_dir / filename).write_bytes(response.read())
         cache_path = Path(temp) / "identity-cache.json"
         cache_path.write_text(
             json.dumps(
