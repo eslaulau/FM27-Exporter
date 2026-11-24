@@ -1,0 +1,504 @@
+{
+  "report_scope": "first-team formal competitions only",
+  "formal_competition_ids": [
+    7,
+    637,
+    661,
+    662
+  ],
+  "excluded_non_competitive_competition_ids": [
+    131
+  ],
+  "expected_fixtures": 30,
+  "detailed_reports_found": 8,
+  "raw_activity_rows_detected": 125,
+  "active_player_appearances": 125,
+  "excluded_zero_minute_rows": 0,
+  "identified_appearances": 123,
+  "unresolved_appearances": 2,
+  "unique_players_identified": 25,
+  "team_total_reconciliation": {
+    "comparisons": 152,
+    "matches": 152,
+    "mismatches": 0,
+    "missing": 0
+  },
+  "per_competition": {
+    "7": {
+      "expected_fixtures": 27,
+      "detailed_reports_found": 7,
+      "identified_appearances": 107,
+      "unresolved_appearances": 2,
+      "team_total_reconciliation": {
+        "comparisons": 133,
+        "matches": 133,
+        "mismatches": 0,
+        "missing": 0
+      }
+    },
+    "637": {
+      "expected_fixtures": 0,
+      "detailed_reports_found": 0,
+      "identified_appearances": 0,
+      "unresolved_appearances": 0,
+      "team_total_reconciliation": {
+        "comparisons": 0,
+        "matches": 0,
+        "mismatches": 0,
+        "missing": 0
+      }
+    },
+    "661": {
+      "expected_fixtures": 2,
+      "detailed_reports_found": 1,
+      "identified_appearances": 16,
+      "unresolved_appearances": 0,
+      "team_total_reconciliation": {
+        "comparisons": 19,
+        "matches": 19,
+        "mismatches": 0,
+        "missing": 0
+      }
+    },
+    "662": {
+      "expected_fixtures": 1,
+      "detailed_reports_found": 0,
+      "identified_appearances": 0,
+      "unresolved_appearances": 0,
+      "team_total_reconciliation": {
+        "comparisons": 0,
+        "matches": 0,
+        "mismatches": 0,
+        "missing": 0
+      }
+    }
+  },
+  "raw_player_field_coverage": {
+    "goals": {
+      "nonempty": 125,
+      "missing": 0
+    },
+    "assists": {
+      "nonempty": 125,
+      "missing": 0
+    },
+    "passes_attempted": {
+      "nonempty": 125,
+      "missing": 0
+    },
+    "passes_completed": {
+      "nonempty": 125,
+      "missing": 0
+    },
+    "entered_at_minute": {
+      "nonempty": 37,
+      "missing": 88
+    },
+    "minutes": {
+      "nonempty": 125,
+      "missing": 0
+    },
+    "rating": {
+      "nonempty": 125,
+      "missing": 0
+    },
+    "rating_raw_hundredths": {
+      "nonempty": 125,
+      "missing": 0
+    }
+  },
+  "raw_player_field_coverage_by_competition": {
+    "7": {
+      "goals": {
+        "nonempty": 109,
+        "missing": 0
+      },
+      "assists": {
+        "nonempty": 109,
+        "missing": 0
+      },
+      "passes_attempted": {
+        "nonempty": 109,
+        "missing": 0
+      },
+      "passes_completed": {
+        "nonempty": 109,
+        "missing": 0
+      },
+      "entered_at_minute": {
+        "nonempty": 32,
+        "missing": 77
+      },
+      "minutes": {
+        "nonempty": 109,
+        "missing": 0
+      },
+      "rating": {
+        "nonempty": 109,
+        "missing": 0
+      },
+      "rating_raw_hundredths": {
+        "nonempty": 109,
+        "missing": 0
+      }
+    },
+    "637": {
+      "goals": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "assists": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "passes_attempted": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "passes_completed": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "entered_at_minute": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "minutes": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "rating": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "rating_raw_hundredths": {
+        "nonempty": 0,
+        "missing": 0
+      }
+    },
+    "661": {
+      "goals": {
+        "nonempty": 16,
+        "missing": 0
+      },
+      "assists": {
+        "nonempty": 16,
+        "missing": 0
+      },
+      "passes_attempted": {
+        "nonempty": 16,
+        "missing": 0
+      },
+      "passes_completed": {
+        "nonempty": 16,
+        "missing": 0
+      },
+      "entered_at_minute": {
+        "nonempty": 5,
+        "missing": 11
+      },
+      "minutes": {
+        "nonempty": 16,
+        "missing": 0
+      },
+      "rating": {
+        "nonempty": 16,
+        "missing": 0
+      },
+      "rating_raw_hundredths": {
+        "nonempty": 16,
+        "missing": 0
+      }
+    },
+    "662": {
+      "goals": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "assists": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "passes_attempted": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "passes_completed": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "entered_at_minute": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "minutes": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "rating": {
+        "nonempty": 0,
+        "missing": 0
+      },
+      "rating_raw_hundredths": {
+        "nonempty": 0,
+        "missing": 0
+      }
+    }
+  },
+  "raw_history_crosschecks": {
+    "goals": {
+      "matched": 123,
+      "tested": 123,
+      "mismatches": 0
+    },
+    "assists": {
+      "matched": 123,
+      "tested": 123,
+      "mismatches": 0
+    },
+    "passes_attempted": {
+      "matched": 123,
+      "tested": 123,
+      "mismatches": 0
+    },
+    "passes_completed": {
+      "matched": 123,
+      "tested": 123,
+      "mismatches": 0
+    },
+    "entered_at_minute": {
+      "matched": 36,
+      "tested": 36,
+      "mismatches": 0
+    },
+    "left_at_minute": {
+      "matched": 37,
+      "tested": 37,
+      "mismatches": 0
+    },
+    "minutes": {
+      "matched": 123,
+      "tested": 123,
+      "mismatches": 0
+    },
+    "rating": {
+      "matched": 114,
+      "tested": 114,
+      "mismatches": 0
+    }
+  },
+  "match_duration_audit": {
+    "match_duration_minutes": {
+      "7|2027-01-17|471": {
+        "minutes_played": 90,
+        "source": "same_match_named_history_full_time_votes",
+        "vote_count": 11
+      },
+      "7|2027-01-23|532": {
+        "minutes_played": 90,
+        "source": "same_match_named_history_full_time_votes",
+        "vote_count": 10
+      },
+      "7|2027-01-29|541": {
+        "minutes_played": 90,
+        "source": "same_match_named_history_full_time_votes",
+        "vote_count": 10
+      },
+      "7|2027-02-06|518": {
+        "minutes_played": 90,
+        "source": "same_match_named_history_full_time_votes",
+        "vote_count": 11
+      },
+      "7|2027-02-10|533": {
+        "minutes_played": 90,
+        "source": "same_match_named_history_full_time_votes",
+        "vote_count": 11
+      },
+      "661|2027-02-13|476": {
+        "minutes_played": 90,
+        "source": "same_match_named_history_full_time_votes",
+        "vote_count": 11
+      },
+      "7|2027-02-20|581": {
+        "minutes_played": 90,
+        "source": "same_match_named_history_full_time_votes",
+        "vote_count": 11
+      },
+      "7|2027-02-27|520": {
+        "minutes_played": 90,
+        "source": "same_match_named_history_full_time_votes",
+        "vote_count": 11
+      }
+    },
+    "history_vote_fixture_count": 8,
+    "history_vote_conflicts": {},
+    "aggregate_solver": {
+      "cup": {
+        "unknown_fixtures": 0,
+        "status": "all_durations_from_history"
+      },
+      "continental": {
+        "unknown_fixtures": 0,
+        "status": "all_durations_from_history"
+      }
+    },
+    "unresolved_duration_fixtures": []
+  },
+  "rating_recovery": {
+    "source": "uint16 little-endian at raw-window +136 (statistics_anchor +36), divided by 100 and rounded half-up to one decimal",
+    "available": 125,
+    "missing": 0,
+    "status": "raw_report_rating_locally_crosschecked",
+    "crosscheck_minimum": 25,
+    "crosscheck": {
+      "matched": 114,
+      "tested": 114,
+      "mismatches": 0
+    },
+    "raw_source_enabled": true
+  },
+  "zero_minute_exclusion": {
+    "excluded_rows": 0,
+    "by_competition": {},
+    "reason": "verified_minutes_zero",
+    "team_total_checks_use_full_raw_report_rows": true
+  },
+  "derived_singleton_signature_mappings": {},
+  "missing_fixtures": [
+    [
+      7,
+      "2026-08-23",
+      472,
+      457
+    ],
+    [
+      7,
+      "2026-08-30",
+      484,
+      472
+    ],
+    [
+      7,
+      "2026-09-05",
+      472,
+      524
+    ],
+    [
+      7,
+      "2026-09-12",
+      493,
+      472
+    ],
+    [
+      7,
+      "2026-09-19",
+      472,
+      456
+    ],
+    [
+      7,
+      "2026-10-10",
+      575,
+      472
+    ],
+    [
+      7,
+      "2026-10-18",
+      472,
+      496
+    ],
+    [
+      7,
+      "2026-10-25",
+      529,
+      472
+    ],
+    [
+      7,
+      "2026-10-31",
+      532,
+      472
+    ],
+    [
+      7,
+      "2026-11-08",
+      472,
+      471
+    ],
+    [
+      7,
+      "2026-11-21",
+      518,
+      472
+    ],
+    [
+      7,
+      "2026-11-29",
+      472,
+      541
+    ],
+    [
+      7,
+      "2026-12-02",
+      454,
+      472
+    ],
+    [
+      7,
+      "2026-12-05",
+      545,
+      472
+    ],
+    [
+      7,
+      "2026-12-13",
+      472,
+      503
+    ],
+    [
+      7,
+      "2026-12-20",
+      472,
+      520
+    ],
+    [
+      7,
+      "2026-12-26",
+      507,
+      472
+    ],
+    [
+      7,
+      "2026-12-30",
+      581,
+      472
+    ],
+    [
+      7,
+      "2027-01-02",
+      472,
+      533
+    ],
+    [
+      7,
+      "2027-01-06",
+      472,
+      454
+    ],
+    [
+      661,
+      "2027-01-09",
+      472,
+      551
+    ],
+    [
+      662,
+      "2026-09-09",
+      466,
+      472
+    ]
+  ],
+  "unresolved_signatures": {
+    "02c41500": 2
+  }
+}
