@@ -7,7 +7,7 @@ current save. It does not rerun the full exporter and never modifies the save. A
 standard reports, it invokes the bundled field-enrichment step for conservative position
 candidates, raw role-code provenance, rating-source statuses and unresolved signature sightings.
 
-Scope for the current 2026/27 Manchester United save:
+Scope is resolved at runtime from the current save's managed club and owned first-team slot 0:
   formal competitions: 7 (league), 637 (continental), 661 and 662 (cups)
   excluded: 131 (pre-season / non-competitive)
 
@@ -55,7 +55,6 @@ SECTION = "match_stats_cfg"
 EXPECTED_BUILD = "27.0.1+2494687"
 REFERENCE_BUILD = "27.0.0+2486695"
 EXPECTED_SCHEMA = 6
-TEAM_ID_DEFAULT = 539
 # These are the four official competitions present in this specific season export.
 FORMAL_COMPETITION_IDS = (7, 637, 661, 662)
 EXCLUDED_NON_COMPETITIVE_IDS = (131,)
@@ -330,7 +329,7 @@ def load_candidates(export_dir: Path, comp_ids: set[int], roster_names: dict[int
     return result
 
 
-def load_identity_cache(path: Path, team_id: int, roster_names: dict[int, str]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+def load_identity_cache(path: Path, team_id: int, club_uid: int, roster_names: dict[int, str]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
     """Load only trusted mappings; quarantine stale vector-only cache entries.
 
     A stale cache UID must not abort the entire report. When it is absent from the
@@ -343,33 +342,16 @@ def load_identity_cache(path: Path, team_id: int, roster_names: dict[int, str]) 
     if cache.get("game") != "FM27":
         raise RuntimeError("Identity cache is not for FM27")
 
-    # Seed caches are club-specific. The exporter resolves the managed first-team
-    # team_id from the current save and passes it explicitly; never abort a valid
-    # export or reuse another club's player signatures when the seed belongs elsewhere.
+    # A cache is valid only for the exact managed club and its owned first team.
+    # Mismatches are fatal: silently resetting a cache hides wiring errors and can
+    # make a report look successful while every player identity remains unresolved.
     cached_team_id = as_int(cache.get("team_id"))
+    cached_club_uid = as_int(cache.get("club_uid"))
     cached_competition_id = as_int(cache.get("competition_id"))
-    if cached_team_id != team_id or cached_competition_id != 0:
-        cache = {
-            "cache_version": cache.get("cache_version", "1.1"),
-            "game": "FM27",
-            "team_id": team_id,
-            "competition_id": 0,
-            "scope": "formal cross-competition identity cache; isolated to the currently resolved managed first team",
-            "seed_source": None,
-            "mappings": {},
-            "rejected_mappings": [],
-            "cache_reset": {
-                "reason": "seed_cache_scope_mismatch",
-                "seed_team_id": cached_team_id,
-                "requested_team_id": team_id,
-                "seed_competition_id": cached_competition_id,
-                "action": "discarded all seed mappings; rebuild identities only from this save's roster and guarded same-match evidence",
-            },
-        }
-        print(
-            "Identity cache scope mismatch: seed team_id=%s, current team_id=%s. "
-            "Discarding foreign seed mappings and rebuilding safely."
-            % (cached_team_id, team_id)
+    if cached_team_id != team_id or cached_club_uid != club_uid or cached_competition_id != 0:
+        raise RuntimeError(
+            "Identity cache scope mismatch: cache club/team=%s/%s, requested club/team=%s/%s"
+            % (cached_club_uid, cached_team_id, club_uid, team_id)
         )
 
     raw = cache.get("mappings")
@@ -408,11 +390,28 @@ def load_identity_cache(path: Path, team_id: int, roster_names: dict[int, str]) 
                     and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(item.get("date") or "")))
                     and as_int(item.get("competition_id")) in FORMAL_COMPETITION_IDS
                     and (as_int(item.get("opponent_team_id"), 0) or 0) > 0
-                    and item.get("reason") == "unique_single_remaining_row_and_named_history_uid_after_complete_match_roster_reconciliation"
+                    and item.get("reason") == "unique_single_remaining_row_and_unique_named_history_uid_after_complete_match_roster_reconciliation"
                     for item in evidence_rows
                 )
             )
-            if entry.get("evidence") != "prior_validated_signature_cache" and not guarded_singleton:
+            guarded_exact_vector = (
+                entry.get("evidence") == "unique_exact_same_match_stat_vector"
+                and isinstance(evidence_rows, list)
+                and bool(evidence_rows)
+                and all(
+                    as_int(item.get("player_uid")) == uid
+                    and str(item.get("player_name") or "") == name
+                    and item.get("same_match_history_has_stats") is True
+                    and item.get("exact_stat_vector_match") is True
+                    and item.get("matched_fields") == ["goals", "assists", "passes_attempted", "passes_completed"]
+                    and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(item.get("date") or "")))
+                    and as_int(item.get("competition_id")) in FORMAL_COMPETITION_IDS
+                    and (as_int(item.get("opponent_team_id"), 0) or 0) > 0
+                    and item.get("reason") == "unique_exact_four_field_same_match_stat_vector"
+                    for item in evidence_rows
+                )
+            )
+            if entry.get("evidence") != "prior_validated_signature_cache" and not guarded_singleton and not guarded_exact_vector:
                 rejected_mappings.append({
                     "signature": sig,
                     "player_uid": uid,
@@ -862,6 +861,134 @@ def audit_raw_history_crosschecks(
     return result
 
 
+def infer_exact_stat_signature_mappings(
+    reports: list[dict[str, Any]],
+    base_map: dict[str, dict[str, Any]],
+) -> tuple[dict[str, dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """Recover stable record signatures from unique exact same-match stat vectors.
+
+    A match is eligible only when its active anonymous report-row count equals the
+    active named-history UID count. A row is assigned only when goals, assists,
+    passes attempted and passes completed match exactly one active named-history
+    player. Assignments are then reconciled across matches; conflicting signatures
+    and duplicate player UIDs are rejected rather than guessed.
+    """
+    fields = ["goals", "assists", "passes_attempted", "passes_completed"]
+    evidence_by_signature: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    rejected: list[dict[str, Any]] = []
+
+    for report in reports:
+        history_by_uid: dict[int, dict[str, Any]] = {}
+        for history in report.get("candidate_player_history_rows", []):
+            uid = as_int(history.get("player_uid"))
+            if uid is None:
+                continue
+            prior = history_by_uid.get(uid)
+            if prior is None or (history.get("has_stats") is True and prior.get("has_stats") is not True):
+                history_by_uid[uid] = history
+
+        active_uids = {
+            uid: history for uid, history in history_by_uid.items()
+            if history.get("has_stats") is True or (as_int(history.get("minutes"), 0) or 0) > 0
+        }
+        active_rows = [
+            row for row in report.get("anonymous_player_rows", [])
+            if is_appearance(row.get("metrics") or {}, None)
+        ]
+        if not active_uids or len(active_rows) != len(active_uids):
+            continue
+
+        match_assignments: list[tuple[str, int, dict[str, Any], dict[str, int]]] = []
+        used_uids: set[int] = set()
+        for row in active_rows:
+            signature = str(row.get("row_signature") or "").lower()
+            raw_stats = raw_stats_from_probe_row(row)
+            if not re.fullmatch(r"[0-9a-f]{8}", signature) or raw_stats is None:
+                continue
+            if not all(as_int(raw_stats.get(field)) is not None for field in fields):
+                continue
+            matches = []
+            for uid, history in active_uids.items():
+                if history.get("has_stats") is not True:
+                    continue
+                if all(
+                    as_int(history.get(field)) is not None
+                    and as_int(history.get(field)) == as_int(raw_stats.get(field))
+                    for field in fields
+                ):
+                    matches.append((uid, history))
+            if len(matches) != 1:
+                continue
+            uid, history = matches[0]
+            if uid in used_uids:
+                continue
+            used_uids.add(uid)
+            match_assignments.append((signature, uid, history, raw_stats))
+
+        # A partial match is still useful evidence for signatures with unique vectors;
+        # full one-to-one coverage is independently asserted by the regression test.
+        for signature, uid, history, raw_stats in match_assignments:
+            evidence_by_signature[signature].append({
+                "player_uid": uid,
+                "player_name": str(history.get("player_name") or ""),
+                "competition_id": int(report["competition_id"]),
+                "date": str(report["date"]),
+                "opponent_team_id": int(report["opponent_team_id"]),
+                "same_match_history_has_stats": history.get("has_stats") is True,
+                "same_match_minutes": history.get("minutes"),
+                "exact_stat_vector_match": True,
+                "matched_fields": fields,
+                "raw_stat_vector": {field: as_int(raw_stats.get(field)) for field in fields},
+                "reason": "unique_exact_four_field_same_match_stat_vector",
+            })
+
+    inferred: dict[str, dict[str, Any]] = {}
+    uid_to_signature: dict[int, str] = {}
+    for signature, occurrences in evidence_by_signature.items():
+        identities = {(int(item["player_uid"]), str(item["player_name"])) for item in occurrences}
+        if len(identities) != 1 or not next(iter(identities))[1]:
+            rejected.append({
+                "signature": signature,
+                "reason": "conflicting_same_match_exact_stat_vector_assignments",
+                "assignments": sorted(
+                    [{"player_uid": uid, "player_name": name} for uid, name in identities],
+                    key=lambda item: (item["player_uid"], item["player_name"]),
+                ),
+                "occurrences": occurrences,
+            })
+            continue
+        uid, name = next(iter(identities))
+        existing = base_map.get(signature)
+        if existing and as_int(existing.get("player_uid")) != uid:
+            rejected.append({
+                "signature": signature,
+                "reason": "exact_stat_vector_conflicts_with_existing_cache",
+                "cached_player_uid": as_int(existing.get("player_uid")),
+                "observed_player_uid": uid,
+            })
+            continue
+        previous_signature = uid_to_signature.get(uid)
+        if previous_signature and previous_signature != signature:
+            rejected.append({
+                "signature": signature,
+                "reason": "one_player_uid_resolves_to_multiple_record_signatures",
+                "player_uid": uid,
+                "other_signature": previous_signature,
+            })
+            continue
+        uid_to_signature[uid] = signature
+        inferred[signature] = {
+            "player_uid": uid,
+            "player_name": name,
+            "evidence": "unique_exact_same_match_stat_vector",
+            "confidence": "high",
+            "seed_competition_id": None,
+            "derived_from_matches": occurrences,
+        }
+
+    return inferred, [item for group in evidence_by_signature.values() for item in group], rejected
+
+
 def infer_singleton_signature_mappings(
     reports: list[dict[str, Any]],
     base_map: dict[str, dict[str, Any]],
@@ -961,7 +1088,8 @@ def main() -> int:
     parser.add_argument("save", type=Path, help="Path to the current FM27 .fm save")
     parser.add_argument("export_dir", type=Path, help="Existing FM27 first-team export folder")
     parser.add_argument("--cache-file", type=Path, required=True, help="Formal cross-competition identity cache JSON")
-    parser.add_argument("--team-id", type=int, default=TEAM_ID_DEFAULT)
+    parser.add_argument("--team-id", type=int, required=True, help="Dynamically resolved managed first-team ID")
+    parser.add_argument("--club-uid", type=int, required=True, help="Dynamically resolved managed club UID")
     parser.add_argument("--competition-id", type=int, default=0,
                         help="0 = the four formal competitions in this season; never includes pre-season 131")
     parser.add_argument("--no-raw", action="store_true", help="Do not retain raw match-report byte windows in the probe JSON")
@@ -999,7 +1127,7 @@ def main() -> int:
     season_aggregates = load_season_aggregate_rows(export_dir, args.team_id)
     history_source = "player-match-stats-history-archive.json" if (export_dir / "player-match-stats-history-archive.json").is_file() else "player-match-stats.json"
     team_index = load_team_match_index(export_dir, args.team_id)
-    signature_map, cache = load_identity_cache(cache_path, args.team_id, roster_names)
+    signature_map, cache = load_identity_cache(cache_path, args.team_id, args.club_uid, roster_names)
     rejected_cache_mappings = cache.get("rejected_mappings", [])
     rejected_cache_signatures = {str(x.get("signature", "")).lower() for x in rejected_cache_mappings if isinstance(x, dict)}
     if rejected_cache_mappings:
@@ -1215,6 +1343,7 @@ def main() -> int:
             "section": SECTION,
             "section_schema": info.section_schemas.get(SECTION),
             "team_id": args.team_id,
+            "club_uid": args.club_uid,
             "competition_id_filter": 0 if args.competition_id == 0 else args.competition_id,
             "formal_competition_ids": sorted(comp_ids),
             "excluded_non_competitive_ids": list(EXCLUDED_NON_COMPETITIVE_IDS),
@@ -1228,17 +1357,29 @@ def main() -> int:
         }
 
 
-    # Try only the strict one-remaining-row / one-remaining-UID case from complete
-    # same-match player history. This can recover a player such as a cup-only keeper
-    # without guessing from row order or position.
+    # Recover identities from exact same-match stat vectors first. This is possible
+    # even when every row is initially anonymous: the four raw per-player counters
+    # are independently cross-checkable against the named match-history table.
+    exact_map, exact_evidence, rejected_exact = infer_exact_stat_signature_mappings(reports, signature_map)
+    for sig, entry in exact_map.items():
+        if sig in signature_map:
+            continue
+        if any(int(existing["player_uid"]) == int(entry["player_uid"]) for existing in signature_map.values()):
+            rejected_exact.append({"signature": sig, "reason": "player_uid_already_has_a_different_cached_signature", "player_uid": entry["player_uid"]})
+            continue
+        signature_map[sig] = entry
+
+    # Retain the strict one-remaining-row / one-remaining-UID fallback for genuinely
+    # sparse cases, using exact-vector mappings as already-established anchors.
     inferred_map, inferred_evidence, rejected_inference = infer_singleton_signature_mappings(reports, signature_map)
     for sig, entry in inferred_map.items():
         if sig in signature_map:
             continue
         if any(int(existing["player_uid"]) == int(entry["player_uid"]) for existing in signature_map.values()):
-            rejected_inference.append({"signature": sig, "reason": "player_uid_already_has_a_different_cached_signature", "player_uid": entry["player_uid"]})
+            rejected_inference.append({"signature": sig, "reason": "player_uid_already_has_a_different_signature", "player_uid": entry["player_uid"]})
             continue
         signature_map[sig] = entry
+    all_derived_map = {**exact_map, **inferred_map}
 
     # Attach match-duration evidence after singleton identity recovery so every trusted
     # signature mapping can contribute. This enables direct per-match minutes on rows
@@ -1422,6 +1563,9 @@ def main() -> int:
                 if evidence_type == "single_remaining_same_match_named_history":
                     identity_method = "unique_same_match_history_residual"
                     identity_confidence = "同场具名出场名单与详细报告出场行数量完全一致，且仅剩该球员与该记录一一对应"
+                elif evidence_type == "unique_exact_same_match_stat_vector":
+                    identity_method = "unique_exact_same_match_stat_vector"
+                    identity_confidence = "同场四项原始统计（进球、助攻、传球尝试、传球成功）与具名历史唯一精确匹配，并经跨场签名一致性核验"
                 elif evidence_type == "prior_validated_signature_cache":
                     identity_method = "prior_named_history_validated_signature_cache_cross_competition"
                     identity_confidence = "签名映射曾在同一存档的旧报告中通过具名历史交叉检查；本场仅作为跨赛事签名转用"
@@ -1529,6 +1673,7 @@ def main() -> int:
     write_json(export_dir / "player-report-identity-audit.json", {
         "audit_version": "1.9-formal-stale-cache-quarantine",
         "team_id": args.team_id,
+        "club_uid": args.club_uid,
         "competition_id": 0 if args.competition_id == 0 else args.competition_id,
         "formal_competition_ids": sorted(comp_ids),
         "excluded_non_competitive_competition_ids": list(EXCLUDED_NON_COMPETITIVE_IDS),
@@ -1560,8 +1705,12 @@ def main() -> int:
             "signature_mapping_count": len(signature_map),
             "mapping_provenance": cache.get("seed_source") or {},
             "mappings_by_evidence": dict(cache_usage),
-            "derived_singleton_signature_mappings": inferred_map,
+            "derived_exact_stat_vector_signature_mappings": exact_map,
+        "derived_singleton_signature_mappings": inferred_map,
             "derived_singleton_evidence": inferred_evidence,
+            "exact_stat_vector_signature_mappings": exact_map,
+            "exact_stat_vector_evidence_rows": exact_evidence,
+            "rejected_exact_stat_vector_inferences": rejected_exact,
             "rejected_singleton_inferences": rejected_inference,
             "same_match_history_rows_present": cache_history_presence,
             "unresolved_signatures": dict(sorted(unknown_signatures.items())),
@@ -1625,8 +1774,26 @@ def main() -> int:
                 field: sum(1 for row in all_appearance_rows if row.get(field) not in (None, ""))
                 for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "minutes", "rating", "rating_raw_hundredths")
             },
-            "named_history_match_count": 0,
-            "named_history_matches_passed": 0,
+            "named_history_match_count": sum(
+                1 for report in reports
+                if report.get("candidate_player_history_rows")
+            ),
+            "named_history_matches_passed": sum(
+                1 for report in reports
+                if any(
+                    row.get("date") == report.get("date")
+                    and as_int(row.get("competition_id")) == as_int(report.get("competition_id"))
+                    and as_int(row.get("opponent_team_id")) == as_int(report.get("opponent_team_id"))
+                    for row in all_appearance_rows
+                )
+                and all(
+                    row.get("identity_status") == "identified"
+                    for row in all_appearance_rows
+                    if row.get("date") == report.get("date")
+                    and as_int(row.get("competition_id")) == as_int(report.get("competition_id"))
+                    and as_int(row.get("opponent_team_id")) == as_int(report.get("opponent_team_id"))
+                )
+            ),
         "named_history_source": history_source,
             "named_history_note": "Named history supplies positions and cross-checks ratings/entry clocks; the raw match-report player record supplies detailed ratings plus goals, assists, entry/exit clocks and passing counts.",
             "duplicate_uid_within_match_rows": duplicate_uid_conflicts,
@@ -1718,13 +1885,15 @@ def main() -> int:
         "unresolved_signatures": dict(sorted(unknown_signatures.items())),
     })
 
-    learned_cache = {**cache, "mappings": dict(cache.get("mappings", {}))}
-    for sig, entry in inferred_map.items():
+    learned_cache = {**cache, "team_id": args.team_id, "club_uid": args.club_uid, "mappings": dict(cache.get("mappings", {}))}
+    for sig, entry in all_derived_map.items():
         if sig not in learned_cache["mappings"]:
             learned_cache["mappings"][sig] = entry
     learned_cache["updated_from_report"] = {
         "output_directory": export_dir.name,
-        "derived_signature_count": len(inferred_map),
+        "derived_signature_count": len(all_derived_map),
+        "derived_exact_stat_vector_signature_count": len(exact_map),
+        "derived_singleton_signature_count": len(inferred_map),
         "unresolved_signature_count": len(unknown_signatures),
     }
     write_json(export_dir / "FM27_PlayerIdentityCache_Formal_v1.1_learned.json", learned_cache)

@@ -1,0 +1,58 @@
+name: FM27 Exporter PR Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "Run_FM27_Formal_Season_Export_v1.5.0.ps1"
+      - "FM27_PlayerMatchReport_Recovery_v1.9_Formal.py"
+      - "FM27_FormalPlayerReport_Enrichment_v1.1.py"
+      - "tests/**"
+      - ".github/workflows/**"
+  push:
+    branches: [fix/dynamic-identity-cache-scope]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+
+      - name: Install pinned reader
+        run: python -m pip install "fmsave==0.12.4"
+
+      - name: Compile exporter helpers
+        run: |
+          python -m py_compile FM27_PlayerMatchReport_Recovery_v1.9_Formal.py
+          python -m py_compile FM27_FormalPlayerReport_Enrichment_v1.1.py
+          python -m py_compile FM27_FirstTeam_Filter_v1.3.0.py
+
+      - name: Replay real-save identity regression fixture
+        run: python tests/test_player_identity_inference.py
+
+      - name: Parse Windows PowerShell exporter
+        shell: powershell
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $env:GITHUB_WORKSPACE "Run_FM27_Formal_Season_Export_v1.5.0.ps1"),
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+          Write-Host "PowerShell syntax validation passed."
