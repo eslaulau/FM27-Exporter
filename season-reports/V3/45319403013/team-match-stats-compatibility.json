@@ -1,0 +1,101 @@
+{
+  "audit_version": "1.0-v1.4.3-local-compatibility",
+  "game": "FM27",
+  "save_build": "27.0.1+2494687",
+  "save_known_build_upstream": false,
+  "fmsave_version": "0.12.4",
+  "section": "match_stats_cfg",
+  "save_section_schema": 6,
+  "reader": {
+    "name": "team_match_stats",
+    "status": "ok",
+    "record_count": 342,
+    "layout_region": "match_stats_cfg",
+    "layout_source_build": "27.0.0+2486695",
+    "layout_source_schema": 6,
+    "save_schema": 6,
+    "layout_borrowed": true
+  },
+  "upstream_registration": {
+    "status": "unverified_borrowed_layout",
+    "registered_reference_build": "27.0.0+2486695",
+    "note": "This local audit does not alter fmsave known_build or make the save build upstream-registered."
+  },
+  "local_assessment": "partial_or_unverified",
+  "local_checks": {
+    "team_match_stats_reader_passed": true,
+    "managed_first_team_team_match_stats_rows": 13,
+    "formal_fixture_coverage": {
+      "expected": 46,
+      "decoded": 9,
+      "missing": 37,
+      "unexpected": 0,
+      "duplicates": 0,
+      "passed": false
+    },
+    "player_team_total_reconciliation": {
+      "comparisons": 171,
+      "matches": 171,
+      "mismatches": 0,
+      "missing": 0
+    },
+    "raw_player_field_crosschecks": {
+      "goals": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "assists": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "passes_attempted": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "passes_completed": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "entered_at_minute": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "left_at_minute": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "minutes": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      },
+      "rating": {
+        "matched": 0,
+        "tested": 0,
+        "mismatches": 0
+      }
+    },
+    "rating_field_crosscheck": {
+      "raw_window_offset": 136,
+      "anchor_relative_offset": 36,
+      "encoding": "uint16 little-endian hundredths; /100; half-up to one decimal",
+      "minimum_required": 25,
+      "matched": 0,
+      "tested": 0,
+      "mismatches": 0,
+      "passed": false
+    },
+    "zero_minute_rows_excluded": 1
+  },
+  "limitations": [
+    "Local evidence applies only to this checked save/build/schema and does not confer upstream registration.",
+    "FM27 build 27.0.1+2494687 remains upstream-unverified in fmsave 0.12.4 and borrows the registered 27.0.0 schema-6 layout.",
+    "Structural and data reconciliation are not a substitute for semantic validation on other saves."
+  ]
+}
