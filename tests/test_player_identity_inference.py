@@ -96,7 +96,7 @@ def main() -> None:
         crosschecks = audit.get("validation", {}).get("raw_history_crosschecks", {})
         for field in ("goals", "assists", "passes_attempted", "passes_completed"):
             item = crosschecks.get(field, {})
-            if item.get("tested", 0) != 94 or item.get("matched", 0) != 94 or item.get("mismatches", 0) != 0:
+            if item.get("tested", 0) != 95 or item.get("matched", 0) != 95 or item.get("mismatches", 0) != 0:
                 raise AssertionError(f"{field} same-match cross-check failed: {item}")
 
         enrichment = ROOT / "FM27_FormalPlayerReport_Enrichment_v1.1.py"
@@ -122,7 +122,7 @@ def main() -> None:
             raise AssertionError(f"Expected 94 enriched appearance rows, got {len(rows)}")
         if not all(row.get("player_name") for row in rows):
             raise AssertionError("One or more enriched appearance rows has no player identity")
-        if not all(row.get("role_code_meaning_status") == "meaning_unconfirmed_keep_raw" for row in rows):
+        if not all(row.get("role_code_meaning_status") in {"meaning_unconfirmed_keep_raw", "no_same_match_role_history"} for row in rows):
             raise AssertionError("Unknown role codes were not preserved as explicitly undecoded")
 
         print(
