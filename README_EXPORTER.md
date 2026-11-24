@@ -24,7 +24,7 @@ The GitHub-hosted Windows runner executes the v1.5.0 PowerShell exporter. The wo
 - Retains opponent identity, competition, date, venue, score and opponent team-level match statistics only in direct matches against the managed first team.
 - Excludes opponent player profiles, opponent player records and unrelated matches.
 - Tactical configurations, set-piece configurations, current tactic slots, historical tactic inference and role inference are deliberately not exported. The user supplies the tactic used for each match.
-- Detailed player match reports for formal competition IDs 7, 637, 661 and 662; excludes non-competitive ID 131.
+- Detailed player match reports for formal competitions discovered from the managed team's save-local fixture rules; match-rule family 1 (friendlies/pre-season) is excluded. Competition IDs are never hardcoded.
 - Unresolved anonymous match rows remain unresolved; the exporter does not guess player identity.
 
 ## Compatibility note
