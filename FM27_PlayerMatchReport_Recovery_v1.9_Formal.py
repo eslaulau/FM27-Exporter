@@ -341,13 +341,39 @@ def load_identity_cache(path: Path, team_id: int, roster_names: dict[int, str]) 
     cache = read_json(path)
     if cache.get("game") != "FM27":
         raise RuntimeError("Identity cache is not for FM27")
-    if as_int(cache.get("team_id")) != team_id:
-        raise RuntimeError("Identity cache team_id does not match the requested team")
-    if as_int(cache.get("competition_id")) != 0:
-        raise RuntimeError("Formal identity cache must declare competition_id=0 (formal cross-competition scope)")
+
+    # Seed caches are club-specific. The exporter resolves the managed first-team
+    # team_id from the current save and passes it explicitly; never abort a valid
+    # export or reuse another club's player signatures when the seed belongs elsewhere.
+    cached_team_id = as_int(cache.get("team_id"))
+    cached_competition_id = as_int(cache.get("competition_id"))
+    if cached_team_id != team_id or cached_competition_id != 0:
+        cache = {
+            "cache_version": cache.get("cache_version", "1.1"),
+            "game": "FM27",
+            "team_id": team_id,
+            "competition_id": 0,
+            "scope": "formal cross-competition identity cache; isolated to the currently resolved managed first team",
+            "seed_source": None,
+            "mappings": {},
+            "rejected_mappings": [],
+            "cache_reset": {
+                "reason": "seed_cache_scope_mismatch",
+                "seed_team_id": cached_team_id,
+                "requested_team_id": team_id,
+                "seed_competition_id": cached_competition_id,
+                "action": "discarded all seed mappings; rebuild identities only from this save's roster and guarded same-match evidence",
+            },
+        }
+        print(
+            "Identity cache scope mismatch: seed team_id=%s, current team_id=%s. "
+            "Discarding foreign seed mappings and rebuilding safely."
+            % (cached_team_id, team_id)
+        )
+
     raw = cache.get("mappings")
-    if not isinstance(raw, dict) or not raw:
-        raise RuntimeError("Identity cache has no mappings")
+    if not isinstance(raw, dict):
+        raise RuntimeError("Identity cache mappings must be a JSON object")
     mappings: dict[str, dict[str, Any]] = {}
     uid_to_signature: dict[int, str] = {}
     rejected_mappings: list[dict[str, Any]] = []
