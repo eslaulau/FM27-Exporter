@@ -8,8 +8,8 @@ v1.5.0 runs on a GitHub-hosted Windows runner. The active workflow is [fm27-v1.5
 2. When you request an export, start **Actions → FM27 v1.5.0 Cloud Season Export → Run workflow**.
 3. Supply the exact `.fm` asset filename. One workflow run exports exactly one save; automatic Release publishing triggers are disabled.
 4. Before parsing, the workflow checks the downloaded file's byte length and SHA-256 against the source Release asset metadata. Each save is downloaded and exported inside its own isolated working directory.
-5. The workflow validates required output files and dynamic managed first-team scope, then publishes the report ZIP and summary JSON to `fm27-exports`.
-6. It reads the published Release back and verifies each uploaded asset's server-reported size and SHA-256. Successful full report folders are retained as a 30-day workflow artifact; failure diagnostics are retained for 14 days.
+5. The complete, uncompressed report folder is committed to `season-reports/<save-name>/<workflow-run-id>/` on the repository's default branch. Repeated exports are stored in separate run-ID folders. No ZIP is created and no report Release asset is uploaded.
+6. The workflow verifies the committed report files against their Git blob IDs. Failure diagnostics are retained for 14 days as a workflow artifact.
 
 The GitHub-hosted Windows runner executes the v1.5.0 PowerShell exporter. The workflow uses the pinned `fmsave==0.12.4` dependency; automatic parser upgrades are disabled. Users do not need local Python, PowerShell, or a local export installation.
 
@@ -31,11 +31,27 @@ The GitHub-hosted Windows runner executes the v1.5.0 PowerShell exporter. The wo
 
 For FM27 build 27.0.1+2494687 and `match_stats_cfg` schema 6, an explicitly labelled experimental compatibility path is included. It borrows the registered 27.0.0 schema-6 layout and is not an upstream verification claim. Inspect `team-match-stats-compatibility.json` when present and compare its values against an in-game match report.
 
-## Output and validation
+## Report location and validation
 
-Download the generated ZIP packages from the [fm27-exports Release](https://github.com/eslaulau/FM27-Exporter/releases/tag/fm27-exports). Review `managed-club.json`, `validation.json`, `first-team-scope.json`, `player-report-identity-audit.json`, `team-match-stats-compatibility.json` (if present), `export-warnings.txt` (if present), and `native-diagnostics.txt`.
+Browse the generated report folders under [season-reports/](season-reports/). Each export is stored as:
 
-A completed workflow means the source asset integrity check, required output checks, dynamic first-team scope check, and published asset readback checks passed. Paired-row checks prove two-sided structure and fixture joins, not semantic accuracy of every decoded statistic.
+```
+season-reports/
+  <save-name>/
+    <workflow-run-id>/
+      FM27_Analysis_<timestamp>/
+        save-info.json
+        validation.json
+        first-team-scope.json
+        fixtures.json
+        team-match-stats.json
+        players.json
+        ...
+```
+
+Review `cloud-export-manifest.json`, `cloud-export-summary.json`, `managed-club.json`, `validation.json`, `first-team-scope.json`, `player-report-identity-audit.json`, `team-match-stats-compatibility.json` (if present), `export-warnings.txt` (if present), and `native-diagnostics.txt`.
+
+A completed workflow means the source asset integrity check, required output checks, dynamic first-team scope check, repository commit, and Git blob readback checks passed. Paired-row checks prove two-sided structure and fixture joins, not semantic accuracy of every decoded statistic.
 
 ## Local development
 
