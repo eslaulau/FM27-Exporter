@@ -7,7 +7,7 @@ current save. It does not rerun the full exporter and never modifies the save. A
 standard reports, it invokes the bundled field-enrichment step for conservative position
 candidates, raw role-code provenance, rating-source statuses and unresolved signature sightings.
 
-Scope for the current 2026/27 Manchester United save:
+Scope is resolved at runtime from the current save's managed club and owned first-team slot 0:
   formal competitions: 7 (league), 637 (continental), 661 and 662 (cups)
   excluded: 131 (pre-season / non-competitive)
 
@@ -55,7 +55,6 @@ SECTION = "match_stats_cfg"
 EXPECTED_BUILD = "27.0.1+2494687"
 REFERENCE_BUILD = "27.0.0+2486695"
 EXPECTED_SCHEMA = 6
-TEAM_ID_DEFAULT = 539
 # These are the four official competitions present in this specific season export.
 FORMAL_COMPETITION_IDS = (7, 637, 661, 662)
 EXCLUDED_NON_COMPETITIVE_IDS = (131,)
@@ -330,7 +329,7 @@ def load_candidates(export_dir: Path, comp_ids: set[int], roster_names: dict[int
     return result
 
 
-def load_identity_cache(path: Path, team_id: int, roster_names: dict[int, str]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+def load_identity_cache(path: Path, team_id: int, club_uid: int, roster_names: dict[int, str]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
     """Load only trusted mappings; quarantine stale vector-only cache entries.
 
     A stale cache UID must not abort the entire report. When it is absent from the
@@ -343,33 +342,16 @@ def load_identity_cache(path: Path, team_id: int, roster_names: dict[int, str]) 
     if cache.get("game") != "FM27":
         raise RuntimeError("Identity cache is not for FM27")
 
-    # Seed caches are club-specific. The exporter resolves the managed first-team
-    # team_id from the current save and passes it explicitly; never abort a valid
-    # export or reuse another club's player signatures when the seed belongs elsewhere.
+    # A cache is valid only for the exact managed club and its owned first team.
+    # Mismatches are fatal: silently resetting a cache hides wiring errors and can
+    # make a report look successful while every player identity remains unresolved.
     cached_team_id = as_int(cache.get("team_id"))
+    cached_club_uid = as_int(cache.get("club_uid"))
     cached_competition_id = as_int(cache.get("competition_id"))
-    if cached_team_id != team_id or cached_competition_id != 0:
-        cache = {
-            "cache_version": cache.get("cache_version", "1.1"),
-            "game": "FM27",
-            "team_id": team_id,
-            "competition_id": 0,
-            "scope": "formal cross-competition identity cache; isolated to the currently resolved managed first team",
-            "seed_source": None,
-            "mappings": {},
-            "rejected_mappings": [],
-            "cache_reset": {
-                "reason": "seed_cache_scope_mismatch",
-                "seed_team_id": cached_team_id,
-                "requested_team_id": team_id,
-                "seed_competition_id": cached_competition_id,
-                "action": "discarded all seed mappings; rebuild identities only from this save's roster and guarded same-match evidence",
-            },
-        }
-        print(
-            "Identity cache scope mismatch: seed team_id=%s, current team_id=%s. "
-            "Discarding foreign seed mappings and rebuilding safely."
-            % (cached_team_id, team_id)
+    if cached_team_id != team_id or cached_club_uid != club_uid or cached_competition_id != 0:
+        raise RuntimeError(
+            "Identity cache scope mismatch: cache club/team=%s/%s, requested club/team=%s/%s"
+            % (cached_club_uid, cached_team_id, club_uid, team_id)
         )
 
     raw = cache.get("mappings")
@@ -961,7 +943,8 @@ def main() -> int:
     parser.add_argument("save", type=Path, help="Path to the current FM27 .fm save")
     parser.add_argument("export_dir", type=Path, help="Existing FM27 first-team export folder")
     parser.add_argument("--cache-file", type=Path, required=True, help="Formal cross-competition identity cache JSON")
-    parser.add_argument("--team-id", type=int, default=TEAM_ID_DEFAULT)
+    parser.add_argument("--team-id", type=int, required=True, help="Dynamically resolved managed first-team ID")
+    parser.add_argument("--club-uid", type=int, required=True, help="Dynamically resolved managed club UID")
     parser.add_argument("--competition-id", type=int, default=0,
                         help="0 = the four formal competitions in this season; never includes pre-season 131")
     parser.add_argument("--no-raw", action="store_true", help="Do not retain raw match-report byte windows in the probe JSON")
@@ -999,7 +982,7 @@ def main() -> int:
     season_aggregates = load_season_aggregate_rows(export_dir, args.team_id)
     history_source = "player-match-stats-history-archive.json" if (export_dir / "player-match-stats-history-archive.json").is_file() else "player-match-stats.json"
     team_index = load_team_match_index(export_dir, args.team_id)
-    signature_map, cache = load_identity_cache(cache_path, args.team_id, roster_names)
+    signature_map, cache = load_identity_cache(cache_path, args.team_id, args.club_uid, roster_names)
     rejected_cache_mappings = cache.get("rejected_mappings", [])
     rejected_cache_signatures = {str(x.get("signature", "")).lower() for x in rejected_cache_mappings if isinstance(x, dict)}
     if rejected_cache_mappings:
@@ -1718,7 +1701,7 @@ def main() -> int:
         "unresolved_signatures": dict(sorted(unknown_signatures.items())),
     })
 
-    learned_cache = {**cache, "mappings": dict(cache.get("mappings", {}))}
+    learned_cache = {**cache, "team_id": args.team_id, "club_uid": args.club_uid, "mappings": dict(cache.get("mappings", {}))}
     for sig, entry in inferred_map.items():
         if sig not in learned_cache["mappings"]:
             learned_cache["mappings"][sig] = entry
