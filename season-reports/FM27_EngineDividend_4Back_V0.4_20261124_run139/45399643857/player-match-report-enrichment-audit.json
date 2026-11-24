@@ -1,0 +1,89 @@
+{
+  "enrichment_version": "1.1",
+  "input_identified_rows": 0,
+  "output_rows": 0,
+  "unresolved_rows_left_unchanged": 94,
+  "native_catalog_position_map": [
+    {
+      "mask": 1,
+      "id": "GK",
+      "name_zh": "门将"
+    },
+    {
+      "mask": 4,
+      "id": "DR",
+      "name_zh": "右后卫"
+    },
+    {
+      "mask": 8,
+      "id": "DL",
+      "name_zh": "左后卫"
+    },
+    {
+      "mask": 16,
+      "id": "DC",
+      "name_zh": "中后卫"
+    },
+    {
+      "mask": 32,
+      "id": "WBR",
+      "name_zh": "右翼卫"
+    },
+    {
+      "mask": 64,
+      "id": "WBL",
+      "name_zh": "左翼卫"
+    },
+    {
+      "mask": 128,
+      "id": "DMC",
+      "name_zh": "后腰"
+    },
+    {
+      "mask": 256,
+      "id": "MR",
+      "name_zh": "右前卫"
+    },
+    {
+      "mask": 512,
+      "id": "ML",
+      "name_zh": "左前卫"
+    },
+    {
+      "mask": 1024,
+      "id": "MC",
+      "name_zh": "中前卫"
+    },
+    {
+      "mask": 2048,
+      "id": "AMR",
+      "name_zh": "右边锋"
+    },
+    {
+      "mask": 4096,
+      "id": "AML",
+      "name_zh": "左边锋"
+    },
+    {
+      "mask": 8192,
+      "id": "AMC",
+      "name_zh": "前腰"
+    },
+    {
+      "mask": 16384,
+      "id": "ST",
+      "name_zh": "中锋"
+    }
+  ],
+  "position_mapping_note": "Only exact single-bit numeric matches to the bundle's native tactic-position catalog are labelled. GK is the only match-history position named by the upstream fmsave reference; other labels are candidates, not UI-verified match-position semantics. Raw position_code is preserved.",
+  "position_candidate_row_counts": {},
+  "role_code_note": "role_code is retained as a raw byte. Upstream fmsave documents its meaning as unestablished; it is not decoded by array order or by candidate roles.",
+  "role_code_raw_counts": {},
+  "role_code_position_groups": [],
+  "rating_note": "Ratings are sourced from the detailed raw match-report record at raw-window offset +136 (uint16 little-endian hundredths, divided by 100 and rounded half-up to one decimal) only when the current save passes at least 25 exact named-history rating cross-checks with zero mismatches. Otherwise retained same-match history remains the fallback; no performance-based estimate is used.",
+  "rating_source_status_counts": {},
+  "rating_rows_present": 0,
+  "rating_rows_missing": 0,
+  "history_archive_rows": 459,
+  "same_match_history_join_rows": 0
+}
