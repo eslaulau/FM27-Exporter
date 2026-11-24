@@ -1,5 +1,5 @@
 ﻿# FM27 managed first-team + opponent match-stat exporter v1.5.0 - Windows PowerShell 5.1 compatible
-# Read-only. Requires Python 3.12+ and fmsave==0.12.4 (pinned; no auto-upgrade).
+# Read-only. Requires Python 3.12+ and fmsave==0.14.3 (pinned; no auto-upgrade).
 # Keeps managed first-team player data and both home and away team statistics for direct first-team fixtures.
 # Tactical configurations are intentionally not exported or inferred; user supplies match-to-tactic mapping.
 # Opponent player profiles and unrelated opponent matches are excluded.
@@ -137,229 +137,6 @@ with fmsave.open(sys.argv[1]) as career:
     Set-Content -LiteralPath (Join-Path $script:OutDir 'managed-club.json') -Value ($identity | ConvertTo-Json -Depth 5) -Encoding UTF8
     Write-Host ("Managed club resolved: {0} | UID {1} | first-team ID {2}" -f $script:ClubName, $script:ClubUid, $script:TeamId) -ForegroundColor Green
 }
-
-function Invoke-TeamMatchStatsSchemaFallback {
-    param([Parameter(Mandatory = $true)][string]$OutputPath)
-
-    # Experimental compatibility path for FM27 27.0.1+2494687 only.
-    # The match_stats_cfg section must still report schema 6. This borrows the
-    # registered 27.0.0 schema-6 layout and then runs fmsave's own reader checks.
-    # It is NOT an upstream-verified 27.0.1 layout; metadata is written beside the JSON.
-    $helperPath = Join-Path $script:TempDir 'team_match_stats_schema_fallback.py'
-    $compatPath = Join-Path $script:OutDir 'team-match-stats-compatibility.json'
-
-    $pythonHelper = @'
-import collections
-import datetime
-import json
-import pathlib
-import sys
-import traceback
-import warnings
-
-EXPECTED_BUILD = "27.0.1+2494687"
-REFERENCE_BUILD = "27.0.0+2486695"
-EXPECTED_SCHEMA = 6
-FIRST_TEAM_ID = None
-
-
-def key_of(row):
-    return (
-        row.get("competition_id"),
-        row.get("home_team_id"),
-        row.get("away_team_id"),
-        str(row.get("date")),
-    )
-
-
-def main():
-    if len(sys.argv) != 5:
-        raise RuntimeError("internal helper arguments are incomplete")
-
-    save_path = pathlib.Path(sys.argv[1])
-    output_path = pathlib.Path(sys.argv[2])
-    fixtures_path = pathlib.Path(sys.argv[3])
-    compatibility_path = pathlib.Path(sys.argv[4])
-
-    import fmsave
-    import fmsave._save as save_module
-    from fmsave._layouts import MatchReportLayout, find_layout
-    from fmsave.readers._common import MATCH_REPORTS_SECTION
-
-    original_resolver = save_module.find_match_report_layout
-
-    def schema_matched_resolver(game, schema, build, *, known_build):
-        if (
-            game == "FM27"
-            and build == EXPECTED_BUILD
-            and schema == EXPECTED_SCHEMA
-            and not known_build
-        ):
-            # Resolve only the exact schema-6 report layout registered for 27.0.0.
-            # The check in this helper is intentionally narrower than a generic override.
-            match = find_layout(
-                MatchReportLayout,
-                MATCH_REPORTS_SECTION,
-                EXPECTED_SCHEMA,
-                REFERENCE_BUILD,
-            )
-            if not match.exact:
-                raise RuntimeError("reference match-report layout was not an exact registered match")
-            return match.layout
-        return original_resolver(game, schema, build, known_build=known_build)
-
-    save_module.find_match_report_layout = schema_matched_resolver
-
-    with fmsave.open(str(save_path)) as career:
-        info = career.info
-        observed_schema = info.section_schemas.get(MATCH_REPORTS_SECTION)
-        if info.game != "FM27":
-            raise RuntimeError("compatibility path is only for FM27 saves")
-        if info.build != EXPECTED_BUILD:
-            raise RuntimeError(
-                "compatibility path is restricted to build %s; save is %s" % (EXPECTED_BUILD, info.build)
-            )
-        if observed_schema != EXPECTED_SCHEMA:
-            raise RuntimeError(
-                "match_stats_cfg schema mismatch: expected %s, found %s" % (EXPECTED_SCHEMA, observed_schema)
-            )
-
-        managed = career.managed_clubs()
-        if len(managed) != 1:
-            raise RuntimeError("expected exactly one managed club entry; refusing to guess")
-        managed_uid = managed[0].club_uid
-        managed_club_name = managed[0].club_name
-        managed_clubs = [club for club in career.clubs() if club.uid == managed_uid]
-        if len(managed_clubs) != 1:
-            raise RuntimeError("managed club UID did not resolve to exactly one club")
-        first_teams = [team for team in managed_clubs[0].teams if team.club_uid == managed_uid and team.slot == 0]
-        if len(first_teams) != 1:
-            raise RuntimeError("managed club does not have exactly one owned team at slot 0")
-        FIRST_TEAM_ID = first_teams[0].team_id
-        team_ids = {team.team_id for team in managed_clubs[0].teams}
-        if FIRST_TEAM_ID not in team_ids:
-            raise RuntimeError("resolved first-team ID is not present in managed club team list")
-
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            table = career.team_match_stats()
-            all_rows = table.to_dicts(json_ready=True)
-
-        # Select only matches involving the explicitly configured managed first team.
-        # Keep both home and away rows after pair integrity checks.
-        relevant_rows = [
-            row for row in all_rows
-            if row.get("home_team_id") == FIRST_TEAM_ID or row.get("away_team_id") == FIRST_TEAM_ID
-        ]
-        if not relevant_rows:
-            raise RuntimeError(
-                "the schema-matched reader returned zero first-team rows for team_id=%s; refusing to create an empty success file"
-                % FIRST_TEAM_ID
-            )
-
-        grouped = collections.defaultdict(list)
-        for row in relevant_rows:
-            grouped[key_of(row)].append(row)
-
-        malformed = []
-        for key, pair in grouped.items():
-            homes = [row for row in pair if row.get("is_home") is True]
-            aways = [row for row in pair if row.get("is_home") is False]
-            if len(pair) != 2 or len(homes) != 1 or len(aways) != 1:
-                malformed.append({"match": key, "rows": len(pair)})
-                continue
-            if homes[0].get("team_id") != key[1] or aways[0].get("team_id") != key[2]:
-                malformed.append({"match": key, "reason": "home/away team IDs disagree"})
-        if malformed:
-            raise RuntimeError(
-                "structural match-pair checks failed for %s report(s); refusing to export" % len(malformed)
-            )
-
-        fixture_count = None
-        joined_count = None
-        unmatched_report_matches = None
-        if fixtures_path.is_file():
-            fixtures = json.loads(fixtures_path.read_text(encoding="utf-8-sig"))
-            first_team_fixtures = [
-                row for row in fixtures
-                if FIRST_TEAM_ID in (row.get("home_team_id"), row.get("away_team_id"))
-            ]
-            fixture_keys = {key_of(row) for row in first_team_fixtures}
-            report_keys = set(grouped)
-            fixture_count = len(first_team_fixtures)
-            joined_count = len(report_keys & fixture_keys)
-            unmatched_report_matches = len(report_keys - fixture_keys)
-            if report_keys and joined_count == 0:
-                raise RuntimeError(
-                    "none of the first-team report keys join to first-team fixtures.json; refusing to export potentially misaligned rows"
-                )
-
-        output_path.write_text(
-            json.dumps(relevant_rows, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
-            encoding="utf-8",
-        )
-        metadata = {
-            "status": "EXPERIMENTAL_SCHEMA_MATCH_FALLBACK",
-            "save_game": info.game,
-            "save_build": info.build,
-            "match_stats_cfg_schema": observed_schema,
-            "layout_borrowed_from": REFERENCE_BUILD,
-            "fmsave_version": getattr(fmsave, "__version__", "unknown"),
-            "scope": "managed first-team fixtures; both home and away team rows per match",
-            "managed_club_uid": managed_uid,
-            "managed_club_name": managed_club_name,
-            "managed_first_team_id": FIRST_TEAM_ID,
-            "raw_team_rows": len(all_rows),
-            "first_team_match_pair_rows_checked": len(relevant_rows),
-            "first_team_and_opponent_rows_written": len(relevant_rows),
-            "opponent_side_rows_retained": sum(1 for row in relevant_rows if row.get("team_id") != FIRST_TEAM_ID),
-            "first_team_matches_with_reports": len(grouped),
-            "first_team_fixtures_in_scope": fixture_count,
-            "report_matches_joined_to_first_team_fixtures": joined_count,
-            "report_matches_without_fixture_join": unmatched_report_matches,
-            "reader_warnings": [str(item.message) for item in caught],
-            "limitations": [
-                "The upstream fmsave package does not register the team-match-stats layout for this exact build.",
-                "This fallback borrows the FM27 27.0.0 layout only because match_stats_cfg schema is exactly 6.",
-                "Structural pair and fixture-join checks passed, but that does not prove every decoded field matches the in-game screen.",
-                "Treat the output as experimental until compared with at least one in-game match report."
-            ],
-        }
-        compatibility_path.write_text(
-            json.dumps(metadata, ensure_ascii=False, indent=2, allow_nan=False) + "\n",
-            encoding="utf-8",
-        )
-        print(
-            "EXPERIMENTAL TWO-SIDED MATCH STATS: %s matches, %s home+away rows, %s rows joined to first-team fixtures."
-            % (len(grouped), len(relevant_rows), joined_count)
-        )
-        print("Compatibility notes: %s" % compatibility_path)
-        return 0
-
-
-if __name__ == "__main__":
-    try:
-        raise SystemExit(main())
-    except Exception:
-        traceback.print_exc()
-        raise SystemExit(2)
-'@
-
-    Set-Content -LiteralPath $helperPath -Value $pythonHelper -Encoding UTF8
-
-    $helperArgs = @()
-    if ($script:PythonPrefix.Count -gt 0) { $helperArgs += $script:PythonPrefix }
-    $helperArgs += @(
-        $helperPath,
-        $script:SavePath,
-        $OutputPath,
-        (Join-Path $script:OutDir 'fixtures.json'),
-        $compatPath
-    )
-
-    return Invoke-NativeCapture -FilePath $script:PythonExe -Arguments $helperArgs -Label 'team_match_stats_schema_fallback'
-}
-
 
 function Invoke-FirstTeamDataFilter {
     param()
@@ -533,37 +310,8 @@ function Export-FmTable {
     Add-Diagnostic -Title ('export ' + $TableName + ' stderr') -Text $result.StdErr
 
     if ($result.ExitCode -ne 0) {
-        $fallbackSucceeded = $false
-        if (
-            $TableName -eq 'team-match-stats' -and
-            $result.StdErr -match 'team match stats have no supported layout for FM27 build 27\.0\.1\+2494687'
-        ) {
-            Write-Host 'Trying experimental same-schema team-match-stats compatibility path...' -ForegroundColor Yellow
-            if (Test-Path -LiteralPath $outputPath) { Remove-Item -LiteralPath $outputPath -Force }
-            $compatibilityPath = Join-Path $script:OutDir 'team-match-stats-compatibility.json'
-            if (Test-Path -LiteralPath $compatibilityPath) { Remove-Item -LiteralPath $compatibilityPath -Force }
-            $fallbackResult = Invoke-TeamMatchStatsSchemaFallback -OutputPath $outputPath
-            Add-Diagnostic -Title 'team-match-stats schema fallback stdout' -Text $fallbackResult.StdOut
-            Add-Diagnostic -Title 'team-match-stats schema fallback stderr' -Text $fallbackResult.StdErr
-            if (
-                $fallbackResult.ExitCode -eq 0 -and
-                (Test-Path -LiteralPath $outputPath) -and
-                (Test-Path -LiteralPath (Join-Path $script:OutDir 'team-match-stats-compatibility.json'))
-            ) {
-                $fallbackSucceeded = $true
-                Write-Host 'Experimental team-match-stats export succeeded. Verify team-match-stats-compatibility.json against an in-game match report.' -ForegroundColor Yellow
-            }
-            else {
-                $script:Errors.Add('team-match-stats: standard export unsupported and experimental schema fallback failed; see native-diagnostics.txt')
-                Write-Host 'WARNING: experimental team-match-stats fallback failed. See native-diagnostics.txt.' -ForegroundColor Yellow
-            }
-        }
-        if (-not $fallbackSucceeded) {
-            if ($TableName -ne 'team-match-stats' -or $result.StdErr -notmatch 'team match stats have no supported layout for FM27 build 27\.0\.1\+2494687') {
-                $script:Errors.Add($TableName + ': export failed; exit code ' + $result.ExitCode)
-                Write-Host ('WARNING: ' + $TableName + ' export failed. Continuing.') -ForegroundColor Yellow
-            }
-        }
+        $script:Errors.Add($TableName + ': export failed; exit code ' + $result.ExitCode)
+        Write-Host ('WARNING: ' + $TableName + ' export failed. Continuing.') -ForegroundColor Yellow
     }
     elseif (-not [string]::IsNullOrWhiteSpace($result.StdErr)) {
         Write-Host ('Note: ' + $TableName + ' produced parser warnings; see native-diagnostics.txt.') -ForegroundColor Yellow
@@ -576,7 +324,7 @@ function Export-FmTable {
 Write-Host ''
 Write-Host 'FM27 Save Batch Exporter' -ForegroundColor Cyan
 Write-Host 'Read-only: the save file will not be modified.' -ForegroundColor Green
-Write-Host 'FM27 27.0.1 team-match-stats may use a clearly labelled experimental schema fallback.' -ForegroundColor Yellow
+Write-Host 'fmsave 0.14.3 can try a shared FM27 schema-matched layout for unregistered builds; review validation and compatibility audit.' -ForegroundColor Yellow
 Write-Host ''
 
 $script:TempDir = Join-Path $env:TEMP ('FM27_Fmsave_' + [Guid]::NewGuid().ToString('N'))
@@ -670,7 +418,7 @@ try {
     # Pin the parser to the last known-good version from the original workflow.
     # Never use --upgrade here: pip must install exactly this version, even if a
     # newer release is already present in the selected Python environment.
-    $script:FmsavePinnedVersion = '0.12.4'
+    $script:FmsavePinnedVersion = '0.14.3'
     Write-Host ''
     Write-Host ('Installing/checking pinned fmsave ' + $script:FmsavePinnedVersion + ' (automatic upgrades disabled)...') -ForegroundColor Cyan
     $pipArgs = @()
@@ -822,7 +570,7 @@ try {
         'FM27 managed first-team + opponent match-stat export bundle v1.5.0 (formal competitions)',
         'Default named player history uses a save-scoped route under FM27_PlayerMatchHistoryArchives beside the save file.',
         'Overlapping fixture or named-row conflicts automatically fork a new save-specific archive branch; conflicting histories are never merged.',
-        'Parser version is pinned to fmsave==0.12.4; automatic upgrades are disabled.',
+        'Parser version is pinned to fmsave==0.14.3; automatic upgrades are disabled.',
         'Save path defaults to the configured FM27 2.fm; override with -SavePath when needed.',
         'Optional -ReuseExportDir reuses an existing first-team export folder and regenerates only the detailed formal player reports.',
         '',
@@ -831,11 +579,11 @@ try {
         'managed-club.json, save-info, parser validation and first-team-scope.json.',
         'Per-player detailed match-report outputs: player-report-probe.json, player-match-report-identified.csv/json, player-match-report-unresolved.csv, player-match-report-formal-all.csv and player-match-report-formal-summary.json.',
         'These detailed reports cover formal competitions 7, 637, 661 and 662; pre-season/non-competitive competition 131 is excluded.',
-        'The match-report helper performs a targeted read-only pass over match_stats_cfg with fmsave==0.12.4.',
+        'The match-report helper performs a targeted read-only pass over match_stats_cfg with fmsave==0.14.3.',
         'Identities use a persisted four-byte signature cache seeded from the validated full-season league report; cross-competition transfer limitations are recorded in the identity audit.',
         'Unmapped player rows remain anonymous and are written to player-match-report-unresolved.csv.',
         'Verified raw player-record offsets decode goals, assists, substitute entry/exit clocks, passes attempted and passes completed even when rolling named history is missing.',
-        'fmsave 0.12.4 adds PlayerMatchStats.entered_at_minute to named match history and PlayerSeasonStats.minutes_since_last_goal to overall club season stats.',
+        'The pinned fmsave version exposes PlayerMatchStats.entered_at_minute and PlayerSeasonStats.minutes_since_last_goal for named match history and overall club season stats.',
         'Minutes are decoded from raw entry/exit clocks when match duration is verified by named-history votes, a unique exact season-category solution, or regular-time competition/stage rules.',
         'Match ratings use the locally cross-validated uint16 little-endian field at raw-window +136 (statistics_anchor +36): hundredths divided by 100, rounded half-up to one decimal. Enable only after at least 25 exact same-match history checks pass with zero mismatches.',
         'Rows with a confirmed 0-minute appearance are omitted from player-level match reports; team-total checks still use the full raw match report.',
@@ -847,8 +595,8 @@ try {
         'Opponent identity, competition, date, venue and score remain as match context; opponent team-level statistics are retained for direct matches.',
         'Opponent player profiles and unrelated opponent matches are excluded; opponent-side team statistics for direct matches are retained.',
         'Tactical configurations, set-piece configurations, current tactic slots and historical tactic inference are deliberately not exported.',
-        'For FM27 27.0.1+2494687 with match_stats_cfg schema 6, fmsave 0.12.4 borrows the registered 27.0.0 schema-6 layout because 27.0.1 is not upstream-registered.',
-        'The generated team-match-stats-compatibility.json records the reader status, source layout, formal-fixture coverage, team totals and raw-field cross-checks for this save only.',
+        'For FM27 27.0.1+2494687 with match_stats_cfg schema 6, fmsave 0.14.3 uses an available registered FM27 schema-6 match-report layout; the exact 27.0.1 build remains unregistered and the decoded fields are not thereby in-game verified.',
+        'The generated team-match-stats-compatibility.json records the reader status, borrowed layout, formal-fixture coverage, team totals and raw-field cross-checks for this save only.',
         'A local compatibility pass does not change fmsave known_build and is not a claim of upstream verification for other saves/builds.',
         'Named player history is joined to first-team fixtures by competition, date and opponent team ID.',
         'Tactical configurations and inferred historical formations are not exported. User supplies the tactic used for each match.',
