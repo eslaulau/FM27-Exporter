@@ -537,6 +537,28 @@ def build_position_semantic_validation(
         })
 
     verified_codes = [row for row in codes if row["semantic_status"] == "verified_by_visual_game_ui_evidence"]
+    fixture_groups: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for row in queue:
+        key = review_fixture_key(row)
+        if key is None:
+            continue
+        group = fixture_groups.setdefault(key, {
+            "date": row.get("date") or "",
+            "competition_id": row.get("competition_id") or "",
+            "opponent_team_id": row.get("opponent_team_id") or "",
+            "opponent_name": row.get("opponent_name") or "",
+            "review_sample_count": 0,
+            "position_codes": set(),
+        })
+        group["review_sample_count"] += 1
+        group["position_codes"].add(str(row.get("position_code_raw") or ""))
+    review_fixtures = [
+        {
+            **{key: value for key, value in group.items() if key != "position_codes"},
+            "position_codes": sorted(group["position_codes"], key=lambda item: int(item)),
+        }
+        for _, group in sorted(fixture_groups.items())
+    ]
     return {
         "audit_version": "1.0-game-ui-position-semantic-validation",
         "overall_status": "partially_verified" if verified_codes else "pending_game_ui_validation",
@@ -576,6 +598,8 @@ def build_position_semantic_validation(
             ],
             "important": "Unreviewed screenshot references and numerical cross-checks never promote a candidate to verified.",
         },
+        "review_fixture_count": len(review_fixtures),
+        "review_fixtures": review_fixtures,
         "codes": codes,
         "verified_code_count": len(verified_codes),
         "unverified_code_count": len(codes) - len(verified_codes),
