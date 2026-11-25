@@ -123,7 +123,7 @@ class FormalCompetitionScopeTests(unittest.TestCase):
         fixtures = {
             (7, "2027-04-24", 503, 472): {
                 "home_goals": 1,
-                "away_goals": 2,
+                "away_goals": 3,
             },
         }
         reports = [
@@ -137,15 +137,15 @@ class FormalCompetitionScopeTests(unittest.TestCase):
                     {"metrics": {"goals": 1}},
                     {"metrics": {"goals": 1}},
                     # Raw row still counts even if a later appearance filter excludes it.
-                    {"metrics": {"goals": 0}},
+                    {"minutes": 0, "metrics": {"goals": 1}},
                 ],
             }
         ]
         audit = MODULE.audit_player_goal_reconciliation(reports, fixtures)
-        self.assertFalse(audit["passed"])
+        self.assertTrue(audit["passed"])
         self.assertEqual(audit["matches_checked"], 1)
-        self.assertEqual(audit["team_score_goals_total"], 2)
-        self.assertEqual(audit["raw_player_record_goals_total"], 2)
+        self.assertEqual(audit["team_score_goals_total"], 3)
+        self.assertEqual(audit["raw_player_record_goals_total"], 3)
         self.assertEqual(audit["unattributed_team_goals_total"], 0)
         self.assertEqual(audit["matches_with_equal_team_and_player_goals"], 1)
 
