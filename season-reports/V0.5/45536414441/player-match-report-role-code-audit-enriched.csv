@@ -1,0 +1,12 @@
+﻿position_code_raw,position_id_candidate,position_name_candidate,role_code_raw,history_rows,distinct_players,role_code_meaning_status
+,,,,612,19,NO_HISTORY_ROLE_CODE
+1,GK,门将,12,12,1,UNDECODED_KEEP_RAW
+1024,MC,中前卫,56,35,4,UNDECODED_KEEP_RAW
+16,DC,中后卫,1,12,2,UNDECODED_KEEP_RAW
+16,DC,中后卫,24,12,2,UNDECODED_KEEP_RAW
+16384,ST,中锋,31,23,2,UNDECODED_KEEP_RAW
+2048,AMR,右边锋,43,18,4,UNDECODED_KEEP_RAW
+4,DR,右后卫,3,11,2,UNDECODED_KEEP_RAW
+4096,AML,左边锋,43,18,5,UNDECODED_KEEP_RAW
+8,DL,左后卫,2,17,3,UNDECODED_KEEP_RAW
+8192,AMC,前腰,56,16,4,UNDECODED_KEEP_RAW
