@@ -23,7 +23,7 @@ The GitHub-hosted Windows runner executes the v1.5.0 PowerShell exporter. The wo
 - Retains managed first-team player profiles, selections, player match rows and season rows. Historical players are retained in player-match data only when their record confirms actual minutes.
 - Retains opponent identity, competition, date, venue, score and opponent team-level match statistics only in direct matches against the managed first team.
 - Excludes opponent player profiles, opponent player records and unrelated matches.
-- Tactical configurations, set-piece configurations, current tactic slots, historical tactic inference and role inference are deliberately not exported. The user supplies the tactic used for each match.
+- Tactical configurations, set-piece configurations, current tactic slots and historical tactic inference are not exported. The user supplies the tactic used for each match. Match-history role bytes are decoded independently from the saved player-history records using the native role-bit catalog and position-eligibility table described below; the exporter does not infer roles from a tactic supplied after the match.
 - Detailed player match reports for formal competitions discovered from the managed team's save-local fixture rules; match-rule family 1 (friendlies/pre-season) is excluded. Competition IDs are never hardcoded.
 - Player-detail parser completeness is checked against the matches still retained by fmsave's native team-match-stats reader. The season schedule is reported separately because FM27 does not retain a detailed report for every played fixture.
 - Unresolved anonymous match rows remain unresolved; the exporter does not guess player identity.
@@ -62,11 +62,45 @@ and `16384=ST`. Other exact single-bit entries such as wing-back or wide-midfiel
 positions are also supported when they occur in the save. Unknown, compound, or non-matching
 masks remain unmapped instead of being guessed.
 
-The decoded mask is a match-position classification, not a role or duty. A base mask
-`16=DC` identifies centre-back but does not distinguish `DCL` from `DCR`; likewise,
-the export does not claim a player's in-possession and out-of-possession tactical slots.
+The decoded mask is a match-position classification, separate from player role and duty. A
+base mask `16=DC` identifies centre-back but does not distinguish `DCL` from `DCR`.
+Role decoding is handled independently from the raw `role_code` byte, as described below.
 The raw `position_code` is always retained in the source reports. The legacy
 `position-semantic-review.csv` from earlier exports is not used by the new validator.
+
+## Match role codes: native flag and position-context decoding
+
+The named player match-history reader exposes `unknown.role_code` as a raw unsigned byte.
+The exporter does not interpret it as a role-array index. Instead, it derives a flag mask
+using `role_bit_mask = 1 << role_code`, then requires an exact match against
+`catalog.json` `roles[].flags`.
+
+Because the same flag may be used by an in-possession role and a different
+out-of-possession role, decoding is restricted to phase 0 (in possession). The resulting
+role must also be present in `catalog.json` `role_eligibility[base_position_id][0]`
+for that player's stored match-position code. A matching phase-1 role is recorded as an
+alternative, but is never substituted as the match-history role label.
+
+Examples supported by the current native catalog include:
+- `role_code=12` at `GK` → `BallPlayingGoalkeeper`（出球门将）
+- `role_code=24` at `DC` → `BallPlayingCentreBack`（出球中卫）
+- `role_code=43` at `AMR/AML` → `PlaymakingWinger`（组织型边锋）
+- `role_code=56` at `MC/AMC` → `ChannelMidfielder`（肋部中场）
+
+The mapping has been corroborated against the role badges and named players shown in
+the in-possession formation diagrams for Brighton's 6–1 Ajax match on 18 March 2027
+(`3/3.png`) and 4–0 Sunderland match on 9 May 2027 (`3/4.png`). This visual sample
+covers role codes `1, 2, 3, 12, 24, 31, 43, 56`.
+
+Each export writes `role-code-semantic-validation.json` and extends
+`player-match-report-role-code-audit-enriched.csv`. The identified enriched CSV includes
+the original `role_code_raw`, bit mask, candidate role, verified in-possession role,
+phase, and any phase-1 alternative. A code-position combination that fails the native
+eligibility table is not force-decoded: for example, one observed `role_code=27` row at
+`ST` is retained as raw because `InsideForward` is not eligible at `ST`. The raw byte
+is always preserved; no role is inferred from array order, player attributes, or lineup
+order. The exporter does not claim that this byte independently identifies the
+out-of-possession role.
 
 ## Report location and validation
 

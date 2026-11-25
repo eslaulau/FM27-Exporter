@@ -152,13 +152,51 @@ def main() -> None:
             raise AssertionError(f"Expected 94 enriched appearance rows, got {len(rows)}")
         if not all(row.get("player_name") for row in rows):
             raise AssertionError("One or more enriched appearance rows has no player identity")
-        if not all(row.get("role_code_meaning_status") in {"meaning_unconfirmed_keep_raw", "no_same_match_role_history"} for row in rows):
-            raise AssertionError("Unknown role codes were not preserved as explicitly undecoded")
+        valid_role_statuses = {
+            "decoded_native_in_possession_role",
+            "no_same_match_role_history",
+            "no_matching_native_role_flag",
+            "only_phase1_role_matches",
+            "position_eligibility_conflict",
+            "candidate_missing_position_context",
+            "candidate_position_has_no_role_eligibility_table",
+            "ambiguous_phase0_role_flag",
+            "ambiguous_position_eligible_phase0_roles",
+            "raw_role_code_out_of_byte_range",
+        }
+        unexpected = sorted({
+            row.get("role_code_meaning_status") or ""
+            for row in rows
+            if row.get("role_code_meaning_status") not in valid_role_statuses
+        })
+        if unexpected:
+            raise AssertionError(f"Unexpected role-code semantic statuses: {unexpected}")
+
+        decoded = [
+            row for row in rows
+            if row.get("role_code_meaning_status") == "decoded_native_in_possession_role"
+        ]
+        if not decoded:
+            raise AssertionError("No role_code values were decoded from the native catalog")
+
+        conflicts = [
+            row for row in rows
+            if row.get("role_code_meaning_status") == "position_eligibility_conflict"
+        ]
+        if any(row.get("match_role_id_verified") for row in conflicts):
+            raise AssertionError("A position-ineligible role was incorrectly verified")
+
+        role_audit_path = export_dir / "role-code-semantic-validation.json"
+        if not role_audit_path.is_file():
+            raise AssertionError("Missing role-code semantic validation audit")
+        role_audit = read_json(role_audit_path)
+        if role_audit.get("decoded_role_code_count", 0) < 1:
+            raise AssertionError("Role-code semantic audit reports no decoded role codes")
 
         print(
             "PASS: 94/94 appearances identified; 26 stable signatures recovered; "
             "four raw stat fields cross-checked 94/94; position enrichment completed; "
-            "unconfirmed role codes retained without guessing."
+            f"{len(decoded)} player-match rows decoded to native in-possession roles."
         )
 
 
