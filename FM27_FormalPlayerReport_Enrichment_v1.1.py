@@ -57,6 +57,7 @@ POSITION_REVIEW_RESPONSE_FIELDS = (
     "visual_review_status", "reviewed_by", "reviewed_at", "notes",
 )
 POSITION_UI_MIN_DISTINCT_MATCHES = 3
+POSITION_UI_MIN_DISTINCT_PLAYERS = 2
 
 
 def read_json(path: Path) -> Any:
@@ -275,8 +276,8 @@ def build_position_review_queue(
                 used_players.add(player_key)
             if len(selected) >= samples_per_code:
                 break
-        # If fewer than three distinct players exist (for example, a single goalkeeper),
-        # fill with additional distinct matches rather than silently dropping this code.
+        # Second pass allows another match for the same player. Third pass also retains
+        # distinct players from one rare-code fixture (for example, three DMC rows in one match).
         if len(selected) < samples_per_code:
             for row in ordered:
                 fixture_key = review_fixture_key(row)
@@ -284,6 +285,27 @@ def build_position_review_queue(
                     continue
                 selected.append(row)
                 used_fixtures.add(fixture_key)
+                if row.get("player_uid") not in (None, ""):
+                    used_players.add(str(row.get("player_uid")))
+                if len(selected) >= samples_per_code:
+                    break
+        if len(selected) < samples_per_code:
+            selected_keys = {
+                (review_fixture_key(item), str(item.get("player_uid") or ""))
+                for item in selected
+            }
+            for row in ordered:
+                fixture_key = review_fixture_key(row)
+                player_key = str(row.get("player_uid") or "")
+                sample_key = (fixture_key, player_key)
+                if fixture_key is None or sample_key in selected_keys:
+                    continue
+                if player_key and player_key in used_players:
+                    continue
+                selected.append(row)
+                selected_keys.add(sample_key)
+                if player_key:
+                    used_players.add(player_key)
                 if len(selected) >= samples_per_code:
                     break
 
@@ -324,15 +346,25 @@ def build_position_review_queue(
                 "notes": "",
             })
 
-    coverage = {
-        code: {
+    coverage = {}
+    for code in sorted((key for key in counts if key != "missing"), key=lambda item: int(item)):
+        code_rows = [
+            row for row in identified_rows
+            if str(as_int(row.get("position_code"))) == code
+        ]
+        coverage[code] = {
             "total_rows": counts[code],
             "identified_rows": identified_counts[code],
             "unresolved_rows": unresolved_counts[code],
             "review_samples": sum(1 for item in queue if item["position_code_raw"] == code),
+            "distinct_matches_available": len({
+                key for key in (review_fixture_key(row) for row in code_rows) if key is not None
+            }),
+            "distinct_players_available": len({
+                str(row.get("player_uid")) for row in code_rows
+                if row.get("player_uid") not in (None, "")
+            }),
         }
-        for code in sorted((key for key in counts if key != "missing"), key=lambda item: int(item))
-    }
     if "missing" in counts:
         coverage["missing"] = {
             "total_rows": counts["missing"],
@@ -392,6 +424,10 @@ def build_position_semantic_validation(
         ]
         fixture_keys = {review_fixture_key(row) for row in confirmed}
         fixture_keys.discard(None)
+        player_keys = {
+            str(row.get("player_uid")) for row in confirmed
+            if row.get("player_uid") not in (None, "")
+        }
         observed_ids = sorted({str(row["visual_review_position_id"]) for row in confirmed})
         mismatches = [
             row for row in confirmed
@@ -403,8 +439,15 @@ def build_position_semantic_validation(
             status = "candidate_mapping_conflicts_with_visual_evidence"
         elif len(observed_ids) > 1:
             status = "conflicting_visual_evidence"
-        elif len(fixture_keys) >= POSITION_UI_MIN_DISTINCT_MATCHES:
+        elif (
+            len(fixture_keys) >= POSITION_UI_MIN_DISTINCT_MATCHES
+            and len(player_keys) >= POSITION_UI_MIN_DISTINCT_PLAYERS
+        ):
             status = "verified_by_visual_game_ui_evidence"
+        elif len(confirmed) >= 3 and len(fixture_keys) < POSITION_UI_MIN_DISTINCT_MATCHES:
+            status = "visually_observed_but_insufficient_match_diversity"
+        elif len(fixture_keys) >= POSITION_UI_MIN_DISTINCT_MATCHES:
+            status = "visually_observed_but_insufficient_player_diversity"
         else:
             status = "pending_game_ui_validation"
 
@@ -425,6 +468,7 @@ def build_position_semantic_validation(
             **counts,
             "visual_evidence_rows_confirmed": len(confirmed),
             "distinct_matches_visually_checked": len(fixture_keys),
+            "distinct_players_visually_checked": len(player_keys),
             "observed_ui_position_ids": observed_ids,
             "candidate_mismatch_rows": len(mismatches),
             "semantic_status": status,
@@ -456,6 +500,11 @@ def build_position_semantic_validation(
         "visual_validation_policy": {
             "required_evidence": "A screenshot of the exact FM27 match screen showing this player's actual match position, linked to the exact fixture and identified player.",
             "minimum_distinct_matches_per_code": POSITION_UI_MIN_DISTINCT_MATCHES,
+            "minimum_distinct_players_per_code": POSITION_UI_MIN_DISTINCT_PLAYERS,
+            "rare_code_policy": (
+                "If fewer than three distinct fixtures exist in the save, preserve up to three distinct "
+                "player/fixture samples but report insufficient_match_diversity; do not promote globally."
+            ),
             "accepted_review_status": "confirmed",
             "required_review_fields": [
                 "game_ui_position_text", "screenshot_file", "screenshot_sha256",
