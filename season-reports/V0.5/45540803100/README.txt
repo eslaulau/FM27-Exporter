@@ -45,3 +45,13 @@ ReuseExportDir replays the existing raw player-report-probe.json and does not op
 Cross-competition signature-cache transfer and same-match-history singleton inference are distinguished in player-report-identity-audit.json; conflicting candidates remain unresolved.
 Individual goals, assists and pass totals are read from raw match records. The player-goal audit reads raw_player_stats/goals from every unfiltered report row, never normalized metrics, and flags missing raw values as incomplete instead of treating them as zero. Individual minutes are calculated from raw entry/exit clocks. Season aggregates only verify duration; they are never apportioned to players or matches.
 This tool reads the save only and never modifies it.
+
+Position semantics were reviewed against the four FM27 match-overview screenshots in repository folder 3/:
+- 2026-08-20 vs Trnava Spartak: 3/1.png
+- 2026-10-10 vs Sunderland: 3/2.png
+- 2027-03-18 vs Ajax: 3/3.png
+- 2027-05-09 vs Sunderland: 3/4.png
+These screens show the in-possession formation and role/duty labels. Raw position code 1 (GK) is visually confirmed across three independent matches.
+Codes 4, 8, 16, 1024, 2048, 4096, 8192 and 16384 were visually reviewed but remain semantically unverified because the screenshots do not expose an explicit match-position field separate from role/duty and possession phase.
+Code 128 remains unverified and has only one distinct fixture in this save, despite three player rows.
+See position-semantic-review.csv and position-semantic-validation.json. Git blob SHA-1 values are recorded as immutable screenshot identifiers; they are not SHA-256 values.
