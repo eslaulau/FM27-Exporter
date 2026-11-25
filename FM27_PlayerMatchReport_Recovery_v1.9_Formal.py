@@ -2262,6 +2262,14 @@ def main() -> int:
         "raw_player_field_coverage_by_competition": raw_field_coverage_by_competition,
         "raw_history_crosschecks": raw_history_crosschecks,
         "match_duration_audit": duration_audit,
+        "position_recovery": {
+            "source": "uint16 little-endian position mask at raw-window +110 (statistics_anchor +10); zero masks are omitted",
+            "available": raw_field_coverage["position_code"]["nonempty"],
+            "missing": raw_field_coverage["position_code"]["missing"],
+            "crosscheck": position_crosscheck,
+            "minimum_crosschecks": MIN_POSITION_CROSSCHECKS,
+            "raw_source_enabled": position_raw_enabled,
+        },
         "rating_recovery": {
             "source": "uint16 little-endian hundredths; offset follows each embedded report-record variant's distance-field displacement; /100 and rounded half-up to one decimal",
             "raw_window_offsets": dict(sorted(Counter(str(report.get("raw_rating_offset")) for report in reports).items())),
@@ -2402,6 +2410,7 @@ def main() -> int:
     print(f"Formal fixtures expected: {len(fixtures)} | detailed reports found: {len(reports)} | missing: {len(missing_keys)}")
     print(f"Player appearances: {len(all_appearance_rows)} | raw activity rows: {appearance_count} | zero-minute rows skipped: {len(zero_minute_exclusions)}")
     print(f"Identified: {len(identified_rows)} | unresolved: {len(unresolved_rows)}")
+    print(f"Positions recovered: {sum(1 for row in all_appearance_rows if row.get('position_code') not in (None, ''))} | raw position cross-check: {position_crosscheck['matched']}/{position_crosscheck['tested']}")
     print(f"Ratings recovered: {sum(1 for row in identified_rows if row.get('rating') not in (None, ''))} | raw rating cross-check: {rating_crosscheck['matched']}/{rating_crosscheck['tested']}")
     print(f"Team-total reconciliation: {team_checks['matches']}/{team_checks['comparisons']} matched; {team_checks['mismatches']} mismatches; {team_checks['missing']} missing")
     if args.reuse_probe:
