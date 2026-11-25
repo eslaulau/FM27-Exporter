@@ -36,6 +36,35 @@ The formal-report coverage audit compares native match-stat rows only against th
 
 For detailed player reports, the helper also reads the raw 16-bit position mask at raw-window offset +110 and the raw one-decimal rating stored as uint16 hundredths. The rating offset is selected per embedded report-record variant (rather than assuming the pre-27.1 offset). Position and rating raw sources are enabled only after at least 25 direct same-match named-history comparisons with zero mismatches. Zero position masks remain blank; unknown identities are not inferred from lineup order or preferred positions. The compatibility audit records each field's offset, sample count and cross-check result.
 
+## Position semantics: candidate labels versus verified match positions
+
+The raw match-position number and its UI meaning are separate claims. The exporter preserves the raw
+`position_code` and may attach a `match_position_id_candidate` / `match_position_name_candidate`
+when the number exactly matches a one-hot entry in the native tactic-position catalog. This catalog
+match is only a candidate mapping. A same-match numeric cross-check against `fmsave` history confirms
+that the number was decoded consistently; it does not prove what the number means on the match screen.
+
+Each export now writes:
+
+- `position-semantic-validation.json`: per-code coverage, candidate label, numeric cross-check scope,
+  and explicit semantic-verification status.
+- `position-semantic-review.csv`: up to three identified player/fixture samples per observed raw code.
+  The CSV is a review queue, not proof.
+
+To complete a review, open each exact fixture in FM27 and inspect the match screen that explicitly
+shows the player's position for that match. Do not substitute the player's preferred position, the
+starting tactic slot, a role/duty, or the position used in another match. Record the exact UI text and
+screenshot filename/hash in the review CSV. After the screenshot has actually been inspected, mark the
+row `visual_review_status=confirmed` and fill the normalized position ID/name, reviewer, and review
+date. Re-run `FM27_FormalPlayerReport_Enrichment_v1.1.py` against the same report folder; existing
+review responses are carried forward.
+
+A code is promoted only when at least three distinct fixtures have screenshot-backed, visually
+reviewed evidence and all reviewed rows agree with the candidate. Conflicting or mismatching evidence
+blocks promotion. Screenshot hashes and reviewer fields are metadata; the script does not itself
+inspect screenshot pixels. Until visual review is complete, verified position fields remain blank and
+the raw code is authoritative.
+
 ## Report location and validation
 
 Browse the generated report folders under [season-reports/](season-reports/). Each export is stored as:
