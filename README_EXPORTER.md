@@ -32,6 +32,8 @@ The GitHub-hosted Windows runner executes the v1.5.0 PowerShell exporter. The wo
 
 For FM27 build 27.0.1+2494687 and `match_stats_cfg` schema 6, the player-report helper borrows the registered 27.0.0 schema-6 layout. For FM27 build 27.1.1+2511875 and schema 6, it borrows the registered 27.1.0 schema-6 layout already shipped in pinned `fmsave==0.14.3`. The helper selects the embedded per-report record variant before decoding squad anchors, player metrics and record lengths (the 27.1 variant adds five bytes inside player records). These target builds remain unregistered upstream; this is explicit structural compatibility, not a claim of upstream registration or full semantic validation. Inspect `player_report_layout` in `team-match-stats-compatibility.json` and compare exported values against in-game match reports.
 
+The formal-report coverage audit compares native match-stat rows only against the dynamically discovered formal competition IDs. Friendly/pre-season matches and native-only competition IDs outside that scope are counted separately, not reported as missing formal player reports. `player-match-report-formal-summary.json` also includes `player_goal_reconciliation`, which compares the fixture score with every raw player-report row before identity and zero-minute filtering. Goal differences remain unattributed; the exporter does not assign an unverified scorer or assume an own goal. The first-team scope audit permits a competition-ID fallback only when the match date and ordered home/away team IDs identify exactly one played fixture; the original native competition ID is preserved.
+
 ## Report location and validation
 
 Browse the generated report folders under [season-reports/](season-reports/). Each export is stored as:

@@ -377,17 +377,33 @@ def load_team_match_index(export_dir: Path, team_id: int) -> dict[tuple[int, int
 def audit_retained_report_coverage(
     team_index: dict[tuple[int, int, int, str, str, int], dict[str, Any]],
     reports: list[dict[str, Any]],
+    formal_competition_ids: set[int] | None = None,
 ) -> dict[str, Any]:
-    """Compare custom player-report decoding with matches the native reader retained.
+    """Compare detailed reports only with native reports inside the formal scope.
 
-    A save does not retain a detailed report for every played fixture. Season schedule
-    coverage is therefore not a parser-completeness test; the native team-match-stats
-    reader is the independent index of match reports still present in this save.
+    The native team-match-stats reader also retains friendlies and pre-season
+    matches. Those must not be counted as missing formal player-detail reports.
+    The competition IDs are save-local, so the caller passes the set discovered
+    from the managed team's fixture rules. Unknown/native-only IDs are kept in
+    an explicit out-of-scope audit bucket rather than guessed or remapped.
     """
-    native_keys = {
+    if formal_competition_ids is None:
+        formal_ids = {
+            value for value in (as_int(row.get("competition_id")) for row in reports)
+            if value is not None
+        }
+    else:
+        formal_ids = {
+            value for value in (as_int(item) for item in formal_competition_ids)
+            if value is not None
+        }
+
+    all_native_keys = {
         (key[0], key[3], key[1], key[2])
         for key in team_index
     }
+    native_keys = {key for key in all_native_keys if key[0] in formal_ids}
+    excluded_native_keys = sorted(all_native_keys - native_keys)
     parsed_list = [
         (
             as_int(row.get("competition_id")),
@@ -404,6 +420,10 @@ def audit_retained_report_coverage(
     duplicates = sorted(key for key, count in parsed_counts.items() if count > 1)
     passed = not native_missing and not parsed_unbacked and not duplicates
     return {
+        "formal_competition_ids": sorted(formal_ids),
+        "native_team_match_stats_matches_retained_all_competitions": len(all_native_keys),
+        "native_team_match_stats_matches_excluded_outside_formal_scope": len(excluded_native_keys),
+        "native_match_stats_competition_ids_excluded": sorted({key[0] for key in excluded_native_keys}),
         "native_team_match_stats_matches_retained": len(native_keys),
         "player_detail_reports_decoded": len(parsed_keys),
         "decoded_reports_matching_native_retained_matches": len(native_keys & parsed_keys),
@@ -411,9 +431,113 @@ def audit_retained_report_coverage(
         "player_detail_reports_without_native_match_stats_row": [list(key) for key in parsed_unbacked],
         "duplicate_player_detail_report_keys": [list(key) for key in duplicates],
         "passed": passed,
-        "note": "Compares player-detail extraction against reports retained by the native team-match-stats reader; it does not claim every played fixture remains stored in the save.",
+        "note": (
+            "Coverage is compared only inside the dynamically discovered formal competition IDs. "
+            "Native matches outside that scope (including friendlies/pre-season and unrecognized "
+            "native-only competition IDs) are counted separately and are not treated as missing "
+            "formal player-detail reports."
+        ),
     }
 
+
+def audit_player_goal_reconciliation(
+    reports: list[dict[str, Any]],
+    fixture_index: dict[tuple[int, str, int, int], dict[str, Any]],
+) -> dict[str, Any]:
+    """Compare team score with every raw player row before identity/minute filtering.
+
+    A positive difference is left unattributed. It may represent an own goal or a
+    source-data/parser discrepancy; this audit never invents a player scorer.
+    """
+    match_rows: list[dict[str, Any]] = []
+    seen_keys: Counter[tuple[int, str, int, int]] = Counter()
+    for report in reports:
+        key = (
+            int(report["competition_id"]),
+            str(report["date"]),
+            int(report["home_team_id"]),
+            int(report["away_team_id"]),
+        )
+        seen_keys[key] += 1
+        fixture = fixture_index.get(key)
+        if fixture is None:
+            match_rows.append({
+                "competition_id": key[0],
+                "date": key[1],
+                "home_team_id": key[2],
+                "away_team_id": key[3],
+                "status": "fixture_score_unavailable",
+            })
+            continue
+
+        score_field = "home_goals" if report.get("is_home") is True else "away_goals"
+        team_score = as_int(fixture.get(score_field))
+        player_goals = sum(
+            (as_int(row.get("metrics", {}).get("goals"), 0) or 0)
+            for row in report.get("anonymous_player_rows", [])
+        )
+        base = {
+            "competition_id": key[0],
+            "date": key[1],
+            "home_team_id": key[2],
+            "away_team_id": key[3],
+            "team_score_goals": team_score,
+            "raw_player_record_goals": player_goals,
+            "raw_player_records_included": len(report.get("anonymous_player_rows", [])),
+            "score_player_goal_difference": None if team_score is None else team_score - player_goals,
+        }
+        if team_score is None:
+            match_rows.append({**base, "status": "fixture_score_unavailable"})
+            continue
+
+        difference = team_score - player_goals
+        if difference == 0:
+            status = "matched"
+            unattributed = 0
+            player_over = 0
+        elif difference > 0:
+            status = "team_score_exceeds_player_goals"
+            unattributed = difference
+            player_over = 0
+        else:
+            status = "player_goals_exceed_team_score"
+            unattributed = 0
+            player_over = -difference
+        match_rows.append({
+            **base,
+            "status": status,
+            "unattributed_team_goals": unattributed,
+            "player_goals_over_score": player_over,
+        })
+
+    scorable = [row for row in match_rows if row.get("team_score_goals") is not None]
+    unresolved = [row for row in scorable if row["status"] != "matched"]
+    score_unavailable = len(match_rows) - len(scorable)
+    return {
+        "audit_version": "1.0-raw-player-goals-vs-fixture-score",
+        "method": "sum raw player-record goals from every report row before identity and zero-minute filtering; compare with managed-team fixture score",
+        "matches_checked": len(scorable),
+        "matches_with_equal_team_and_player_goals": sum(1 for row in scorable if row["status"] == "matched"),
+        "matches_with_unattributed_team_goals": sum(1 for row in scorable if row["status"] == "team_score_exceeds_player_goals"),
+        "matches_with_player_goals_over_team_score": sum(1 for row in scorable if row["status"] == "player_goals_exceed_team_score"),
+        "matches_without_fixture_score": score_unavailable,
+        "team_score_goals_total": sum(int(row["team_score_goals"]) for row in scorable),
+        "raw_player_record_goals_total": sum(int(row["raw_player_record_goals"]) for row in scorable),
+        "unattributed_team_goals_total": sum(int(row.get("unattributed_team_goals", 0)) for row in scorable),
+        "player_goals_over_score_total": sum(int(row.get("player_goals_over_score", 0)) for row in scorable),
+        "duplicate_report_match_keys": [list(key) for key, count in seen_keys.items() if count > 1],
+        "passed": (
+            score_unavailable == 0
+            and not unresolved
+            and all(count == 1 for count in seen_keys.values())
+        ),
+        "unresolved_matches": unresolved,
+        "note": (
+            "Positive score/player-goal differences remain unattributed. An own goal is one possible "
+            "explanation, but is not asserted without a separate match-event source. The audit uses "
+            "raw report rows, including rows later excluded from player appearance CSVs."
+        ),
+    }
 
 def load_roster_names(export_dir: Path, team_id: int) -> dict[int, str]:
     result: dict[int, str] = {}
@@ -2020,7 +2144,8 @@ def main() -> int:
             }
             for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "minutes", "rating", "rating_raw_hundredths")
         }
-    retained_report_coverage = audit_retained_report_coverage(team_index, reports)
+    retained_report_coverage = audit_retained_report_coverage(team_index, reports, comp_ids)
+    player_goal_reconciliation = audit_player_goal_reconciliation(reports, fixture_index)
     write_json(export_dir / "player-match-report-formal-summary.json", {
         "report_scope": "first-team formal competitions discovered from save-local fixture rules",
         "formal_competition_ids": sorted(comp_ids),
@@ -2029,6 +2154,7 @@ def main() -> int:
         "expected_fixtures": len(fixtures),
         "detailed_reports_found": len(reports),
         "retained_report_coverage": retained_report_coverage,
+        "player_goal_reconciliation": player_goal_reconciliation,
         "raw_activity_rows_detected": appearance_count,
         "active_player_appearances": len(all_appearance_rows),
         "excluded_zero_minute_rows": len(zero_minute_exclusions),
@@ -2090,11 +2216,12 @@ def main() -> int:
     own_team_rows = [row for row in team_rows if as_int(row.get("team_id")) == args.team_id]
     fixture_check_passed = bool(retained_report_coverage["passed"])
     total_check_passed = team_checks["mismatches"] == 0 and team_checks["missing"] == 0
+    goal_check_passed = bool(player_goal_reconciliation["passed"])
     reader_passed = bool(team_reader and team_reader.get("status") == "ok")
-    local_passed = reader_passed and fixture_check_passed and total_check_passed
+    local_passed = reader_passed and fixture_check_passed and total_check_passed and goal_check_passed
     team_layout = (team_reader or {}).get("layout") or {}
     write_json(export_dir / "team-match-stats-compatibility.json", {
-        "audit_version": "1.2-v1.5.1-per-report-layout",
+        "audit_version": "1.3-v1.5.2-formal-scope-goal-audit",
         "game": source_meta.get("game"),
         "save_build": source_meta.get("game_build") or source_meta.get("build"),
         "save_known_build_upstream": source_meta.get("known_build"),
@@ -2136,6 +2263,8 @@ def main() -> int:
             },
             "retained_report_coverage": retained_report_coverage,
             "player_team_total_reconciliation": team_checks,
+            "player_goal_reconciliation": player_goal_reconciliation,
+            "player_goal_reconciliation_passed": goal_check_passed,
             "raw_player_field_crosschecks": {
                 field: raw_history_crosschecks.get(field, {"matched": 0, "tested": 0, "mismatches": 0})
                 for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "left_at_minute", "minutes", "rating")
@@ -2159,6 +2288,7 @@ def main() -> int:
                 "and selects each report's embedded record variant before decoding."
             ),
             "Structural and data reconciliation are not a substitute for semantic validation on other saves.",
+            "Player-goal differences against the fixture score remain explicitly unattributed until separately verified; they are not assigned to a player or automatically labelled own goals.",
         ],
     })
 

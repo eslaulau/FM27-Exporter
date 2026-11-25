@@ -101,6 +101,31 @@ class FirstTeamFilterTests(unittest.TestCase):
             self.assertFalse((root / "set-pieces.json").exists())
             self.assertFalse((root / "league-tables.json").exists())
 
+
+    def test_joins_native_team_stats_when_only_competition_id_differs(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            make_export(root)
+            stats_path = root / "team-match-stats.json"
+            stats = json.loads(stats_path.read_text(encoding="utf-8"))
+            for row in stats:
+                if row["date"] == "2026-11-01":
+                    row["competition_id"] = 8208
+            write_json(stats_path, stats)
+
+            result = self.run_filter(root)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            scope = json.loads((root / "first-team-scope.json").read_text(encoding="utf-8"))
+            self.assertEqual(scope["counts"]["team_stats_matches_joined_to_fixtures"], 1)
+            join_audit = scope["counts"]["team_stats_fixture_join"]
+            self.assertEqual(join_audit["exact_competition_date_team_matches"], 0)
+            self.assertEqual(join_audit["unique_date_and_team_fallback_matches"], 1)
+            self.assertEqual(join_audit["fallback_mappings"][0]["team_stats_competition_id"], 8208)
+            self.assertEqual(join_audit["fallback_mappings"][0]["fixture_competition_id"], 7)
+            # The original native competition ID is preserved in team-match-stats.json.
+            output_stats = json.loads(stats_path.read_text(encoding="utf-8"))
+            self.assertEqual({row["competition_id"] for row in output_stats}, {8208})
+
     def test_rejects_single_sided_team_match_export(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

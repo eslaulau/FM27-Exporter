@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scope FM27 export artifacts to the managed first team and direct match opponents (v1.3.0).
+"""Scope FM27 export artifacts to the managed first team and direct match opponents (v1.3.1).
 
 The save is read-only. Tactical configurations are intentionally not exported or inferred:
 the user supplies the tactic used for each match. Opponent data is limited to team-level
@@ -44,6 +44,61 @@ def fixture_key(row, team_id):
     home, away = as_int(row.get("home_team_id")), as_int(row.get("away_team_id"))
     if team_id not in (home, away): return None
     return (as_int(row.get("competition_id")), str(row.get("date")), away if home == team_id else home)
+
+def audit_team_stats_fixture_join(grouped_keys, fixtures):
+    """Join native team-stat matches to fixtures without rewriting source IDs.
+
+    Exact competition/date/home/away keys take priority. If only the competition
+    ID differs, a fallback is allowed only when date + ordered home/away teams
+    identify exactly one played first-team fixture.
+    """
+    fixture_keys = {match_key(row) for row in fixtures}
+    fixtures_by_pair_date = defaultdict(list)
+    for row in fixtures:
+        if row.get("played") is not True:
+            continue
+        key = match_key(row)
+        pair_date = (key[1], key[2], key[3])
+        fixtures_by_pair_date[pair_date].append(key)
+
+    exact = sorted(set(grouped_keys) & fixture_keys)
+    fallback = []
+    ambiguous = []
+    unmatched = []
+    for key in sorted(set(grouped_keys) - fixture_keys):
+        pair_date = (key[1], key[2], key[3])
+        candidates = sorted(set(fixtures_by_pair_date.get(pair_date, [])))
+        if len(candidates) == 1:
+            fixture_key_value = candidates[0]
+            fallback.append({
+                "team_stats_competition_id": key[0],
+                "fixture_competition_id": fixture_key_value[0],
+                "date": key[3],
+                "home_team_id": key[1],
+                "away_team_id": key[2],
+                "match_key_difference": "competition_id_only",
+            })
+        elif len(candidates) > 1:
+            ambiguous.append({
+                "team_stats_match": list(key),
+                "candidate_fixture_keys": [list(item) for item in candidates],
+            })
+        else:
+            unmatched.append(list(key))
+
+    return {
+        "exact_competition_date_team_matches": len(exact),
+        "unique_date_and_team_fallback_matches": len(fallback),
+        "matches_joined": len(exact) + len(fallback),
+        "ambiguous_fallback_matches": ambiguous,
+        "unmatched_team_stats_matches": unmatched,
+        "fallback_mappings": fallback,
+        "note": (
+            "Competition IDs are preserved as exported. The fallback links context only when "
+            "date and ordered home/away team IDs identify exactly one played first-team fixture."
+        ),
+    }
+
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
@@ -115,8 +170,10 @@ def main() -> int:
             malformed.append({"match": key, "reason": "home/away team IDs disagree"})
     if malformed:
         raise RuntimeError(f"Expected exactly two team rows per match (home + away); {len(malformed)} match pairs failed. Refusing to claim opponent stats.")
-    joined = set(grouped) & fixture_keys
-    if grouped and not joined: raise RuntimeError("No team stats match keys join to filtered first-team fixtures")
+    fixture_join_audit = audit_team_stats_fixture_join(grouped.keys(), fixtures)
+    joined_match_count = fixture_join_audit["matches_joined"]
+    if grouped and not joined_match_count:
+        raise RuntimeError("No team stats match keys join to filtered first-team fixtures")
     write_json(tpath, stats)
 
     removed_tactics = []
@@ -127,7 +184,7 @@ def main() -> int:
     if league.exists(): league.unlink()
 
     scope = {
-      "scope_version": "1.3.0-managed-first-team-match-opponents",
+      "scope_version": "1.3.1-managed-first-team-match-join-audit",
       "club_uid": a.club_uid, "club_name": a.club_name, "team_id": a.team_id,
       "policy": {
         "managed_club_resolution": "managed_clubs() UID; owned club team slot 0",
@@ -154,7 +211,8 @@ def main() -> int:
         "home_team_rows": sum(1 for r in stats if r.get("is_home") is True),
         "away_team_rows": sum(1 for r in stats if r.get("is_home") is False),
         "matches_with_two_team_rows": len(grouped),
-        "team_stats_matches_joined_to_fixtures": len(joined),
+        "team_stats_matches_joined_to_fixtures": joined_match_count,
+        "team_stats_fixture_join": fixture_join_audit,
         "tactical_configuration_files_removed": removed_tactics
       },
       "notes": [
@@ -167,10 +225,10 @@ def main() -> int:
       ]
     }
     write_json(root / "first-team-scope.json", scope)
-    print("FIRST-TEAM FILTER v1.3.0 COMPLETE")
+    print("FIRST-TEAM FILTER v1.3.1 COMPLETE")
     print(f"Club: {a.club_name} (UID {a.club_uid}) | first-team ID: {a.team_id}")
     print(f"Fixtures: {len(fixtures)} | player profiles: {len(profiles)} | tracked players: {len(tracked_uids)}")
-    print(f"Team stats: {len(stats)} rows across {len(grouped)} matches; both home/away rows validated")
+    print(f"Team stats: {len(stats)} rows across {len(grouped)} matches; fixture joins={joined_match_count} (exact={fixture_join_audit['exact_competition_date_team_matches']}, unique fallback={fixture_join_audit['unique_date_and_team_fallback_matches']})")
     print("Tactical configuration extraction/inference disabled; opponent player data excluded.")
     return 0
 
