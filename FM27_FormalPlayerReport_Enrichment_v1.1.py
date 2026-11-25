@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
+import re
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
@@ -39,6 +41,22 @@ POSITION_NAMES_ZH = {
     "STR": "右中锋",
     "STL": "左中锋",
 }
+
+POSITION_REVIEW_FIELDS = [
+    "sample_id", "game_build", "section_schema", "record_variant_scope",
+    "date", "competition_id", "competition_name", "round", "kick_off_time",
+    "home_away", "opponent_team_id", "opponent_name", "player_uid", "player_name",
+    "position_code_raw", "candidate_position_id", "candidate_position_name_zh",
+    "game_ui_position_text", "screenshot_file", "screenshot_sha256",
+    "visual_review_position_id", "visual_review_position_name_zh",
+    "visual_review_status", "reviewed_by", "reviewed_at", "notes",
+]
+POSITION_REVIEW_RESPONSE_FIELDS = (
+    "game_ui_position_text", "screenshot_file", "screenshot_sha256",
+    "visual_review_position_id", "visual_review_position_name_zh",
+    "visual_review_status", "reviewed_by", "reviewed_at", "notes",
+)
+POSITION_UI_MIN_DISTINCT_MATCHES = 3
 
 
 def read_json(path: Path) -> Any:
@@ -159,14 +177,21 @@ def enrich_record(
 
     result["match_position_id_candidate"] = mapped["id"] if mapped else ""
     result["match_position_name_candidate"] = mapped["name_zh"] if mapped else ""
-    if mapped and mapped["id"] == "GK":
-        result["match_position_mapping_evidence"] = "native_catalog_exact_mask; GK also named by upstream reference"
-    elif mapped:
-        result["match_position_mapping_evidence"] = "native_catalog_exact_single_bit_mask_candidate; not UI-verified for match history"
+    if mapped:
+        result["match_position_mapping_evidence"] = (
+            "native_catalog_exact_single_bit_mask_candidate; "
+            "game UI semantics have not been visually verified"
+        )
     elif code is None:
         result["match_position_mapping_evidence"] = "no_same_match_position_history"
     else:
         result["match_position_mapping_evidence"] = "raw_mask_not_in_native_single_bit_catalog"
+
+    # A numeric match against fmsave's same-match history confirms the decoded number only.
+    # It does not establish what the number means on the in-game match screen.
+    result["match_position_semantic_status"] = "unverified_pending_game_ui_evidence"
+    result["match_position_id_verified"] = ""
+    result["match_position_name_verified"] = ""
 
     unknown = (history or {}).get("unknown") or {}
     role_code = unknown.get("role_code")
@@ -176,6 +201,273 @@ def enrich_record(
     )
     result["rating_source_status"] = rating_source_status(row, history)
     return result
+
+
+def review_fixture_key(row: dict[str, Any]) -> tuple[str, str, str] | None:
+    date = str(row.get("date") or "")
+    competition_id = str(row.get("competition_id") or "")
+    opponent_team_id = str(row.get("opponent_team_id") or "")
+    if not date or not competition_id or not opponent_team_id:
+        return None
+    return date, competition_id, opponent_team_id
+
+
+def build_position_review_queue(
+    identified_rows: list[dict[str, Any]],
+    unresolved_rows: list[dict[str, Any]],
+    position_map: dict[int, dict[str, str]],
+    game_build: str = "",
+    section_schema: int | None = None,
+    record_variant_scope: str = "",
+    samples_per_code: int = 3,
+) -> tuple[list[dict[str, Any]], dict[str, dict[str, int]]]:
+    """Create a reproducible in-game UI review queue without treating catalog matches as proof."""
+    all_rows = [*identified_rows, *unresolved_rows]
+    counts: Counter[str] = Counter()
+    identified_counts: Counter[str] = Counter()
+    unresolved_counts: Counter[str] = Counter()
+    for row in identified_rows:
+        value = as_int(row.get("position_code"))
+        counts[str(value) if value is not None else "missing"] += 1
+        identified_counts[str(value) if value is not None else "missing"] += 1
+    for row in unresolved_rows:
+        value = as_int(row.get("position_code"))
+        counts[str(value) if value is not None else "missing"] += 1
+        unresolved_counts[str(value) if value is not None else "missing"] += 1
+
+    by_code: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in identified_rows:
+        value = as_int(row.get("position_code"))
+        if value is None:
+            continue
+        by_code[str(value)].append(row)
+
+    queue: list[dict[str, Any]] = []
+    for raw_code in sorted((key for key in counts if key != "missing"), key=lambda item: int(item)):
+        candidates = by_code.get(raw_code, [])
+        selected: list[dict[str, Any]] = []
+        used_fixtures: set[tuple[str, str, str]] = set()
+        used_players: set[str] = set()
+
+        def row_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
+            minutes = as_int(row.get("minutes"))
+            return (
+                0 if minutes is not None and minutes > 0 else 1,
+                0 if row.get("player_uid") not in (None, "") else 1,
+                str(row.get("date") or ""),
+                str(row.get("competition_id") or ""),
+                str(row.get("opponent_team_id") or ""),
+                str(row.get("player_uid") or ""),
+            )
+
+        ordered = sorted(candidates, key=row_sort_key)
+        # First pass prefers distinct players and distinct matches.
+        for row in ordered:
+            fixture_key = review_fixture_key(row)
+            player_key = str(row.get("player_uid") or "")
+            if fixture_key is None or fixture_key in used_fixtures:
+                continue
+            if player_key and player_key in used_players:
+                continue
+            selected.append(row)
+            used_fixtures.add(fixture_key)
+            if player_key:
+                used_players.add(player_key)
+            if len(selected) >= samples_per_code:
+                break
+        # If fewer than three distinct players exist (for example, a single goalkeeper),
+        # fill with additional distinct matches rather than silently dropping this code.
+        if len(selected) < samples_per_code:
+            for row in ordered:
+                fixture_key = review_fixture_key(row)
+                if fixture_key is None or fixture_key in used_fixtures:
+                    continue
+                selected.append(row)
+                used_fixtures.add(fixture_key)
+                if len(selected) >= samples_per_code:
+                    break
+
+        mapped = position_map.get(int(raw_code))
+        for row in selected:
+            fixture_key = review_fixture_key(row) or ("", "", "")
+            stable_key = "|".join((
+                game_build, str(section_schema or ""), raw_code,
+                *fixture_key, str(row.get("player_uid") or ""),
+            ))
+            sample_id = hashlib.sha256(stable_key.encode("utf-8")).hexdigest()[:16]
+            queue.append({
+                "sample_id": sample_id,
+                "game_build": game_build,
+                "section_schema": section_schema if section_schema is not None else "",
+                "record_variant_scope": record_variant_scope,
+                "date": row.get("date") or "",
+                "competition_id": row.get("competition_id") or "",
+                "competition_name": row.get("competition_name") or "",
+                "round": row.get("round") or "",
+                "kick_off_time": row.get("kick_off_time") or "",
+                "home_away": row.get("home_away") or "",
+                "opponent_team_id": row.get("opponent_team_id") or "",
+                "opponent_name": row.get("opponent_name") or "",
+                "player_uid": row.get("player_uid") or "",
+                "player_name": row.get("player_name") or "",
+                "position_code_raw": raw_code,
+                "candidate_position_id": mapped["id"] if mapped else "",
+                "candidate_position_name_zh": mapped["name_zh"] if mapped else "",
+                "game_ui_position_text": "",
+                "screenshot_file": "",
+                "screenshot_sha256": "",
+                "visual_review_position_id": "",
+                "visual_review_position_name_zh": "",
+                "visual_review_status": "pending_visual_review",
+                "reviewed_by": "",
+                "reviewed_at": "",
+                "notes": "",
+            })
+
+    coverage = {
+        code: {
+            "total_rows": counts[code],
+            "identified_rows": identified_counts[code],
+            "unresolved_rows": unresolved_counts[code],
+            "review_samples": sum(1 for item in queue if item["position_code_raw"] == code),
+        }
+        for code in sorted((key for key in counts if key != "missing"), key=lambda item: int(item))
+    }
+    if "missing" in counts:
+        coverage["missing"] = {
+            "total_rows": counts["missing"],
+            "identified_rows": identified_counts["missing"],
+            "unresolved_rows": unresolved_counts["missing"],
+            "review_samples": 0,
+        }
+    return queue, coverage
+
+
+def preserve_position_review_responses(
+    review_path: Path, queue: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Carry forward manually entered UI evidence when re-enriching the same export folder."""
+    if not review_path.is_file():
+        return queue
+    _, previous_rows = read_csv(review_path)
+    previous_by_id = {
+        str(row.get("sample_id") or ""): row
+        for row in previous_rows
+        if row.get("sample_id")
+    }
+    for row in queue:
+        previous = previous_by_id.get(str(row["sample_id"]))
+        if not previous:
+            continue
+        for field in POSITION_REVIEW_RESPONSE_FIELDS:
+            value = previous.get(field)
+            if value not in (None, ""):
+                row[field] = value
+    return queue
+
+
+def build_position_semantic_validation(
+    queue: list[dict[str, Any]],
+    coverage: dict[str, dict[str, int]],
+    position_map: dict[int, dict[str, str]],
+    source: dict[str, Any],
+    numeric_crosscheck: dict[str, Any],
+) -> dict[str, Any]:
+    """Only promote a mapping after visually reviewed screenshots from distinct matches."""
+    codes: list[dict[str, Any]] = []
+    for raw_code, counts in coverage.items():
+        code_value = as_int(raw_code)
+        mapped = position_map.get(code_value) if code_value is not None else None
+        records = [row for row in queue if row.get("position_code_raw") == raw_code]
+        confirmed = [
+            row for row in records
+            if row.get("visual_review_status") == "confirmed"
+            and row.get("game_ui_position_text")
+            and row.get("screenshot_file")
+            and bool(re.fullmatch(r"[0-9a-fA-F]{64}", str(row.get("screenshot_sha256") or "")))
+            and row.get("visual_review_position_id")
+            and row.get("visual_review_position_name_zh")
+            and row.get("reviewed_by")
+            and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(row.get("reviewed_at") or "")))
+        ]
+        fixture_keys = {review_fixture_key(row) for row in confirmed}
+        fixture_keys.discard(None)
+        observed_ids = sorted({str(row["visual_review_position_id"]) for row in confirmed})
+        mismatches = [
+            row for row in confirmed
+            if mapped is not None and str(row["visual_review_position_id"]) != mapped["id"]
+        ]
+        if mapped is None:
+            status = "unmapped_raw_code"
+        elif mismatches:
+            status = "candidate_mapping_conflicts_with_visual_evidence"
+        elif len(observed_ids) > 1:
+            status = "conflicting_visual_evidence"
+        elif len(fixture_keys) >= POSITION_UI_MIN_DISTINCT_MATCHES:
+            status = "verified_by_visual_game_ui_evidence"
+        else:
+            status = "pending_game_ui_validation"
+
+        verified_id = (
+            str(confirmed[0]["visual_review_position_id"])
+            if status == "verified_by_visual_game_ui_evidence" and confirmed
+            else ""
+        )
+        verified_name = (
+            str(confirmed[0]["visual_review_position_name_zh"])
+            if status == "verified_by_visual_game_ui_evidence" and confirmed
+            else ""
+        )
+        codes.append({
+            "position_code_raw": raw_code,
+            "candidate_position_id": mapped["id"] if mapped else None,
+            "candidate_position_name_zh": mapped["name_zh"] if mapped else None,
+            **counts,
+            "visual_evidence_rows_confirmed": len(confirmed),
+            "distinct_matches_visually_checked": len(fixture_keys),
+            "observed_ui_position_ids": observed_ids,
+            "candidate_mismatch_rows": len(mismatches),
+            "semantic_status": status,
+            "verified_position_id": verified_id or None,
+            "verified_position_name_zh": verified_name or None,
+        })
+
+    verified_codes = [row for row in codes if row["semantic_status"] == "verified_by_visual_game_ui_evidence"]
+    return {
+        "audit_version": "1.0-game-ui-position-semantic-validation",
+        "overall_status": "partially_verified" if verified_codes else "pending_game_ui_validation",
+        "game": source.get("game") or "FM27",
+        "game_build": source.get("game_build"),
+        "fmsave_version": source.get("fmsave_version"),
+        "section": source.get("section") or "match_stats_cfg",
+        "section_schema": source.get("section_schema"),
+        "record_variant_counts": source.get("record_variant_counts") or {},
+        "raw_position_source": {
+            "encoding": "uint16 little-endian",
+            "raw_window_offset": 110,
+            "anchor_relative_offset": 10,
+            "note": "This validates where the raw numeric field is read; it does not validate the field's in-game positional meaning.",
+        },
+        "numeric_history_crosscheck": {
+            **(numeric_crosscheck or {}),
+            "what_it_proves": "The raw numeric code agrees with the same-match named-history numeric field where available.",
+            "what_it_does_not_prove": "It does not prove that the numeric code means the candidate position label shown by the tactic-position catalog.",
+        },
+        "visual_validation_policy": {
+            "required_evidence": "A screenshot of the exact FM27 match screen showing this player's actual match position, linked to the exact fixture and identified player.",
+            "minimum_distinct_matches_per_code": POSITION_UI_MIN_DISTINCT_MATCHES,
+            "accepted_review_status": "confirmed",
+            "required_review_fields": [
+                "game_ui_position_text", "screenshot_file", "screenshot_sha256",
+                "visual_review_position_id", "visual_review_position_name_zh",
+                "reviewed_by", "reviewed_at",
+            ],
+            "important": "Unreviewed screenshot references and numerical cross-checks never promote a candidate to verified.",
+        },
+        "codes": codes,
+        "verified_code_count": len(verified_codes),
+        "unverified_code_count": len(codes) - len(verified_codes),
+    }
 
 
 def build_role_audit(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -299,16 +591,68 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
     history_index = build_history_index(history_rows)
 
     enriched = [enrich_record(row, history_index, position_map) for row in identified_rows]
+
+    identity_audit_path = export_dir / "player-report-identity-audit.json"
+    formal_summary_path = export_dir / "player-match-report-formal-summary.json"
+    identity_audit = read_json(identity_audit_path) if identity_audit_path.is_file() else {}
+    formal_summary = read_json(formal_summary_path) if formal_summary_path.is_file() else {}
+    source = identity_audit.get("source") or {}
+    if not source:
+        save_info_path = export_dir / "save-info.json"
+        source = read_json(save_info_path) if save_info_path.is_file() else {}
+    game_build = str(source.get("game_build") or source.get("build") or "")
+    section_schema = as_int(source.get("section_schema"))
+    variants = source.get("record_variant_counts") or {}
+    record_variant_scope = ", ".join(sorted(str(key) for key in variants))
+
+    review_path = export_dir / "position-semantic-review.csv"
+    position_review_queue, position_code_coverage = build_position_review_queue(
+        identified_rows,
+        unresolved_rows,
+        position_map,
+        game_build=game_build,
+        section_schema=section_schema,
+        record_variant_scope=record_variant_scope,
+    )
+    position_review_queue = preserve_position_review_responses(review_path, position_review_queue)
+    numeric_position_check = (
+        (formal_summary.get("raw_history_crosschecks") or {}).get("position_code")
+        or (identity_audit.get("validation") or {}).get("raw_player_fields", {}).get("position_code")
+        or {}
+    )
+    position_semantic_validation = build_position_semantic_validation(
+        position_review_queue,
+        position_code_coverage,
+        position_map,
+        source,
+        numeric_position_check,
+    )
+    for row in enriched:
+        verified = next((
+            item for item in position_semantic_validation["codes"]
+            if item["position_code_raw"] == str(row.get("position_code") or "")
+            and item["semantic_status"] == "verified_by_visual_game_ui_evidence"
+        ), None)
+        if verified:
+            row["match_position_semantic_status"] = verified["semantic_status"]
+            row["match_position_id_verified"] = verified["verified_position_id"] or ""
+            row["match_position_name_verified"] = verified["verified_position_name_zh"] or ""
+
     extra_fields = [
         "match_position_id_candidate",
         "match_position_name_candidate",
         "match_position_mapping_evidence",
+        "match_position_semantic_status",
+        "match_position_id_verified",
+        "match_position_name_verified",
         "role_code_raw",
         "role_code_meaning_status",
         "rating_source_status",
     ]
     output_fields = list(fields) + [x for x in extra_fields if x not in fields]
     write_csv(export_dir / "player-match-report-identified-enriched.csv", output_fields, enriched)
+    write_csv(export_dir / "position-semantic-review.csv", POSITION_REVIEW_FIELDS, position_review_queue)
+    write_json(export_dir / "position-semantic-validation.json", position_semantic_validation)
 
     role_audit = build_role_audit(enriched)
     write_csv(
@@ -339,11 +683,23 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
             for mask, value in sorted(position_map.items())
         ],
         "position_mapping_note": (
-            "Only exact single-bit numeric matches to the bundle's native tactic-position catalog are labelled. "
-            "GK is the only match-history position named by the upstream fmsave reference; other labels are candidates, "
-            "not UI-verified match-position semantics. Raw position_code is preserved."
+            "Every catalog-derived label remains a candidate until at least three distinct fixtures for that raw code "
+            "have screenshot-backed, visually reviewed FM27 match-screen evidence. Numeric same-match history matches "
+            "confirm only the raw number, not its in-game meaning. Raw position_code is always preserved."
         ),
         "position_candidate_row_counts": dict(position_counts),
+        "position_semantic_validation": {
+            "status": position_semantic_validation["overall_status"],
+            "review_queue_file": "position-semantic-review.csv",
+            "audit_file": "position-semantic-validation.json",
+            "raw_position_codes_with_candidate_labels": sum(
+                1 for item in position_semantic_validation["codes"] if item["candidate_position_id"]
+            ),
+            "verified_position_codes": position_semantic_validation["verified_code_count"],
+            "unverified_position_codes": position_semantic_validation["unverified_code_count"],
+            "distinct_match_threshold_per_code": POSITION_UI_MIN_DISTINCT_MATCHES,
+            "code_coverage": position_code_coverage,
+        },
         "role_code_note": (
             "role_code is retained as a raw byte. Upstream fmsave documents its meaning as unestablished; "
             "it is not decoded by array order or by candidate roles."
@@ -382,7 +738,14 @@ def main() -> int:
         f"{audit['rating_rows_present']} retained-history ratings; "
         f"{audit['unresolved_rows_left_unchanged']} unresolved identities."
     )
-    print(f"Position candidates: {audit['position_candidate_row_counts']}")
+    print(f"Position candidates (not semantic verification): {audit['position_candidate_row_counts']}")
+    semantic = audit.get("position_semantic_validation", {})
+    print(
+        "Position UI semantic validation: "
+        f"{semantic.get('verified_position_codes', 0)} verified / "
+        f"{semantic.get('unverified_position_codes', 0)} pending or unresolved; "
+        f"review queue: {semantic.get('review_queue_file', 'not generated')}"
+    )
     print(f"Role codes preserved raw: {audit['role_code_raw_counts']}")
     print(f"Outputs written to: {args.export_dir}")
     return 0
