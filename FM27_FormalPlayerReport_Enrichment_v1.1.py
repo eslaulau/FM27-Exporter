@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Add conservative position, role-code and rating-source annotations to FM27 reports.
+"""Enrich FM27 match reports with native position-mask, role-code and rating provenance.
 
-This is a post-processing step. It does not read or modify the .fm save and does not
-change the original identified/unresolved CSVs. Non-GK position labels are explicitly
-candidates derived from exact single-bit matches to the native tactic-position catalog.
+This post-processing step does not read or modify the .fm save and does not change the
+original identified/unresolved CSVs. Match-position labels come from exact raw-mask
+matches to the native catalog and are verified only after the raw field passes its
+same-match named-history cross-check gate.
 """
 from __future__ import annotations
 
