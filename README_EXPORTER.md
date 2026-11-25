@@ -75,11 +75,35 @@ The exporter does not interpret it as a role-array index. Instead, it derives a 
 using `role_bit_mask = 1 << role_code`, then requires an exact match against
 `catalog.json` `roles[].flags`.
 
-Because the same flag may be used by an in-possession role and a different
-out-of-possession role, decoding is restricted to phase 0 (in possession). The resulting
-role must also be present in `catalog.json` `role_eligibility[base_position_id][0]`
-for that player's stored match-position code. A matching phase-1 role is recorded as an
-alternative, but is never substituted as the match-history role label.
+The native catalog contains **79 role definitions**: 40 in-possession (phase 0) and
+39 out-of-possession (phase 1). These are not 79 independent raw codes: the catalog has
+50 distinct one-hot role flags, and 29 flags are reused by one role in each phase.
+
+The match-history `role_code` is currently corroborated against in-possession role badges
+in the supplied match screenshots. Therefore the player-match row decoder deliberately
+uses phase 0 only, then validates the role against
+`catalog.json` `role_eligibility[base_position_id][0]`. A phase-1 role is not substituted
+into the match row just because it shares the same bit.
+
+The enrichment now also writes **`native-role-catalog.json`**, a complete reference
+dictionary with all 79 role IDs, Chinese labels, phase, bit index/mask and eligible base
+positions. It includes a full collision report. Four flag groups have role definitions
+that are both eligible at the same base positions across phases:
+- `Goalkeeper` / `OPGoalkeeper` at `GK`
+- `DeepLyingPlaymaker` / `OPDefensiveMidfielder` at `DMC/DMR/DML`
+- `BoxToBoxMidfielder` / `OPDroppingDefensiveMidfielder` at `DMC/DMR/DML`
+- `FreeRole` / `OPCentralOutletAttackingMidfielder` at `AMC/AMCR/AMCL`
+
+For those four groups, bit index plus position cannot determine the phase. An explicit
+phase-specific source is necessary.
+
+**What can be decoded from the player-match row versus the full catalog:**
+- The full 79-role catalogue can be enumerated and mapped, including every phase-1 label.
+- The match-history `role_code` field supports the currently corroborated phase-0 match-role
+  mapping; it does not, by itself, establish each player's phase-1 role.
+- To populate historical out-of-possession roles for each appearance, a phase-1
+  tactic-slot/settings source associated with the tactic actually used in that match is
+  required. The exporter does not infer the historical tactic from the current saved tactic.
 
 Examples supported by the current native catalog include:
 - `role_code=12` at `GK` → `BallPlayingGoalkeeper`（出球门将）
@@ -92,7 +116,8 @@ the in-possession formation diagrams for Brighton's 6–1 Ajax match on 18 March
 (`3/3.png`) and 4–0 Sunderland match on 9 May 2027 (`3/4.png`). This visual sample
 covers role codes `1, 2, 3, 12, 24, 31, 43, 56`.
 
-Each export writes `role-code-semantic-validation.json` and extends
+Each export writes `native-role-catalog.json` (all 79 role definitions),
+`role-code-semantic-validation.json` (observed-code evidence and ambiguities), and extends
 `player-match-report-role-code-audit-enriched.csv`. The identified enriched CSV includes
 the original `role_code_raw`, bit mask, candidate role, verified in-possession role,
 phase, and any phase-1 alternative. A code-position combination that fails the native
