@@ -1,0 +1,2 @@
+﻿validate returned exit code 3; readers not OK: player_match_stats. Inspect validation.json. This is a parser-coverage warning; required exports continue. Review team-match-stats-compatibility.json for the local team-match-stats schema audit; upstream build registration is unchanged.
+per-player report created with unresolved identities or incomplete validation; inspect player-report-identity-audit.json before analysis
