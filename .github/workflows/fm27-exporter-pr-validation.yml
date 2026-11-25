@@ -51,6 +51,8 @@ jobs:
         run: python tests/test_formal_competition_scope.py
       - name: Test raw player-match position and variant-aware rating recovery
         run: python tests/test_player_match_position_rating.py
+      - name: Test screenshot-backed position semantic validation
+        run: python tests/test_position_semantic_validation.py
 
       - name: Test first-team scope filtering and match-key fallback
         run: python tests/test_first_team_filter_v1_3.py
