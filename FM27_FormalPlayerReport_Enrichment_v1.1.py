@@ -429,6 +429,32 @@ def build_position_review_queue(
     return queue, coverage
 
 
+def apply_position_semantic_results(
+    rows: list[dict[str, Any]],
+    code_audit: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Apply each raw code's audited semantic status without erasing inconclusive review states."""
+    by_code = {
+        str(item.get("position_code_raw") or ""): item
+        for item in code_audit
+    }
+    for row in rows:
+        value = as_int(row.get("position_code"))
+        code = str(value) if value is not None else ""
+        result = by_code.get(code)
+        row["match_position_semantic_status"] = (
+            str(result.get("semantic_status"))
+            if result
+            else "no_raw_position_code_or_unmapped"
+        )
+        row["match_position_id_verified"] = ""
+        row["match_position_name_verified"] = ""
+        if result and result.get("semantic_status") == "verified_by_visual_game_ui_evidence":
+            row["match_position_id_verified"] = result.get("verified_position_id") or ""
+            row["match_position_name_verified"] = result.get("verified_position_name_zh") or ""
+    return rows
+
+
 def preserve_position_review_responses(
     review_path: Path, queue: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
@@ -801,16 +827,9 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
         source,
         numeric_position_check,
     )
-    for row in enriched:
-        verified = next((
-            item for item in position_semantic_validation["codes"]
-            if item["position_code_raw"] == str(row.get("position_code") or "")
-            and item["semantic_status"] == "verified_by_visual_game_ui_evidence"
-        ), None)
-        if verified:
-            row["match_position_semantic_status"] = verified["semantic_status"]
-            row["match_position_id_verified"] = verified["verified_position_id"] or ""
-            row["match_position_name_verified"] = verified["verified_position_name_zh"] or ""
+    enriched = apply_position_semantic_results(
+        enriched, position_semantic_validation["codes"]
+    )
 
     extra_fields = [
         "match_position_id_candidate",
