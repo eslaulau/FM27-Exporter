@@ -50,6 +50,22 @@ class PlayerMatchPositionRatingTests(unittest.TestCase):
         self.assertEqual(checks["position_code"], {"matched": 1, "tested": 1, "mismatches": 0})
         self.assertEqual(checks["rating"], {"matched": 1, "tested": 1, "mismatches": 0})
 
+    def test_rating_offset_usage_reports_each_embedded_variant(self):
+        reports = [
+            {"raw_rating_offset": 141},
+            {"raw_rating_offset": 141},
+            {"raw_rating_offset": 136},
+            {},
+        ]
+        self.assertEqual(
+            MODULE.rating_offset_usage(reports),
+            {"136": 1, "141": 2, "unknown": 1},
+        )
+        self.assertEqual(
+            MODULE.rating_offset_usage(reports, anchor_relative=True),
+            {"36": 1, "41": 2, "unknown": 1},
+        )
+
     def test_cached_probe_rating_offset_requires_one_known_variant(self):
         source = {
             "layout_source_build": "27.1.0+2505117",
