@@ -1,0 +1,45 @@
+{
+  "status": "exported_with_partial_identity_coverage",
+  "exporter_version": "1.5.0",
+  "workflow_run_id": "45534660242",
+  "source_asset": "V0.5.fm",
+  "source_sha256": "ac0bd66d2597c0ca488d819a97553771ac2bbabc2be8032d79a5d3fd5d36d60f",
+  "source_size_bytes": 85410272,
+  "club_name": "σ╕âΦÄ▒Θí┐Φ╢│τÉâΣ┐▒Σ╣ÉΘâ¿",
+  "club_uid": 618,
+  "first_team_id": 472,
+  "team_match_stats_coverage": {
+    "matches_with_saved_reports": 62,
+    "played_formal_fixtures": 56,
+    "missing_saved_reports": 0
+  },
+  "player_detail_report_coverage": {
+    "matches_with_saved_reports": 56,
+    "played_formal_fixtures": 56,
+    "missing_saved_reports": 0
+  },
+  "player_identity_coverage": {
+    "status": "partial",
+    "complete": false,
+    "identified_appearances": 786,
+    "actual_appearances": 876,
+    "unresolved_appearances": 90,
+    "identified_share": 0.89726,
+    "policy": "publish_partial_with_explicit_unresolved_rows; never infer or fabricate player identities"
+  },
+  "position_mapping": {
+    "unmapped_or_no_history": 612,
+    "GK": 12,
+    "DR": 11,
+    "DC": 24,
+    "DL": 17,
+    "MC": 35,
+    "AMR": 18,
+    "AML": 18,
+    "AMC": 16,
+    "ST": 23
+  },
+  "role_code_mapping": "raw_codes_preserved_meaning_unconfirmed",
+  "native_report_retention_note": "FM27 retains detailed match reports for only some played fixtures, mostly recent ones; missing reports cannot be reconstructed by the exporter.",
+  "report_folder": "season-reports/V0.5/45534660242/FM27_Analysis_20261125_024102"
+}

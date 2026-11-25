@@ -1,0 +1,156 @@
+{
+  "audit_version": "1.2-v1.5.1-per-report-layout",
+  "game": "FM27",
+  "save_build": "27.1.1+2511875",
+  "save_known_build_upstream": false,
+  "fmsave_version": "0.14.3",
+  "section": "match_stats_cfg",
+  "save_section_schema": 6,
+  "reader": {
+    "name": "team_match_stats",
+    "status": "ok",
+    "record_count": 7780,
+    "layout_region": "match_stats_cfg",
+    "layout_source_build": "27.0.0+2486695",
+    "layout_source_schema": 6,
+    "save_schema": 6,
+    "layout_borrowed": true
+  },
+  "player_report_layout": {
+    "source_build": "27.1.0+2505117",
+    "source_schema": 6,
+    "borrowed": true,
+    "record_variant_selection": "embedded_report_prefix",
+    "record_variant_counts": {
+      "0100013d1f": 56
+    },
+    "note": "Uses the registered FM27 27.1.0 schema-6 layout for build 27.1.1+2511875. Each report's embedded record-variant prefix is selected before decoding squad anchors, player metrics and record lengths; the target build itself remains unregistered."
+  },
+  "upstream_registration": {
+    "status": "unverified_borrowed_layout",
+    "registered_reference_build": "27.1.0+2505117",
+    "note": "This local audit does not alter fmsave known_build or make the save build upstream-registered."
+  },
+  "local_assessment": "partial_or_unverified",
+  "local_checks": {
+    "team_match_stats_reader_passed": true,
+    "managed_first_team_team_match_stats_rows": 62,
+    "formal_fixture_schedule_coverage": {
+      "played_formal_fixtures_in_schedule": 56,
+      "retained_player_detail_reports_decoded": 56,
+      "fixtures_without_a_retained_player_detail_report": 0,
+      "note": "This is schedule coverage, not a parser pass/fail check: FM27 saves retain reports for only some played fixtures."
+    },
+    "retained_report_coverage": {
+      "native_team_match_stats_matches_retained": 62,
+      "player_detail_reports_decoded": 56,
+      "decoded_reports_matching_native_retained_matches": 56,
+      "native_retained_matches_missing_player_detail": [
+        [
+          131,
+          "2026-07-25",
+          472,
+          736
+        ],
+        [
+          131,
+          "2026-08-01",
+          1793,
+          472
+        ],
+        [
+          131,
+          "2026-08-08",
+          472,
+          1347
+        ],
+        [
+          131,
+          "2027-07-10",
+          1235,
+          472
+        ],
+        [
+          395,
+          "2026-08-12",
+          472,
+          691
+        ],
+        [
+          8208,
+          "2026-08-15",
+          472,
+          6059
+        ]
+      ],
+      "player_detail_reports_without_native_match_stats_row": [],
+      "duplicate_player_detail_report_keys": [],
+      "passed": false,
+      "note": "Compares player-detail extraction against reports retained by the native team-match-stats reader; it does not claim every played fixture remains stored in the save."
+    },
+    "player_team_total_reconciliation": {
+      "comparisons": 1064,
+      "matches": 1064,
+      "mismatches": 0,
+      "missing": 0
+    },
+    "raw_player_field_crosschecks": {
+      "goals": {
+        "matched": 174,
+        "tested": 174,
+        "mismatches": 0
+      },
+      "assists": {
+        "matched": 174,
+        "tested": 174,
+        "mismatches": 0
+      },
+      "passes_attempted": {
+        "matched": 174,
+        "tested": 174,
+        "mismatches": 0
+      },
+      "passes_completed": {
+        "matched": 174,
+        "tested": 174,
+        "mismatches": 0
+      },
+      "entered_at_minute": {
+        "matched": 47,
+        "tested": 47,
+        "mismatches": 0
+      },
+      "left_at_minute": {
+        "matched": 55,
+        "tested": 55,
+        "mismatches": 0
+      },
+      "minutes": {
+        "matched": 174,
+        "tested": 174,
+        "mismatches": 0
+      },
+      "rating": {
+        "matched": 0,
+        "tested": 12,
+        "mismatches": 12
+      }
+    },
+    "rating_field_crosscheck": {
+      "raw_window_offset": 136,
+      "anchor_relative_offset": 36,
+      "encoding": "uint16 little-endian hundredths; /100; half-up to one decimal",
+      "minimum_required": 25,
+      "matched": 0,
+      "tested": 12,
+      "mismatches": 12,
+      "passed": false
+    },
+    "zero_minute_rows_excluded": 12
+  },
+  "limitations": [
+    "Local evidence applies only to this checked save/build/schema and does not confer upstream registration.",
+    "FM27 build 27.1.1+2511875 remains unregistered in fmsave 0.14.3; the helper borrows the registered 27.1.0+2505117 schema-6 layout and selects each report's embedded record variant before decoding.",
+    "Structural and data reconciliation are not a substitute for semantic validation on other saves."
+  ]
+}

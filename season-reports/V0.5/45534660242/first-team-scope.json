@@ -1,0 +1,48 @@
+{
+  "scope_version": "1.3.0-managed-first-team-match-opponents",
+  "club_uid": 618,
+  "club_name": "σ╕âΦÄ▒Θí┐Φ╢│τÉâΣ┐▒Σ╣ÉΘâ¿",
+  "team_id": 472,
+  "policy": {
+    "managed_club_resolution": "managed_clubs() UID; owned club team slot 0",
+    "player_profiles": "managed first-team only; no reserve/youth or opponent profiles",
+    "player_match_stats": "managed first-team roster and historical guests with actual first-team minutes",
+    "player_season_stats": "tracked players, managed first-team team_id rows only",
+    "selections": "managed first-team starters and substitutes only",
+    "fixtures": "all matches involving managed first team; opponent identity, date, competition, venue and score retained",
+    "team_match_stats": "both home and away team rows for each match involving managed first team",
+    "opponent_data": "opponent team-level statistics only in direct matches; no opponent player data or unrelated matches",
+    "tactics": "not exported, decoded, inferred or reconstructed; user supplies match-to-tactic mapping"
+  },
+  "counts": {
+    "fixtures_before": 261,
+    "first_team_fixtures": 103,
+    "played_first_team_fixtures": 62,
+    "player_profiles_before": 92,
+    "first_team_player_profiles": 34,
+    "current_first_team_selection": 19,
+    "historical_players_with_minutes": 40,
+    "tracked_player_uids": 44,
+    "player_match_stats_before": 2365,
+    "player_match_stats_after": 611,
+    "player_season_stats_before": 305,
+    "player_season_stats_after": 149,
+    "team_match_stats_before": 312,
+    "team_match_stats_after": 124,
+    "managed_team_rows": 62,
+    "opponent_team_rows": 62,
+    "home_team_rows": 62,
+    "away_team_rows": 62,
+    "matches_with_two_team_rows": 62,
+    "team_stats_matches_joined_to_fixtures": 61,
+    "tactical_configuration_files_removed": []
+  },
+  "notes": [
+    "The .fm save is never modified.",
+    "No fixed club UID or team ID is embedded; identity is resolved from the save at runtime.",
+    "Every retained team match must have exactly one home and one away team row.",
+    "Opponent team statistics are retained only for matches involving the managed first team.",
+    "Opponent player records and unrelated opponent matches are excluded.",
+    "Tactical configurations are not exported or inferred; user supplies the tactic used in each match."
+  ]
+}
