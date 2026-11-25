@@ -225,7 +225,48 @@ def resolve_match_role_code(
     return result
 
 
-def history_key(def rating_source_status(row: dict[str, Any], history: dict[str, Any] | None) -> str:
+def history_key(row: dict[str, Any]) -> tuple[int, str, int, int] | None:
+    uid = as_int(row.get("player_uid"))
+    comp = as_int(row.get("competition_id"))
+    opponent = as_int(row.get("opponent_team_id"))
+    date = str(row.get("date") or "")
+    if uid is None or comp is None or opponent is None or not date:
+        return None
+    return uid, date, comp, opponent
+
+
+def build_history_index(rows: list[dict[str, Any]]) -> dict[tuple[int, str, int, int], dict[str, Any]]:
+    """Index the richest same-match history row, preferring records that include role_code."""
+    index: dict[tuple[int, str, int, int], dict[str, Any]] = {}
+    for row in rows:
+        key = history_key(row)
+        if key is None:
+            continue
+        previous = index.get(key)
+        unknown = row.get("unknown") or {}
+        previous_unknown = (previous or {}).get("unknown") or {}
+        score = (
+            bool(row.get("has_stats")),
+            row.get("rating") not in (None, ""),
+            row.get("position_code") not in (None, ""),
+            unknown.get("role_code") not in (None, "")
+            or row.get("role_code_raw") not in (None, ""),
+        )
+        previous_score = (
+            bool(previous and previous.get("has_stats")),
+            bool(previous and previous.get("rating") not in (None, "")),
+            bool(previous and previous.get("position_code") not in (None, "")),
+            previous_unknown.get("role_code") not in (None, "")
+            or (previous or {}).get("role_code_raw") not in (None, ""),
+        )
+        # Snapshot rows are supplied before archive rows; exact-score ties retain the
+        # current snapshot, while an archive row with more complete fields wins.
+        if previous is None or score > previous_score:
+            index[key] = row
+    return index
+
+
+def rating_source_status(row: dict[str, Any], history: dict[str, Any] | None) -> str:
     recorded_source = str(row.get("rating_source") or "")
     if recorded_source in {
         "raw_match_report_rating_crosschecked",
@@ -776,9 +817,8 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
     identified_path = export_dir / "player-match-report-identified.csv"
     unresolved_path = export_dir / "player-match-report-unresolved.csv"
     probe_path = export_dir / "player-report-probe.json"
-    history_path = export_dir / "player-match-stats-history-archive.json"
-    if not history_path.is_file():
-        history_path = export_dir / "player-match-stats.json"
+    history_archive_path = export_dir / "player-match-stats-history-archive.json"
+    history_snapshot_path = export_dir / "player-match-stats.json"
     if catalog_path is None:
         catalog_path = Path(__file__).resolve().with_name("catalog.json")
 
@@ -789,7 +829,16 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
 
     fields, identified_rows = read_csv(identified_path)
     _, unresolved_rows = read_csv(unresolved_path) if unresolved_path.is_file() else ([], [])
-    history_rows = read_json(history_path) if history_path.is_file() else []
+    history_archive_rows = (
+        read_json(history_archive_path) if history_archive_path.is_file() else []
+    )
+    history_snapshot_rows = (
+        read_json(history_snapshot_path) if history_snapshot_path.is_file() else []
+    )
+    # Merge the live named-history table and the retained archive. Keep live rows first
+    # so exact-score ties prefer the current snapshot; build_history_index upgrades an
+    # archive row when it carries more complete fields, including role_code.
+    history_rows = history_snapshot_rows + history_archive_rows
     probe = read_json(probe_path) if probe_path.is_file() else None
     catalog = read_json(catalog_path)
     position_map = load_position_catalog(catalog)
@@ -936,7 +985,15 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
         "rating_source_status_counts": dict(rating_counts),
         "rating_rows_present": sum(1 for row in enriched if row.get("rating") not in (None, "")),
         "rating_rows_missing": sum(1 for row in enriched if row.get("rating") in (None, "")),
-        "history_archive_rows": len(history_rows),
+        "history_archive_rows": len(history_archive_rows),
+        "history_snapshot_rows": len(history_snapshot_rows),
+        "history_combined_rows": len(history_rows),
+        "history_index_unique_rows": len(history_index),
+        "history_rows_with_role_code": sum(
+            1 for row in history_index.values()
+            if ((row.get("unknown") or {}).get("role_code") not in (None, ""))
+            or row.get("role_code_raw") not in (None, "")
+        ),
         "same_match_history_join_rows": sum(1 for row in enriched if history_key(row) in history_index),
     }
     write_json(export_dir / "player-match-report-enrichment-audit.json", audit)
