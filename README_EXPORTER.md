@@ -36,42 +36,37 @@ The formal-report coverage audit compares native match-stat rows only against th
 
 For detailed player reports, the helper also reads the raw 16-bit position mask at raw-window offset +110 and the raw one-decimal rating stored as uint16 hundredths. The rating offset is selected per embedded report-record variant (rather than assuming the pre-27.1 offset). Position and rating raw sources are enabled only after at least 25 direct same-match named-history comparisons with zero mismatches. Zero position masks remain blank; unknown identities are not inferred from lineup order or preferred positions. The compatibility audit records each field's offset, sample count and cross-check result.
 
-## Position semantics: candidate labels versus verified match positions
+## Match-position masks: native catalog validation
 
-The raw match-position number and its UI meaning are separate claims. The exporter preserves the raw
-`position_code` and may attach a `match_position_id_candidate` / `match_position_name_candidate`
-when the number exactly matches a one-hot entry in the native tactic-position catalog. This catalog
-match is only a candidate mapping. A same-match numeric cross-check against `fmsave` history confirms
-that the number was decoded consistently; it does not prove what the number means on the match screen.
+The player match report stores a raw 16-bit position mask at raw-window offset +110
+(`statistics_anchor +10`). The exporter cross-checks that value against the same-match
+named player-history `position_code` field. Once at least 25 direct comparisons are
+available and every comparison matches (zero mismatches), the mask is decoded by exact
+equality with `catalog.json` `positions[].mask`.
 
-Each export now writes:
+This is a direct lookup against the native FM27 position-mask catalog. It does **not**
+infer position from a player's preferred positions, lineup order, current tactic slot,
+role, duty, or formation. No game screenshot or manual review is required.
 
-- `position-semantic-validation.json`: per-code coverage, candidate label, numeric cross-check scope,
-  and explicit semantic-verification status.
-- `position-semantic-review.csv`: up to three identified player/fixture samples per observed raw code.
-  The CSV is a review queue, not proof. The samples reuse a compact shared set of fixtures so
-one match screen can be used to inspect several position codes. The exact fixture list is repeated
-in `position-semantic-validation.json`.
+Each export writes `position-semantic-validation.json`, which records:
+- the raw field location and encoding;
+- native catalog provenance (bundle hash, resolver metadata and position entries);
+- the number of same-match named-history cross-checks and whether the 25-row/zero-mismatch
+  gate passed;
+- every observed raw code, its exact mask, mapped native position ID/name, row coverage,
+  and verification status.
 
-To complete a review, open each exact fixture in FM27 and inspect the match screen that explicitly
-shows the player's position for that match. Do not substitute the player's preferred position, the
-starting tactic slot, a role/duty, or the position used in another match. Record the exact UI text and
-screenshot filename plus either its SHA-256 or immutable Git blob SHA-1 in the review CSV. The Git blob
-SHA-1 is the exact content object identifier returned by GitHub; it is not a SHA-256 value. After the
-screenshot has actually been inspected, mark the row `visual_review_status=confirmed` and fill the
-normalized position ID/name, reviewer, and review date. Re-run `FM27_FormalPlayerReport_Enrichment_v1.1.py`
-against the same report folder; existing review responses are carried forward.
+Exact examples from the current native catalog include `1=GK`, `4=DR`, `8=DL`,
+`16=DC`, `128=DMC`, `1024=MC`, `2048=AMR`, `4096=AML`, `8192=AMC`,
+and `16384=ST`. Other exact single-bit entries such as wing-back or wide-midfield
+positions are also supported when they occur in the save. Unknown, compound, or non-matching
+masks remain unmapped instead of being guessed.
 
-A code is promoted only when at least three distinct fixtures have screenshot-backed, visually
-reviewed evidence and all reviewed rows agree with the candidate. Evidence should cover at least two
-identified players when the save contains more than one player for that code; a code used by only one
-identified player can be checked across that player's distinct fixtures. Conflicting or mismatching
-evidence blocks promotion. If a rare code appears in fewer than three distinct fixtures, the queue
-keeps up to three distinct player/fixture samples (including different players in the same match) and
-the audit reports that fixture diversity is insufficient; it does not promote the code globally.
-Screenshot hashes and reviewer fields are metadata; the script does not itself inspect screenshot
-pixels. Until visual review is complete, verified position fields remain blank and the raw code is
-authoritative.
+The decoded mask is a match-position classification, not a role or duty. A base mask
+`16=DC` identifies centre-back but does not distinguish `DCL` from `DCR`; likewise,
+the export does not claim a player's in-possession and out-of-possession tactical slots.
+The raw `position_code` is always retained in the source reports. The legacy
+`position-semantic-review.csv` from earlier exports is not used by the new validator.
 
 ## Report location and validation
 
