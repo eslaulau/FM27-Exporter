@@ -292,8 +292,8 @@ def enrich_record(
     row: dict[str, Any],
     history_index: dict[tuple[int, str, int, int], dict[str, Any]],
     position_map: dict[int, dict[str, str]],
-    role_flag_catalog: dict[int, list[dict[str, Any]]],
-    role_eligibility: dict[str, Any],
+    role_flag_catalog: dict[int, list[dict[str, Any]]] | None = None,
+    role_eligibility: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     result = dict(row)
     key = history_key(row)
@@ -320,8 +320,8 @@ def enrich_record(
     role_info = resolve_match_role_code(
         role_code,
         mapped["id"] if mapped else None,
-        role_flag_catalog,
-        role_eligibility,
+        role_flag_catalog or {},
+        role_eligibility or {},
     )
     result["role_code_raw"] = role_code if role_code is not None else ""
     result["role_code_bit_mask"] = role_info["role_bit_mask"]
