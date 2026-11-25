@@ -12,6 +12,7 @@ import argparse
 import csv
 import hashlib
 import json
+import re
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
@@ -383,11 +384,11 @@ def build_position_semantic_validation(
             if row.get("visual_review_status") == "confirmed"
             and row.get("game_ui_position_text")
             and row.get("screenshot_file")
-            and bool(__import__("re").fullmatch(r"[0-9a-fA-F]{64}", str(row.get("screenshot_sha256") or "")))
+            and bool(re.fullmatch(r"[0-9a-fA-F]{64}", str(row.get("screenshot_sha256") or "")))
             and row.get("visual_review_position_id")
             and row.get("visual_review_position_name_zh")
             and row.get("reviewed_by")
-            and bool(__import__("re").fullmatch(r"\\d{4}-\\d{2}-\\d{2}", str(row.get("reviewed_at") or "")))
+            and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(row.get("reviewed_at") or "")))
         ]
         fixture_keys = {review_fixture_key(row) for row in confirmed}
         fixture_keys.discard(None)
