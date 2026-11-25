@@ -49,7 +49,9 @@ Each export now writes:
 - `position-semantic-validation.json`: per-code coverage, candidate label, numeric cross-check scope,
   and explicit semantic-verification status.
 - `position-semantic-review.csv`: up to three identified player/fixture samples per observed raw code.
-  The CSV is a review queue, not proof.
+  The CSV is a review queue, not proof. The samples reuse a compact shared set of fixtures so
+one match screen can be used to inspect several position codes. The exact fixture list is repeated
+in `position-semantic-validation.json`.
 
 To complete a review, open each exact fixture in FM27 and inspect the match screen that explicitly
 shows the player's position for that match. Do not substitute the player's preferred position, the
