@@ -1,0 +1,66 @@
+{
+  "scope_version": "1.3.1-managed-first-team-match-join-audit",
+  "club_uid": 618,
+  "club_name": "σ╕âΦÄ▒Θí┐Φ╢│τÉâΣ┐▒Σ╣ÉΘâ¿",
+  "team_id": 472,
+  "policy": {
+    "managed_club_resolution": "managed_clubs() UID; owned club team slot 0",
+    "player_profiles": "managed first-team only; no reserve/youth or opponent profiles",
+    "player_match_stats": "managed first-team roster and historical guests with actual first-team minutes",
+    "player_season_stats": "tracked players, managed first-team team_id rows only",
+    "selections": "managed first-team starters and substitutes only",
+    "fixtures": "all matches involving managed first team; opponent identity, date, competition, venue and score retained",
+    "team_match_stats": "both home and away team rows for each match involving managed first team",
+    "opponent_data": "opponent team-level statistics only in direct matches; no opponent player data or unrelated matches",
+    "tactics": "not exported, decoded, inferred or reconstructed; user supplies match-to-tactic mapping"
+  },
+  "counts": {
+    "fixtures_before": 159,
+    "first_team_fixtures": 66,
+    "played_first_team_fixtures": 66,
+    "player_profiles_before": 97,
+    "first_team_player_profiles": 32,
+    "current_first_team_selection": 20,
+    "historical_players_with_minutes": 33,
+    "tracked_player_uids": 40,
+    "player_match_stats_before": 2735,
+    "player_match_stats_after": 641,
+    "player_season_stats_before": 309,
+    "player_season_stats_after": 206,
+    "team_match_stats_before": 318,
+    "team_match_stats_after": 132,
+    "managed_team_rows": 66,
+    "opponent_team_rows": 66,
+    "home_team_rows": 66,
+    "away_team_rows": 66,
+    "matches_with_two_team_rows": 66,
+    "team_stats_matches_joined_to_fixtures": 66,
+    "team_stats_fixture_join": {
+      "exact_competition_date_team_matches": 65,
+      "unique_date_and_team_fallback_matches": 1,
+      "matches_joined": 66,
+      "ambiguous_fallback_matches": [],
+      "unmatched_team_stats_matches": [],
+      "fallback_mappings": [
+        {
+          "team_stats_competition_id": 8208,
+          "fixture_competition_id": 131,
+          "date": "2026-08-15",
+          "home_team_id": 472,
+          "away_team_id": 6059,
+          "match_key_difference": "competition_id_only"
+        }
+      ],
+      "note": "Competition IDs are preserved as exported. The fallback links context only when date and ordered home/away team IDs identify exactly one played first-team fixture."
+    },
+    "tactical_configuration_files_removed": []
+  },
+  "notes": [
+    "The .fm save is never modified.",
+    "No fixed club UID or team ID is embedded; identity is resolved from the save at runtime.",
+    "Every retained team match must have exactly one home and one away team row.",
+    "Opponent team statistics are retained only for matches involving the managed first team.",
+    "Opponent player records and unrelated opponent matches are excluded.",
+    "Tactical configurations are not exported or inferred; user supplies the tactic used in each match."
+  ]
+}
