@@ -222,79 +222,130 @@ def build_position_review_queue(
     record_variant_scope: str = "",
     samples_per_code: int = 3,
 ) -> tuple[list[dict[str, Any]], dict[str, dict[str, int]]]:
-    """Create a reproducible in-game UI review queue without treating catalog matches as proof."""
-    all_rows = [*identified_rows, *unresolved_rows]
+    """Create a compact, reproducible UI review set covering as many codes per fixture as possible."""
     counts: Counter[str] = Counter()
     identified_counts: Counter[str] = Counter()
     unresolved_counts: Counter[str] = Counter()
     for row in identified_rows:
         value = as_int(row.get("position_code"))
-        counts[str(value) if value is not None else "missing"] += 1
-        identified_counts[str(value) if value is not None else "missing"] += 1
+        code = str(value) if value is not None else "missing"
+        counts[code] += 1
+        identified_counts[code] += 1
     for row in unresolved_rows:
         value = as_int(row.get("position_code"))
-        counts[str(value) if value is not None else "missing"] += 1
-        unresolved_counts[str(value) if value is not None else "missing"] += 1
+        code = str(value) if value is not None else "missing"
+        counts[code] += 1
+        unresolved_counts[code] += 1
 
-    by_code: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    # Organise identified samples by raw code and exact fixture. Unresolved rows contribute
+    # coverage counts but are not review samples because there is no safe player identity.
+    by_code_fixture: dict[str, dict[tuple[str, str, str], list[dict[str, Any]]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
     for row in identified_rows:
         value = as_int(row.get("position_code"))
-        if value is None:
+        fixture_key = review_fixture_key(row)
+        if value is None or fixture_key is None:
             continue
-        by_code[str(value)].append(row)
+        by_code_fixture[str(value)][fixture_key].append(row)
+
+    def row_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
+        minutes = as_int(row.get("minutes"))
+        return (
+            0 if minutes is not None and minutes > 0 else 1,
+            0 if row.get("player_uid") not in (None, "") else 1,
+            str(row.get("player_uid") or ""),
+            str(row.get("player_name") or ""),
+        )
+
+    # Choose a shared set of match screens. Rare codes that occur in fewer than three
+    # fixtures force all their available fixtures into the set. Then greedily add fixtures
+    # that cover the greatest number of still-underrepresented codes.
+    selected_fixtures: set[tuple[str, str, str]] = set()
+    code_fixture_keys = {
+        code: set(fixtures)
+        for code, fixtures in by_code_fixture.items()
+    }
+    for code, fixture_keys in code_fixture_keys.items():
+        if len(fixture_keys) < samples_per_code:
+            selected_fixtures.update(fixture_keys)
+
+    while True:
+        unfinished = {
+            code for code, fixture_keys in code_fixture_keys.items()
+            if len(fixture_keys) >= samples_per_code
+            and sum(1 for key in selected_fixtures if key in fixture_keys) < samples_per_code
+        }
+        if not unfinished:
+            break
+        remaining = set().union(*(code_fixture_keys[code] for code in unfinished)) - selected_fixtures
+        if not remaining:
+            break
+        best_fixture = max(
+            remaining,
+            key=lambda key: (
+                sum(1 for code in unfinished if key in code_fixture_keys[code]),
+                sum(len(by_code_fixture[code].get(key, [])) for code in unfinished),
+                tuple(reversed(key)),
+            ),
+        )
+        selected_fixtures.add(best_fixture)
 
     queue: list[dict[str, Any]] = []
-    for raw_code in sorted((key for key in counts if key != "missing"), key=lambda item: int(item)):
-        candidates = by_code.get(raw_code, [])
-        selected: list[dict[str, Any]] = []
-        used_fixtures: set[tuple[str, str, str]] = set()
+    for raw_code in sorted(by_code_fixture, key=lambda item: int(item)):
+        fixture_map = by_code_fixture[raw_code]
+        code_fixtures = sorted(
+            (key for key in selected_fixtures if key in fixture_map),
+            key=lambda key: (key[0], key[1], key[2]),
+        )
+        selected_rows: list[dict[str, Any]] = []
         used_players: set[str] = set()
 
-        def row_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
-            minutes = as_int(row.get("minutes"))
-            return (
-                0 if minutes is not None and minutes > 0 else 1,
-                0 if row.get("player_uid") not in (None, "") else 1,
-                str(row.get("date") or ""),
-                str(row.get("competition_id") or ""),
-                str(row.get("opponent_team_id") or ""),
-                str(row.get("player_uid") or ""),
+        # First choose one player from each selected fixture, preferring a new player.
+        for fixture_key in code_fixtures:
+            candidates = sorted(fixture_map[fixture_key], key=row_sort_key)
+            row = next(
+                (
+                    item for item in candidates
+                    if item.get("player_uid") not in (None, "")
+                    and str(item.get("player_uid")) not in used_players
+                ),
+                candidates[0] if candidates else None,
             )
-
-        ordered = sorted(candidates, key=row_sort_key)
-        # First pass prefers distinct players and distinct matches.
-        for row in ordered:
-            fixture_key = review_fixture_key(row)
-            player_key = str(row.get("player_uid") or "")
-            if fixture_key is None or fixture_key in used_fixtures:
+            if row is None:
                 continue
-            if player_key and player_key in used_players:
-                continue
-            selected.append(row)
-            used_fixtures.add(fixture_key)
-            if player_key:
-                used_players.add(player_key)
-            if len(selected) >= samples_per_code:
+            selected_rows.append(row)
+            if row.get("player_uid") not in (None, ""):
+                used_players.add(str(row.get("player_uid")))
+            if len(selected_rows) >= samples_per_code:
                 break
-        # Second pass allows another match for the same player. Third pass also retains
-        # distinct players from one rare-code fixture (for example, three DMC rows in one match).
-        if len(selected) < samples_per_code:
-            for row in ordered:
-                fixture_key = review_fixture_key(row)
-                if fixture_key is None or fixture_key in used_fixtures:
-                    continue
-                selected.append(row)
-                used_fixtures.add(fixture_key)
-                if row.get("player_uid") not in (None, ""):
-                    used_players.add(str(row.get("player_uid")))
-                if len(selected) >= samples_per_code:
-                    break
-        if len(selected) < samples_per_code:
+
+        # For a rare code with fewer available fixtures, add other distinct players from
+        # those same fixtures. This yields useful row-level evidence without pretending the
+        # repeated observations are independent matches.
+        if len(selected_rows) < samples_per_code:
             selected_keys = {
-                (review_fixture_key(item), str(item.get("player_uid") or ""))
-                for item in selected
+                (
+                    review_fixture_key(row),
+                    str(row.get("player_uid") or ""),
+                )
+                for row in selected_rows
             }
-            for row in ordered:
+            additional_rows = sorted(
+                (
+                    row
+                    for fixture_key in code_fixtures
+                    for row in fixture_map[fixture_key]
+                ),
+                key=lambda row: (
+                    0 if row.get("player_uid") not in (None, "") else 1,
+                    str(row.get("date") or ""),
+                    str(row.get("competition_id") or ""),
+                    str(row.get("opponent_team_id") or ""),
+                    str(row.get("player_uid") or ""),
+                ),
+            )
+            for row in additional_rows:
                 fixture_key = review_fixture_key(row)
                 player_key = str(row.get("player_uid") or "")
                 sample_key = (fixture_key, player_key)
@@ -302,15 +353,15 @@ def build_position_review_queue(
                     continue
                 if player_key and player_key in used_players:
                     continue
-                selected.append(row)
+                selected_rows.append(row)
                 selected_keys.add(sample_key)
                 if player_key:
                     used_players.add(player_key)
-                if len(selected) >= samples_per_code:
+                if len(selected_rows) >= samples_per_code:
                     break
 
         mapped = position_map.get(int(raw_code))
-        for row in selected:
+        for row in selected_rows:
             fixture_key = review_fixture_key(row) or ("", "", "")
             stable_key = "|".join((
                 game_build, str(section_schema or ""), raw_code,
@@ -346,7 +397,7 @@ def build_position_review_queue(
                 "notes": "",
             })
 
-    coverage = {}
+    coverage: dict[str, dict[str, int]] = {}
     for code in sorted((key for key in counts if key != "missing"), key=lambda item: int(item)):
         code_rows = [
             row for row in identified_rows
@@ -371,6 +422,8 @@ def build_position_review_queue(
             "identified_rows": identified_counts["missing"],
             "unresolved_rows": unresolved_counts["missing"],
             "review_samples": 0,
+            "distinct_matches_available": 0,
+            "distinct_players_available": 0,
         }
     return queue, coverage
 
