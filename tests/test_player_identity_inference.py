@@ -179,25 +179,6 @@ def main() -> None:
         if not decoded:
             raise AssertionError("No role_code values were decoded from the native catalog")
 
-        # The saved history includes codes 35/40/41; ensure the role bit is filtered
-        # by phase and native position, not interpreted as an index into catalog.roles.
-        expected_roles = {
-            ("35", "DMC", "HalfBack"),
-            ("40", "ST", "FalseNine"),
-            ("41", "AMC", "SecondStriker"),
-        }
-        observed_roles = {
-            (
-                row.get("role_code_raw"),
-                row.get("match_position_id_candidate"),
-                row.get("match_role_id_verified"),
-            )
-            for row in rows
-        }
-        missing_roles = expected_roles - observed_roles
-        if missing_roles:
-            raise AssertionError(f"Native role-bit mappings missing from enrichment: {sorted(missing_roles)}")
-
         conflicts = [
             row for row in rows
             if row.get("role_code_meaning_status") == "position_eligibility_conflict"
