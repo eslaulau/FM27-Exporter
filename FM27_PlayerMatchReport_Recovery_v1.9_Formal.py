@@ -868,6 +868,24 @@ def decode_raw_player_stats(
     return values
 
 
+
+def rating_offset_usage(
+    reports: list[dict[str, Any]], *, anchor_relative: bool = False
+) -> dict[str, int]:
+    """Count selected per-report rating offsets, optionally relative to the statistics anchor."""
+    counts: Counter[str] = Counter()
+    for report in reports:
+        offset = as_int(report.get("raw_rating_offset"))
+        if offset is None:
+            label = "unknown"
+        elif anchor_relative:
+            label = str(offset - 100)
+        else:
+            label = str(offset)
+        counts[label] += 1
+    return dict(sorted(counts.items()))
+
+
 def raw_stats_from_probe_row(row: dict[str, Any]) -> dict[str, int] | None:
     """Refresh position/rating candidates from retained raw-window hex when available."""
     stored = row.get("raw_player_stats")
@@ -2185,9 +2203,12 @@ def main() -> int:
             "raw_history_crosschecks": raw_history_crosschecks,
             "rating_recovery": {
                 "status": "raw_report_rating_locally_crosschecked" if rating_raw_enabled else "named_history_fallback_only",
-                "source": "variant-aware uint16 little-endian hundredths field; offset is selected from the embedded report-record variant and recorded in raw_window_offset/anchor_relative_offset, then rounded half-up to one decimal",
-                "raw_window_offset": RAW_RATING_FIELD_OFFSET,
-                "anchor_relative_offset": RAW_RATING_FIELD_OFFSET - 100,
+                "source": "variant-aware uint16 little-endian hundredths field; the embedded report-record variant selects the actual offset; values are rounded half-up to one decimal",
+                "raw_window_offset_base": RAW_RATING_FIELD_OFFSET,
+                "anchor_relative_offset_base": RAW_RATING_FIELD_OFFSET - 100,
+                "offset_selection": "base offset plus embedded report-record variant distance-field displacement",
+                "raw_window_offsets_used": rating_offset_usage(reports),
+                "anchor_relative_offsets_used": rating_offset_usage(reports, anchor_relative=True),
                 "crosscheck_minimum": MIN_RATING_CROSSCHECKS,
                 "crosscheck": rating_crosscheck,
                 "raw_source_enabled": rating_raw_enabled,
@@ -2313,7 +2334,8 @@ def main() -> int:
         },
         "rating_recovery": {
             "source": "uint16 little-endian hundredths; offset follows each embedded report-record variant's distance-field displacement; /100 and rounded half-up to one decimal",
-            "raw_window_offsets": dict(sorted(Counter(str(report.get("raw_rating_offset")) for report in reports).items())),
+            "raw_window_offsets": rating_offset_usage(reports),
+            "anchor_relative_offsets": rating_offset_usage(reports, anchor_relative=True),
             "available": raw_field_coverage["rating"]["nonempty"],
             "missing": raw_field_coverage["rating"]["missing"],
             "status": "raw_report_rating_locally_crosschecked" if rating_raw_enabled else "named_history_fallback_only",
