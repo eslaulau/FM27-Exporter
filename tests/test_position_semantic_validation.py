@@ -46,6 +46,47 @@ class PositionSemanticValidationTests(unittest.TestCase):
             for index in range(count)
         ]
 
+    def test_reenrichment_preserves_reviewed_inconclusive_statuses(self):
+        rows = [
+            {"position_code": "1"},
+            {"position_code": "4"},
+            {"position_code": "128"},
+            {"position_code": ""},
+        ]
+        codes = [
+            {
+                "position_code_raw": "1",
+                "semantic_status": "verified_by_visual_game_ui_evidence",
+                "verified_position_id": "GK",
+                "verified_position_name_zh": "门将",
+            },
+            {
+                "position_code_raw": "4",
+                "semantic_status": "visually_reviewed_evidence_not_sufficient_for_mapping",
+                "verified_position_id": None,
+                "verified_position_name_zh": None,
+            },
+            {
+                "position_code_raw": "128",
+                "semantic_status": "visually_reviewed_but_insufficient_match_diversity",
+                "verified_position_id": None,
+                "verified_position_name_zh": None,
+            },
+        ]
+        result = MODULE.apply_position_semantic_results(rows, codes)
+        self.assertEqual(result[0]["match_position_id_verified"], "GK")
+        self.assertEqual(result[0]["match_position_name_verified"], "门将")
+        self.assertEqual(
+            result[1]["match_position_semantic_status"],
+            "visually_reviewed_evidence_not_sufficient_for_mapping",
+        )
+        self.assertEqual(
+            result[2]["match_position_semantic_status"],
+            "visually_reviewed_but_insufficient_match_diversity",
+        )
+        self.assertEqual(result[1]["match_position_id_verified"], "")
+        self.assertEqual(result[3]["match_position_semantic_status"], "no_raw_position_code_or_unmapped")
+
     def test_catalog_match_never_auto_confirms_game_ui_semantics(self):
         row = self.make_rows(count=1)[0]
         enriched = MODULE.enrich_record(row, {}, self.position_map)
