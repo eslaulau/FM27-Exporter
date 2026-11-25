@@ -117,6 +117,7 @@ jobs:
           $identityAudit = Get-Content -LiteralPath (Join-Path $reportFolder 'player-report-identity-audit.json') -Raw | ConvertFrom-Json
           $identityCache = Get-Content -LiteralPath (Join-Path $reportFolder 'FM27_PlayerIdentityCache_Formal_v1.1_learned.json') -Raw | ConvertFrom-Json
           $teamStatsAudit = Get-Content -LiteralPath (Join-Path $reportFolder 'team-match-stats-compatibility.json') -Raw | ConvertFrom-Json
+          $formalReportSummary = Get-Content -LiteralPath (Join-Path $reportFolder 'player-match-report-formal-summary.json') -Raw | ConvertFrom-Json
           $enrichmentAudit = Get-Content -LiteralPath (Join-Path $reportFolder 'player-match-report-enrichment-audit.json') -Raw | ConvertFrom-Json
           if ([int]$identityAudit.team_id -ne [int]$scope.team_id) { throw "Identity audit team_id ($($identityAudit.team_id)) differs from managed first-team ID ($($scope.team_id))." }
           if ([int]$identityCache.team_id -ne [int]$scope.team_id -or [int]$identityCache.club_uid -ne [int]$scope.club_uid) { throw 'Learned identity cache does not match the dynamically resolved managed club/team.' }
@@ -131,8 +132,11 @@ jobs:
           $identityComplete = [bool]$identityPolicy.complete
 
           $expectedFormalFixtures = [int]$identityAudit.scope.played_first_team_formal_competition_fixtures
-          $teamStatsMatches = [int]$teamStatsAudit.local_checks.managed_first_team_team_match_stats_rows
+          $teamStatsMatchesAllCompetitions = [int]$teamStatsAudit.local_checks.managed_first_team_team_match_stats_rows
+          $teamStatsMatches = [int]$teamStatsAudit.local_checks.retained_report_coverage.native_team_match_stats_matches_retained
+          $teamStatsExcludedOutsideFormalScope = [int]$teamStatsAudit.local_checks.retained_report_coverage.native_team_match_stats_matches_excluded_outside_formal_scope
           $playerDetailMatches = [int]$identityAudit.scope.detailed_report_matches
+          $playerGoalReconciliation = $formalReportSummary.player_goal_reconciliation
           $partialNativeReportCoverage = (
             $teamStatsMatches -lt $expectedFormalFixtures -or
             $playerDetailMatches -lt $expectedFormalFixtures
@@ -159,6 +163,8 @@ jobs:
             first_team_id = [int]$scope.team_id
             team_match_stats_coverage = [ordered]@{
               matches_with_saved_reports = $teamStatsMatches
+              matches_with_saved_reports_all_competitions = $teamStatsMatchesAllCompetitions
+              matches_excluded_outside_formal_scope = $teamStatsExcludedOutsideFormalScope
               played_formal_fixtures = $expectedFormalFixtures
               missing_saved_reports = [Math]::Max(0, $expectedFormalFixtures - $teamStatsMatches)
             }
@@ -168,6 +174,7 @@ jobs:
               missing_saved_reports = [Math]::Max(0, $expectedFormalFixtures - $playerDetailMatches)
             }
             player_identity_coverage = $identityPolicy
+            player_goal_reconciliation = $playerGoalReconciliation
             position_mapping = $enrichmentAudit.position_candidate_row_counts
             role_code_mapping = 'raw_codes_preserved_meaning_unconfirmed'
             native_report_retention_note = 'FM27 retains detailed match reports for only some played fixtures, mostly recent ones; missing reports cannot be reconstructed by the exporter.'
