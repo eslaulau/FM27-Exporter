@@ -119,13 +119,23 @@ class FormalCompetitionScopeTests(unittest.TestCase):
         self.assertEqual(audit["native_match_stats_competition_ids_excluded"], [131, 395, 8208])
         self.assertEqual(audit["native_retained_matches_missing_player_detail"], [])
 
-    def test_player_goal_audit_uses_raw_rows_and_does_not_invent_scorers(self):
+    def test_player_goal_audit_reads_raw_record_goals_not_normalized_metrics(self):
         fixtures = {
             (7, "2027-04-24", 503, 472): {
                 "home_goals": 1,
                 "away_goals": 3,
             },
         }
+
+        def raw_player_row(goals, normalized_goals):
+            raw_window = bytearray(120)
+            raw_window[MODULE.RAW_PLAYER_FIELD_OFFSETS["goals"]] = goals
+            return {
+                "raw_window_hex": raw_window.hex(),
+                # Deliberately conflicting normalized data must never drive this audit.
+                "metrics": {"goals": normalized_goals},
+            }
+
         reports = [
             {
                 "competition_id": 7,
@@ -134,10 +144,10 @@ class FormalCompetitionScopeTests(unittest.TestCase):
                 "away_team_id": 472,
                 "is_home": False,
                 "anonymous_player_rows": [
-                    {"metrics": {"goals": 1}},
-                    {"metrics": {"goals": 1}},
+                    raw_player_row(1, 0),
+                    raw_player_row(1, 99),
                     # Raw row still counts even if a later appearance filter excludes it.
-                    {"minutes": 0, "metrics": {"goals": 1}},
+                    {"minutes": 0, **raw_player_row(1, 0)},
                 ],
             }
         ]
@@ -149,12 +159,38 @@ class FormalCompetitionScopeTests(unittest.TestCase):
         self.assertEqual(audit["unattributed_team_goals_total"], 0)
         self.assertEqual(audit["matches_with_equal_team_and_player_goals"], 1)
 
-        reports[0]["anonymous_player_rows"][0]["metrics"]["goals"] = 0
+        # Changing the raw field changes the audit; metrics.goals still does not matter.
+        changed = bytearray.fromhex(reports[0]["anonymous_player_rows"][0]["raw_window_hex"])
+        changed[MODULE.RAW_PLAYER_FIELD_OFFSETS["goals"]] = 0
+        reports[0]["anonymous_player_rows"][0]["raw_window_hex"] = changed.hex()
         audit = MODULE.audit_player_goal_reconciliation(reports, fixtures)
         self.assertFalse(audit["passed"])
         self.assertEqual(audit["unattributed_team_goals_total"], 1)
         self.assertEqual(audit["unresolved_matches"][0]["status"], "team_score_exceeds_player_goals")
         self.assertNotIn("player_name", audit["unresolved_matches"][0])
+
+    def test_player_goal_audit_does_not_treat_missing_raw_goals_as_zero(self):
+        fixtures = {
+            (7, "2027-04-24", 503, 472): {
+                "home_goals": 1,
+                "away_goals": 0,
+            },
+        }
+        reports = [{
+            "competition_id": 7,
+            "date": "2027-04-24",
+            "home_team_id": 503,
+            "away_team_id": 472,
+            "is_home": True,
+            "anonymous_player_rows": [{"metrics": {"goals": 0}}],
+        }]
+        audit = MODULE.audit_player_goal_reconciliation(reports, fixtures)
+        self.assertFalse(audit["passed"])
+        self.assertEqual(audit["matches_checked"], 0)
+        self.assertEqual(audit["matches_with_incomplete_raw_player_goals"], 1)
+        self.assertEqual(audit["raw_player_records_missing_goals_total"], 1)
+        self.assertEqual(audit["raw_player_record_goals_total"], 0)
+        self.assertEqual(audit["unresolved_matches"][0]["status"], "raw_player_goal_data_incomplete")
 
     def test_ignores_other_teams_competitions(self):
         fixtures = [

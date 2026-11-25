@@ -486,10 +486,12 @@ def audit_player_goal_reconciliation(
     reports: list[dict[str, Any]],
     fixture_index: dict[tuple[int, str, int, int], dict[str, Any]],
 ) -> dict[str, Any]:
-    """Compare team score with every raw player row before identity/minute filtering.
+    """Compare fixture scores with goals decoded from every raw player row.
 
-    A positive difference is left unattributed. It may represent an own goal or a
-    source-data/parser discrepancy; this audit never invents a player scorer.
+    Goals are read from raw_stats_from_probe_row(), never from normalized metrics.
+    Missing raw values remain explicitly incomplete rather than being treated as zero.
+    Positive score/player-goal differences remain unattributed; this audit does not
+    invent a player scorer or assume an own goal.
     """
     match_rows: list[dict[str, Any]] = []
     seen_keys: Counter[tuple[int, str, int, int]] = Counter()
@@ -514,25 +516,42 @@ def audit_player_goal_reconciliation(
 
         score_field = "home_goals" if report.get("is_home") is True else "away_goals"
         team_score = as_int(fixture.get(score_field))
-        player_goals = sum(
-            (as_int(row.get("metrics", {}).get("goals"), 0) or 0)
-            for row in report.get("anonymous_player_rows", [])
-        )
+        raw_rows = report.get("anonymous_player_rows", [])
+        player_goals_known_sum = 0
+        missing_goal_rows = 0
+        for row in raw_rows:
+            raw_stats = raw_stats_from_probe_row(row)
+            goals = as_int(raw_stats.get("goals")) if isinstance(raw_stats, dict) else None
+            if goals is None:
+                missing_goal_rows += 1
+            else:
+                player_goals_known_sum += goals
+
+        raw_goals_complete = missing_goal_rows == 0
         base = {
             "competition_id": key[0],
             "date": key[1],
             "home_team_id": key[2],
             "away_team_id": key[3],
             "team_score_goals": team_score,
-            "raw_player_record_goals": player_goals,
-            "raw_player_records_included": len(report.get("anonymous_player_rows", [])),
-            "score_player_goal_difference": None if team_score is None else team_score - player_goals,
+            "raw_player_record_goals": player_goals_known_sum if raw_goals_complete else None,
+            "raw_player_record_goals_known_sum": player_goals_known_sum,
+            "raw_player_records_included": len(raw_rows),
+            "raw_player_records_with_goals": len(raw_rows) - missing_goal_rows,
+            "raw_player_records_missing_goals": missing_goal_rows,
+            "score_player_goal_difference": (
+                team_score - player_goals_known_sum
+                if team_score is not None and raw_goals_complete else None
+            ),
         }
         if team_score is None:
             match_rows.append({**base, "status": "fixture_score_unavailable"})
             continue
+        if not raw_goals_complete:
+            match_rows.append({**base, "status": "raw_player_goal_data_incomplete"})
+            continue
 
-        difference = team_score - player_goals
+        difference = team_score - player_goals_known_sum
         if difference == 0:
             status = "matched"
             unattributed = 0
@@ -552,34 +571,56 @@ def audit_player_goal_reconciliation(
             "player_goals_over_score": player_over,
         })
 
-    scorable = [row for row in match_rows if row.get("team_score_goals") is not None]
-    unresolved = [row for row in scorable if row["status"] != "matched"]
-    score_unavailable = len(match_rows) - len(scorable)
+    score_available = [row for row in match_rows if row.get("team_score_goals") is not None]
+    auditable = [
+        row for row in score_available
+        if row.get("raw_player_records_missing_goals", 0) == 0
+    ]
+    unresolved = [row for row in score_available if row["status"] != "matched"]
+    score_unavailable = len(match_rows) - len(score_available)
+    incomplete_matches = sum(
+        1 for row in match_rows if row.get("raw_player_records_missing_goals", 0) > 0
+    )
+    missing_goal_rows_total = sum(
+        int(row.get("raw_player_records_missing_goals", 0)) for row in match_rows
+    )
     return {
-        "audit_version": "1.0-raw-player-goals-vs-fixture-score",
-        "method": "sum raw player-record goals from every report row before identity and zero-minute filtering; compare with managed-team fixture score",
-        "matches_checked": len(scorable),
-        "matches_with_equal_team_and_player_goals": sum(1 for row in scorable if row["status"] == "matched"),
-        "matches_with_unattributed_team_goals": sum(1 for row in scorable if row["status"] == "team_score_exceeds_player_goals"),
-        "matches_with_player_goals_over_team_score": sum(1 for row in scorable if row["status"] == "player_goals_exceed_team_score"),
+        "audit_version": "1.1-raw-player-record-goals-vs-fixture-score",
+        "method": (
+            "sum goals decoded by raw_stats_from_probe_row() from every retained raw player "
+            "record before identity and zero-minute filtering; normalized metrics are not used; "
+            "missing raw goal values make that match incomplete"
+        ),
+        "matches_checked": len(auditable),
+        "matches_with_equal_team_and_player_goals": sum(1 for row in auditable if row["status"] == "matched"),
+        "matches_with_unattributed_team_goals": sum(1 for row in auditable if row["status"] == "team_score_exceeds_player_goals"),
+        "matches_with_player_goals_over_team_score": sum(1 for row in auditable if row["status"] == "player_goals_exceed_team_score"),
+        "matches_with_incomplete_raw_player_goals": incomplete_matches,
         "matches_without_fixture_score": score_unavailable,
-        "team_score_goals_total": sum(int(row["team_score_goals"]) for row in scorable),
-        "raw_player_record_goals_total": sum(int(row["raw_player_record_goals"]) for row in scorable),
-        "unattributed_team_goals_total": sum(int(row.get("unattributed_team_goals", 0)) for row in scorable),
-        "player_goals_over_score_total": sum(int(row.get("player_goals_over_score", 0)) for row in scorable),
+        "team_score_goals_total": sum(int(row["team_score_goals"]) for row in auditable),
+        "raw_player_record_goals_total": sum(int(row["raw_player_record_goals"]) for row in auditable),
+        "raw_player_record_goals_known_sum_total": sum(
+            int(row.get("raw_player_record_goals_known_sum", 0)) for row in match_rows
+        ),
+        "raw_player_records_missing_goals_total": missing_goal_rows_total,
+        "unattributed_team_goals_total": sum(int(row.get("unattributed_team_goals", 0)) for row in auditable),
+        "player_goals_over_score_total": sum(int(row.get("player_goals_over_score", 0)) for row in auditable),
         "duplicate_report_match_keys": [list(key) for key, count in seen_keys.items() if count > 1],
         "passed": (
             score_unavailable == 0
+            and incomplete_matches == 0
             and not unresolved
             and all(count == 1 for count in seen_keys.values())
         ),
         "unresolved_matches": unresolved,
         "note": (
             "Positive score/player-goal differences remain unattributed. An own goal is one possible "
-            "explanation, but is not asserted without a separate match-event source. The audit uses "
-            "raw report rows, including rows later excluded from player appearance CSVs."
+            "explanation, but is not asserted without a separate match-event source. The audit reads "
+            "raw player-record fields, includes rows later excluded from player appearances, and does "
+            "not substitute normalized metrics or zero for missing raw values."
         ),
     }
+
 
 def load_roster_names(export_dir: Path, team_id: int) -> dict[int, str]:
     result: dict[int, str] = {}
@@ -2115,9 +2156,9 @@ def main() -> int:
                 "No row index, lineup order, or performance profile is treated as a player ID; only the four-byte record signature at statistics_anchor-100 is used.",
                 "Goals, assists and pass attempts/completions are decoded from verified raw player-record offsets and cross-checked against named same-match history; season aggregates are not copied into individual rows.",
                 "Minutes are decoded from raw entry/exit clocks only when the match duration is established by named-history votes, a unique exact category-aggregate solution, or a regular-time competition/stage rule. Otherwise they remain blank unless exact named history supplies them.",
-                "Match-report rating is uint16 little-endian at raw-window +136 (statistics_anchor +36), divided by 100 and rounded half-up to one decimal. It is enabled only after at least 25 same-match named-history rating checks pass with zero mismatches.",
+                "Match-report rating is a variant-aware uint16 little-endian hundredths field; its raw-window and anchor-relative offsets are selected from the embedded report-record variant and recorded in rating_recovery. It is enabled only after at least 25 same-match named-history rating checks pass with zero mismatches.",
                 "Rows with a verified zero-minute appearance are omitted from per-player CSV reports. Team-total reconciliation still uses every raw match-report row before this filter.",
-                "FM27 27.0.1+2494687 remains unregistered as an exact build in fmsave 0.14.3; this helper explicitly selects the registered 27.0.0 schema-6 layout and records local checks without changing upstream known_build status.",
+                "When a save build is not registered exactly in fmsave 0.14.3, the helper records the borrowed registered schema/layout and embedded record variant; local structural checks do not change upstream known_build status.",
                 "Friendly/pre-season competitions are excluded dynamically by match-rule family 1; their save-local IDs are listed in the scope audit.",
             ],
         },
@@ -2144,7 +2185,7 @@ def main() -> int:
             "raw_history_crosschecks": raw_history_crosschecks,
             "rating_recovery": {
                 "status": "raw_report_rating_locally_crosschecked" if rating_raw_enabled else "named_history_fallback_only",
-                "source": "uint16 little-endian at raw-window +136 (statistics_anchor +36), divided by 100 and rounded half-up to one decimal",
+                "source": "variant-aware uint16 little-endian hundredths field; offset is selected from the embedded report-record variant and recorded in raw_window_offset/anchor_relative_offset, then rounded half-up to one decimal",
                 "raw_window_offset": RAW_RATING_FIELD_OFFSET,
                 "anchor_relative_offset": RAW_RATING_FIELD_OFFSET - 100,
                 "crosscheck_minimum": MIN_RATING_CROSSCHECKS,

@@ -586,7 +586,7 @@ try {
         'Verified raw player-record offsets decode goals, assists, substitute entry/exit clocks, passes attempted and passes completed even when rolling named history is missing.',
         'The pinned fmsave version exposes PlayerMatchStats.entered_at_minute and PlayerSeasonStats.minutes_since_last_goal for named match history and overall club season stats.',
         'Minutes are decoded from raw entry/exit clocks when match duration is verified by named-history votes, a unique exact season-category solution, or regular-time competition/stage rules.',
-        'Match ratings use the locally cross-validated uint16 little-endian field at raw-window +136 (statistics_anchor +36): hundredths divided by 100, rounded half-up to one decimal. Enable only after at least 25 exact same-match history checks pass with zero mismatches.',
+        'Match ratings use a variant-aware uint16 little-endian hundredths field. The embedded report-record variant selects the raw-window offset; see rating_recovery.raw_window_offset and anchor_relative_offset in player-match-report-formal-summary.json. Enable only after at least 25 exact same-match history checks pass with zero mismatches.',
         'Rows with a confirmed 0-minute appearance are omitted from player-level match reports; team-total checks still use the full raw match report.',
         'FM27 named match history is rolling (~20 rows per player/team spell across all competitions); preserve it by exporting regularly and keeping FM27_PlayerMatchHistoryArchive.',
         'Managed club and first-team ID are resolved from the save at runtime; no club/team ID is hardcoded.',
@@ -596,7 +596,7 @@ try {
         'Opponent identity, competition, date, venue and score remain as match context; opponent team-level statistics are retained for direct matches.',
         'Opponent player profiles and unrelated opponent matches are excluded; opponent-side team statistics for direct matches are retained.',
         'Tactical configurations, set-piece configurations, current tactic slots and historical tactic inference are deliberately not exported.',
-        'For FM27 27.0.1+2494687 with match_stats_cfg schema 6, fmsave 0.14.3 uses an available registered FM27 schema-6 match-report layout; the exact 27.0.1 build remains unregistered and the decoded fields are not thereby in-game verified.',
+        'For save builds without an exact fmsave 0.14.3 registration, the helper records the borrowed registered schema-6 layout and embedded report-record variant. Local structural checks do not register the target build or independently verify every decoded field in-game.',
         'The generated team-match-stats-compatibility.json records the reader status, borrowed layout, formal-fixture coverage, team totals and raw-field cross-checks for this save only.',
         'A local compatibility pass does not change fmsave known_build and is not a claim of upstream verification for other saves/builds.',
         'Named player history is joined to first-team fixtures by competition, date and opponent team ID.',
@@ -608,12 +608,11 @@ try {
         'FM27_FirstTeam_Filter_v1.3.0.py enforces dynamic managed first-team scope and paired home/away match statistics.',
         'FM27_PlayerMatchReport_Recovery_v1.9_Formal.py reads each player signature at the statistics anchor minus 100 bytes and retains the full variable-length player record.',
         'Raw verified offsets from the stored player-record window: goals +20, assists +56, left-at minute +67, entered-at minute +71, passes attempted +86 and passes completed +87.',
-        'Raw rating field: uint16 little-endian at raw-window +136 (statistics anchor +36), stored in hundredths and rounded half-up to one decimal after same-match history cross-validation.',
+        'Raw rating field: variant-aware uint16 little-endian hundredths; the selected raw-window and statistics-anchor offsets are recorded in player-match-report-formal-summary.json and follow the embedded report-record variant.',
         'Raw field extraction is cross-checked against named same-match history; duration solving uses exact season-category reconciliation only as a validation of fixture length, never to fill individual match statistics.',
         'ReuseExportDir replays the existing raw player-report-probe.json and does not open the save for match_stats_cfg.',
         'Cross-competition signature-cache transfer and same-match-history singleton inference are distinguished in player-report-identity-audit.json; conflicting candidates remain unresolved.',
-        'Individual goals, assists and pass totals are read from raw match records. Individual minutes are calculated from raw entry/exit clocks. Season aggregates only verify duration; they are never apportioned to players or matches.',
-        'A rating is not derived from the raw match-report schema in this build. The tool keeps any exact named-history rating and leaves missing ratings empty.',
+        'Individual goals, assists and pass totals are read from raw match records. The player-goal audit reads raw_player_stats/goals from every unfiltered report row, never normalized metrics, and flags missing raw values as incomplete instead of treating them as zero. Individual minutes are calculated from raw entry/exit clocks. Season aggregates only verify duration; they are never apportioned to players or matches.',
         'This tool reads the save only and never modifies it.'
     )
     Set-Content -LiteralPath (Join-Path $script:OutDir 'README.txt') -Value $readmeLines -Encoding UTF8
