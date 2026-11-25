@@ -490,6 +490,24 @@ def build_position_semantic_validation(
             row for row in confirmed
             if mapped is not None and str(row["visual_review_position_id"]) != mapped["id"]
         ]
+        reviewed_insufficient_diversity = [
+            row for row in records
+            if row.get("visual_review_status") == "reviewed_insufficient_match_diversity"
+            and row.get("screenshot_file")
+            and (
+                row.get("screenshot_sha256")
+                or row.get("screenshot_git_blob_sha")
+            )
+        ]
+        reviewed_insufficient_semantics = [
+            row for row in records
+            if row.get("visual_review_status") == "reviewed_insufficient_semantic_evidence"
+            and row.get("screenshot_file")
+            and (
+                row.get("screenshot_sha256")
+                or row.get("screenshot_git_blob_sha")
+            )
+        ]
         if mapped is None:
             status = "unmapped_raw_code"
         elif mismatches:
@@ -504,6 +522,10 @@ def build_position_semantic_validation(
             )
         ):
             status = "verified_by_visual_game_ui_evidence"
+        elif reviewed_insufficient_diversity:
+            status = "visually_reviewed_but_insufficient_match_diversity"
+        elif reviewed_insufficient_semantics:
+            status = "visually_reviewed_evidence_not_sufficient_for_mapping"
         elif len(confirmed) >= 3 and len(fixture_keys) < POSITION_UI_MIN_DISTINCT_MATCHES:
             status = "visually_observed_but_insufficient_match_diversity"
         elif len(fixture_keys) >= POSITION_UI_MIN_DISTINCT_MATCHES:
