@@ -18,6 +18,59 @@ class RoleCodeSemanticValidationTests(unittest.TestCase):
         cls.flags = MODULE.load_role_flag_catalog(cls.catalog)
         cls.eligibility = cls.catalog["role_eligibility"]
 
+    def test_complete_native_catalog_contains_all_79_roles_and_phase_counts(self):
+        result = MODULE.build_native_role_catalog(self.catalog)
+        summary = result["summary"]
+        self.assertEqual(summary["native_role_definition_count"], 79)
+        self.assertEqual(summary["in_possession_role_count"], 40)
+        self.assertEqual(summary["out_of_possession_role_count"], 39)
+        self.assertEqual(summary["distinct_role_bit_mask_count"], 50)
+        self.assertEqual(summary["cross_phase_duplicate_flag_group_count"], 29)
+        self.assertEqual(summary["same_flag_and_position_ambiguous_group_count"], 4)
+        self.assertEqual(summary["role_definitions_covered_by_position_eligibility"], 79)
+        self.assertEqual(len(result["roles"]), 79)
+
+    def test_complete_catalog_lists_every_phase1_role_separately(self):
+        result = MODULE.build_native_role_catalog(self.catalog)
+        phase1 = [item for item in result["roles"] if item["phase"] == 1]
+        self.assertEqual(len(phase1), 39)
+        self.assertTrue(all(item["phase_name"] == "无球" for item in phase1))
+        ids = {item["role_id"] for item in phase1}
+        self.assertIn("OPGoalkeeper", ids)
+        self.assertIn("OPSweeperKeeper", ids)
+        self.assertIn("OPPressingDefensiveMidfielder", ids)
+
+    def test_catalog_surfaces_exact_same_position_phase_collisions(self):
+        result = MODULE.build_native_role_catalog(self.catalog)
+        collisions = result["same_position_ambiguous_flag_groups"]
+        self.assertEqual(len(collisions), 4)
+        contexts = {
+            role_id: positions
+            for group in collisions
+            for pair in group["same_position_ambiguities"]
+            for role_id, positions in (
+                (pair["phase0_role_id"], pair["shared_base_positions"]),
+                (pair["phase1_role_id"], pair["shared_base_positions"]),
+            )
+        }
+        self.assertEqual(contexts["Goalkeeper"], ["GK"])
+        self.assertEqual(contexts["DeepLyingPlaymaker"], ["DMC", "DML", "DMR"])
+        self.assertEqual(contexts["BoxToBoxMidfielder"], ["DMC", "DML", "DMR"])
+        self.assertEqual(contexts["FreeRole"], ["AMC", "AMCL", "AMCR"])
+
+    def test_catalog_bit_index_round_trips_for_every_role_definition(self):
+        result = MODULE.build_native_role_catalog(self.catalog)
+        for role in result["roles"]:
+            self.assertEqual(
+                1 << role["role_bit_index"],
+                int(role["role_bit_mask_decimal"]),
+                msg=role["role_id"],
+            )
+            self.assertEqual(
+                role["role_bit_mask_decimal"],
+                str(next(x["flags"] for x in self.catalog["roles"] if x["id"] == role["role_id"])),
+            )
+
     def test_role_code_is_bit_index_not_role_array_index(self):
         # FullBack is flags=4 (bit 2); OPLineKeeper reuses that same bit in phase 1.
         result = MODULE.resolve_match_role_code(2, "DR", self.flags, self.eligibility)

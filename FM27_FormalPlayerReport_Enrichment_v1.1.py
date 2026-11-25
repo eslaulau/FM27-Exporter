@@ -593,6 +593,138 @@ def build_role_audit(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return result
 
 
+def build_native_role_catalog(catalog: dict[str, Any]) -> dict[str, Any]:
+    """Expose all native phase-specific role definitions and code/position collisions."""
+    roles = catalog.get("roles", [])
+    eligibility = catalog.get("role_eligibility") or {}
+    grouped: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    normalized = []
+
+    for item in roles:
+        flags = as_int(item.get("flags"))
+        role_id = str(item.get("id") or "")
+        phase = as_int(item.get("phase"))
+        if flags is None or flags <= 0 or not role_id or phase not in (0, 1):
+            continue
+        if flags & (flags - 1):
+            raise ValueError(f"Native role {role_id} has a non-one-hot flags value: {flags}")
+        bit_index = flags.bit_length() - 1
+        positions = sorted(
+            position_id
+            for position_id, phase_roles in eligibility.items()
+            if isinstance(phase_roles, list)
+            and len(phase_roles) > phase
+            and isinstance(phase_roles[phase], list)
+            and role_id in phase_roles[phase]
+        )
+        record = {
+            "role_id": role_id,
+            "role_name_zh": str(item.get("label") or role_id),
+            "phase": phase,
+            "phase_name": "有球" if phase == 0 else "无球",
+            "role_bit_index": bit_index,
+            "role_bit_mask_decimal": str(flags),
+            "role_bit_mask_hex": f"0x{flags:X}",
+            "eligible_base_positions": positions,
+        }
+        normalized.append(record)
+        grouped[flags].append(record)
+
+    # A single raw bit can name two different roles across the two phases.
+    # Position context resolves most, but not all, of these pairs.
+    duplicate_flag_groups = []
+    same_position_ambiguous_groups = []
+    for flags, definitions in sorted(grouped.items()):
+        phase0 = [item for item in definitions if item["phase"] == 0]
+        phase1 = [item for item in definitions if item["phase"] == 1]
+        if not phase0 or not phase1:
+            continue
+        ambiguous_contexts = []
+        for left in phase0:
+            for right in phase1:
+                shared_positions = sorted(
+                    set(left["eligible_base_positions"])
+                    & set(right["eligible_base_positions"])
+                )
+                if shared_positions:
+                    ambiguous_contexts.append({
+                        "phase0_role_id": left["role_id"],
+                        "phase1_role_id": right["role_id"],
+                        "shared_base_positions": shared_positions,
+                    })
+        group = {
+            "role_bit_index": flags.bit_length() - 1,
+            "role_bit_mask_decimal": str(flags),
+            "phase0_roles": [
+                {"role_id": x["role_id"], "role_name_zh": x["role_name_zh"]}
+                for x in phase0
+            ],
+            "phase1_roles": [
+                {"role_id": x["role_id"], "role_name_zh": x["role_name_zh"]}
+                for x in phase1
+            ],
+            "same_position_ambiguities": ambiguous_contexts,
+        }
+        duplicate_flag_groups.append(group)
+        if ambiguous_contexts:
+            same_position_ambiguous_groups.append(group)
+
+    phase_counts = Counter(str(item["phase"]) for item in normalized)
+    eligible_role_ids = {
+        role_id
+        for phases in eligibility.values()
+        for role_list in phases
+        if isinstance(role_list, list)
+        for role_id in role_list
+    }
+    return {
+        "catalog_version": "1.0-complete-native-role-catalog",
+        "game": "FM27",
+        "source": {
+            "schema_version": catalog.get("schema_version"),
+            "source_bundle_sha256": catalog.get("source_bundle_sha256"),
+            "resolver_rva": catalog.get("resolver_rva"),
+            "resolver_page_sha256": catalog.get("resolver_page_sha256"),
+        },
+        "summary": {
+            "native_role_definition_count": len(normalized),
+            "in_possession_role_count": phase_counts.get("0", 0),
+            "out_of_possession_role_count": phase_counts.get("1", 0),
+            "distinct_role_bit_mask_count": len(grouped),
+            "cross_phase_duplicate_flag_group_count": len(duplicate_flag_groups),
+            "same_flag_and_position_ambiguous_group_count": len(same_position_ambiguous_groups),
+            "role_definitions_covered_by_position_eligibility": sum(
+                1 for item in normalized if item["role_id"] in eligible_role_ids
+            ),
+        },
+        "interpretation": {
+            "role_code_bit_rule": "role_bit_mask = 1 << role_code",
+            "phase_is_required": True,
+            "position_context_is_required": True,
+            "match_history_role_code_phase": (
+                "Phase 0 (in possession) is the only phase corroborated against the current "
+                "player-match-history role_code field and the supplied in-possession formation screenshots."
+            ),
+            "out_of_possession_role_source": (
+                "The 39 phase-1 definitions are catalogued here, but the match-history role_code "
+                "byte alone does not prove a player's out-of-possession role. A phase-specific "
+                "out-of-possession tactic-slot/settings source is required."
+            ),
+            "collision_warning": (
+                "The same one-hot flag is reused across phases. Four flag groups also have at least "
+                "one base position eligible in both phases, so raw role bit plus position cannot "
+                "resolve those cases without an explicit phase."
+            ),
+        },
+        "cross_phase_duplicate_flag_groups": duplicate_flag_groups,
+        "same_position_ambiguous_flag_groups": same_position_ambiguous_groups,
+        "roles": sorted(
+            normalized,
+            key=lambda item: (item["phase"], item["role_bit_index"], item["role_id"]),
+        ),
+    }
+
+
 def build_role_code_semantic_validation(
     rows: list[dict[str, Any]],
     catalog: dict[str, Any],
@@ -697,8 +829,9 @@ def build_role_code_semantic_validation(
             "role_codes_visually_crosschecked": [1, 2, 3, 12, 24, 31, 43, 56],
         },
     ]
+    native_role_catalog = build_native_role_catalog(catalog)
     return {
-        "audit_version": "1.0-native-role-bit-index-validation",
+        "audit_version": "1.1-complete-79-role-catalog",
         "overall_status": (
             "partially_decoded_with_position_conflicts"
             if any(row["position_eligibility_conflict_rows"] for row in code_rows)
@@ -706,11 +839,9 @@ def build_role_code_semantic_validation(
         ),
         "game": "FM27",
         "native_role_catalog": {
-            "schema_version": catalog.get("schema_version"),
-            "source_bundle_sha256": catalog.get("source_bundle_sha256"),
-            "resolver_rva": catalog.get("resolver_rva"),
-            "resolver_page_sha256": catalog.get("resolver_page_sha256"),
-            "role_entry_count": len(catalog.get("roles", [])),
+            "file": "native-role-catalog.json",
+            **native_role_catalog["summary"],
+            "source": native_role_catalog["source"],
         },
         "mapping_method": {
             "source_field": "fmsave player_match_stats[].unknown.role_code",
@@ -886,6 +1017,7 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
     )
 
     role_semantic_validation = build_role_code_semantic_validation(enriched, catalog)
+    native_role_catalog = build_native_role_catalog(catalog)
 
     extra_fields = [
         "match_position_id_candidate",
@@ -911,6 +1043,7 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
     write_csv(export_dir / "player-match-report-identified-enriched.csv", output_fields, enriched)
     write_json(export_dir / "position-semantic-validation.json", position_semantic_validation)
     write_json(export_dir / "role-code-semantic-validation.json", role_semantic_validation)
+    write_json(export_dir / "native-role-catalog.json", native_role_catalog)
 
     role_audit = build_role_audit(enriched)
     write_csv(
@@ -973,6 +1106,13 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
         "role_code_semantic_validation": {
             "status": role_semantic_validation["overall_status"],
             "audit_file": "role-code-semantic-validation.json",
+            "complete_catalog_file": "native-role-catalog.json",
+            "native_role_definitions": native_role_catalog["summary"]["native_role_definition_count"],
+            "in_possession_role_definitions": native_role_catalog["summary"]["in_possession_role_count"],
+            "out_of_possession_role_definitions": native_role_catalog["summary"]["out_of_possession_role_count"],
+            "distinct_role_bit_masks": native_role_catalog["summary"]["distinct_role_bit_mask_count"],
+            "phase_collision_groups": native_role_catalog["summary"]["cross_phase_duplicate_flag_group_count"],
+            "same_position_ambiguous_groups": native_role_catalog["summary"]["same_flag_and_position_ambiguous_group_count"],
             "decoded_role_codes": role_semantic_validation["decoded_role_code_count"],
             "fully_decoded_role_codes": role_semantic_validation["fully_decoded_role_code_count"],
             "unresolved_role_codes": role_semantic_validation["unresolved_role_code_count"],
@@ -1031,6 +1171,13 @@ def main() -> int:
         "Native role codes decoded: "
         f"{role_semantic.get('decoded_role_codes', 0)} codes; "
         f"{role_semantic.get('fully_decoded_role_codes', 0)} fully position-compatible"
+    )
+    print(
+        "Complete native role catalog: "
+        f"{role_semantic.get('native_role_definitions', 0)} roles "
+        f"({role_semantic.get('in_possession_role_definitions', 0)} in-possession / "
+        f"{role_semantic.get('out_of_possession_role_definitions', 0)} out-of-possession); "
+        f"{role_semantic.get('same_position_ambiguous_groups', 0)} phase/position ambiguity groups"
     )
     print(f"Raw role code coverage: {audit['role_code_raw_counts']}")
     print(f"Outputs written to: {args.export_dir}")
