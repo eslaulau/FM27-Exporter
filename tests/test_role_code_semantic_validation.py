@@ -112,6 +112,44 @@ class RoleCodeSemanticValidationTests(unittest.TestCase):
         self.assertEqual(code27["position_eligibility_conflict_rows"], 1)
         self.assertEqual(audit["visual_crosscheck"]["visually_crosschecked_role_codes"], [1, 2, 3, 12, 24, 31, 43, 56])
 
+    def test_history_index_prefers_role_code_when_other_fields_tie(self):
+        snapshot = {
+            "player_uid": 1, "date": "2027-05-09", "competition_id": 7,
+            "opponent_team_id": 581, "has_stats": True, "rating": 7.0,
+            "position_code": 4, "unknown": {"role_code": None},
+            "source": "snapshot",
+        }
+        archive = {
+            "player_uid": 1, "date": "2027-05-09", "competition_id": 7,
+            "opponent_team_id": 581, "has_stats": True, "rating": 7.0,
+            "position_code": 4, "unknown": {"role_code": 2},
+            "source": "archive",
+        }
+        index = MODULE.build_history_index([snapshot, archive])
+        self.assertEqual(index[(1, "2027-05-09", 7, 581)]["unknown"]["role_code"], 2)
+        self.assertEqual(index[(1, "2027-05-09", 7, 581)]["source"], "archive")
+
+    def test_history_index_merges_distinct_archive_and_snapshot_fixtures(self):
+        snapshot = {
+            "player_uid": 1, "date": "2027-05-09", "competition_id": 7,
+            "opponent_team_id": 581, "has_stats": True, "position_code": 4,
+            "unknown": {"role_code": 2},
+        }
+        archive = {
+            "player_uid": 2, "date": "2027-05-02", "competition_id": 7,
+            "opponent_team_id": 477, "has_stats": True, "position_code": 16,
+            "unknown": {"role_code": 24},
+        }
+        index = MODULE.build_history_index([snapshot, archive])
+        self.assertEqual(len(index), 2)
+        self.assertEqual(index[(1, "2027-05-09", 7, 581)]["unknown"]["role_code"], 2)
+        self.assertEqual(index[(2, "2027-05-02", 7, 477)]["unknown"]["role_code"], 24)
+
+    def test_inside_wing_back_role_bit_is_checked_against_full_back_position(self):
+        result = MODULE.resolve_match_role_code(44, "DR", self.flags, self.eligibility)
+        self.assertEqual(result["verified_role_id"], "InsideWingBack")
+        self.assertEqual(result["verified_role_name_zh"], "内收翼卫")
+
     def test_role_audit_groups_include_decoded_role_names(self):
         rows = [{
             "position_code": "4",
