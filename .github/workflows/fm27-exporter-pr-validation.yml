@@ -53,6 +53,8 @@ jobs:
         run: python tests/test_player_match_position_rating.py
       - name: Test native FM27 position-mask semantic validation
         run: python tests/test_position_semantic_validation.py
+      - name: Test native FM27 match role-code semantic validation
+        run: python tests/test_role_code_semantic_validation.py
 
       - name: Test first-team scope filtering and match-key fallback
         run: python tests/test_first_team_filter_v1_3.py
