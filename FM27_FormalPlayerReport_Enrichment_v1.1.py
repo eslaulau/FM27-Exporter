@@ -188,9 +188,6 @@ def resolve_match_role_code(
         candidate = next(iter(unique_phase0.values()))
         result["candidate_role_id"] = candidate["id"]
         result["candidate_role_name_zh"] = candidate["name_zh"]
-    else:
-        result["status"] = "ambiguous_phase0_role_flag"
-        return result
 
     if not position_id:
         result["status"] = "candidate_missing_position_context"
@@ -205,6 +202,8 @@ def resolve_match_role_code(
     if len(eligible) == 1:
         resolved = eligible[0]
         result.update({
+            "candidate_role_id": resolved["id"],
+            "candidate_role_name_zh": resolved["name_zh"],
             "verified_role_id": resolved["id"],
             "verified_role_name_zh": resolved["name_zh"],
             "verified_role_phase": 0,
@@ -217,10 +216,13 @@ def resolve_match_role_code(
     elif len(eligible) > 1:
         result["status"] = "ambiguous_position_eligible_phase0_roles"
     else:
-        result["status"] = "position_eligibility_conflict"
+        result["status"] = (
+            "position_eligibility_conflict"
+            if phase0 else "no_phase0_role_candidate"
+        )
         result["evidence"] = (
-            "the role bit has a phase-0 catalog candidate, but that role is not listed "
-            f"for native position {position_id} in role_eligibility"
+            "the role bit has no phase-0 candidate eligible at native position "
+            f"{position_id}; phase-1 alternatives are retained separately"
         )
     return result
 
