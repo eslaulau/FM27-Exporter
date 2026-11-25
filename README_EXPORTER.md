@@ -56,10 +56,11 @@ in `position-semantic-validation.json`.
 To complete a review, open each exact fixture in FM27 and inspect the match screen that explicitly
 shows the player's position for that match. Do not substitute the player's preferred position, the
 starting tactic slot, a role/duty, or the position used in another match. Record the exact UI text and
-screenshot filename/hash in the review CSV. After the screenshot has actually been inspected, mark the
-row `visual_review_status=confirmed` and fill the normalized position ID/name, reviewer, and review
-date. Re-run `FM27_FormalPlayerReport_Enrichment_v1.1.py` against the same report folder; existing
-review responses are carried forward.
+screenshot filename plus either its SHA-256 or immutable Git blob SHA-1 in the review CSV. The Git blob
+SHA-1 is the exact content object identifier returned by GitHub; it is not a SHA-256 value. After the
+screenshot has actually been inspected, mark the row `visual_review_status=confirmed` and fill the
+normalized position ID/name, reviewer, and review date. Re-run `FM27_FormalPlayerReport_Enrichment_v1.1.py`
+against the same report folder; existing review responses are carried forward.
 
 A code is promoted only when at least three distinct fixtures have screenshot-backed, visually
 reviewed evidence and all reviewed rows agree with the candidate. Evidence should cover at least two

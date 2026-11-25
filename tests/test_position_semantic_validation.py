@@ -259,6 +259,54 @@ class PositionSemanticValidationTests(unittest.TestCase):
         )
         self.assertEqual(audit["verified_code_count"], 0)
 
+    def test_reviewed_but_inconclusive_screenshot_is_recorded_without_promotion(self):
+        queue, coverage = MODULE.build_position_review_queue(
+            self.make_rows(code=4, count=3), [], self.position_map,
+            game_build="27.1.1+2511875", section_schema=6,
+        )
+        for row in queue:
+            row.update({
+                "screenshot_file": "3/1.png",
+                "screenshot_git_blob_sha": "2" * 40,
+                "visual_review_status": "reviewed_insufficient_semantic_evidence",
+                "reviewed_by": "visual-review",
+                "reviewed_at": "2026-11-25",
+                "notes": "The image shows an in-possession formation and role labels, not an explicit match-position field.",
+            })
+        audit = MODULE.build_position_semantic_validation(
+            queue, coverage, self.position_map, self.source, {},
+        )
+        right_back = next(item for item in audit["codes"] if item["position_code_raw"] == "4")
+        self.assertEqual(
+            right_back["semantic_status"],
+            "visually_reviewed_evidence_not_sufficient_for_mapping",
+        )
+        self.assertEqual(audit["verified_code_count"], 0)
+        self.assertEqual(audit["source_screenshots"][0]["git_blob_sha"], "2" * 40)
+
+    def test_immutable_git_blob_hash_is_accepted_as_screenshot_provenance(self):
+        queue, coverage = MODULE.build_position_review_queue(
+            self.make_rows(code=1, count=3), [], self.position_map,
+            game_build="27.1.1+2511875", section_schema=6,
+        )
+        for row in queue:
+            row.update({
+                "game_ui_position_text": "门将位置",
+                "screenshot_file": "3/1.png",
+                "screenshot_git_blob_sha": "1" * 40,
+                "visual_review_position_id": "GK",
+                "visual_review_position_name_zh": "门将",
+                "visual_review_status": "confirmed",
+                "reviewed_by": "visual-review",
+                "reviewed_at": "2026-11-25",
+            })
+        audit = MODULE.build_position_semantic_validation(
+            queue, coverage, self.position_map, self.source, {},
+        )
+        goalkeeper = next(item for item in audit["codes"] if item["position_code_raw"] == "1")
+        self.assertEqual(goalkeeper["semantic_status"], "verified_by_visual_game_ui_evidence")
+        self.assertEqual(audit["source_screenshots"][0]["git_blob_sha"], "1" * 40)
+
     def test_screenshot_metadata_without_visual_review_is_not_confirmation(self):
         queue, coverage = MODULE.build_position_review_queue(
             self.make_rows(count=3), [], self.position_map,
