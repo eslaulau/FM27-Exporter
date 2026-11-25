@@ -57,6 +57,8 @@ SUPPORTED_FMSAVE_VERSION = "0.14.3"
 SECTION = "match_stats_cfg"
 EXPECTED_BUILD = "27.0.1+2494687"
 REFERENCE_BUILD = "27.0.0+2486695"
+FM27_2711_TARGET_BUILD = "27.1.1+2511875"
+FM27_2711_REFERENCE_BUILD = "27.1.0+2505117"
 EXPECTED_SCHEMA = 6
 # Competition IDs are save-local and must never be hardcoded.
 # Match-rule family 1 identifies friendly/pre-season fixtures in the observed FM27 schema.
@@ -216,6 +218,32 @@ def resolve_match_layout(info: Any) -> tuple[Any, dict[str, Any]]:
         raise RuntimeError(f"Save has no {SECTION!r} section")
     if (
         info.game == "FM27"
+        and info.build == FM27_2711_TARGET_BUILD
+        and schema == EXPECTED_SCHEMA
+        and not bool(getattr(info, "known_build", False))
+    ):
+        borrowed = find_layout(
+            MatchReportLayout, SECTION, EXPECTED_SCHEMA, FM27_2711_REFERENCE_BUILD
+        )
+        if not borrowed.exact:
+            raise RuntimeError(
+                "Could not resolve the registered FM27 27.1.0 schema-6 layout "
+                "for build 27.1.1+2511875"
+            )
+        return borrowed, {
+            "layout_source_build": FM27_2711_REFERENCE_BUILD,
+            "layout_source_schema": EXPECTED_SCHEMA,
+            "layout_exact_for_save_build": False,
+            "layout_borrowed": True,
+            "layout_note": (
+                "Uses the registered FM27 27.1.0 schema-6 layout for build "
+                "27.1.1+2511875. Each report's embedded record-variant prefix "
+                "is selected before decoding squad anchors, player metrics and "
+                "record lengths; the target build itself remains unregistered."
+            ),
+        }
+    if (
+        info.game == "FM27"
         and info.build == EXPECTED_BUILD
         and schema == EXPECTED_SCHEMA
         and not bool(getattr(info, "known_build", False))
@@ -242,6 +270,19 @@ def resolve_match_layout(info: Any) -> tuple[Any, dict[str, Any]]:
         "layout_borrowed": False,
         "layout_note": "Exact registered layout for this save build.",
     }
+
+
+def select_report_record_layout(report: bytes, layout: Any) -> tuple[Any, str]:
+    """Select the per-report record layout from fmsave's embedded variant marker.
+
+    FM27 27.1 reports add bytes inside each player record. The registered 27.1.0
+    layout carries the 27.1 record variant; selecting it here keeps squad anchors,
+    player metric offsets and record lengths aligned with the actual report bytes.
+    """
+    for prefix, candidate in (getattr(layout, "record_variants", ()) or ()):
+        if report.startswith(prefix):
+            return candidate, prefix.hex().lower()
+    return layout, "default"
 
 
 def discover_formal_competition_ids(
@@ -1336,7 +1377,7 @@ def main() -> int:
                 raise RuntimeError(f"Expected FM27 save, got {info.game!r}")
             match, layout_meta = resolve_match_layout(info)
             layout = match.layout
-            seed_pattern = re.compile(b"(?=" + re.escape(layout.anchor_run) + b")")
+            record_variant_counts: Counter[str] = Counter()
             with save._context.section(SECTION) as section:  # fmsave 0.14.3 private section accessor
                 # fmsave 0.14.3 exposes index_entries(section, layout, file_name); the optional borrowed-layout check remains off for this explicitly selected reference layout.
                 # Do not pass check_borrowed: that keyword belongs to a later API.
@@ -1361,7 +1402,12 @@ def main() -> int:
                     if fixture is None:
                         # Do not silently add friendlies, unplayed records, or another team’s report.
                         continue
-                    squads = _squads(raw_report, layout, seed_pattern)
+                    record_layout, record_variant = select_report_record_layout(raw_report, layout)
+                    record_variant_counts[record_variant] += 1
+                    record_seed_pattern = re.compile(
+                        b"(?=" + re.escape(record_layout.anchor_run) + b")"
+                    )
+                    squads = _squads(raw_report, record_layout, record_seed_pattern)
                     if squads is None:
                         continue
                     anchors = squads.home if is_home else squads.away
@@ -1382,11 +1428,11 @@ def main() -> int:
                     player_rows: list[dict[str, Any]] = []
                     sums: dict[str, float] = {}
                     for row_index, anchor in enumerate(anchors, start=1):
-                        metrics = metric_values(raw_report, anchor, squads.detailed, layout)
+                        metrics = metric_values(raw_report, anchor, squads.detailed, record_layout)
                         for name, value in metrics.items():
                             if isinstance(value, (int, float)):
                                 sums[name] = sums.get(name, 0.0) + float(value)
-                        record_length = _record_length(raw_report, anchor, layout)
+                        record_length = _record_length(raw_report, anchor, record_layout)
                         signature = player_record_signature(raw_report, anchor)
                         row = {
                             "row_index": row_index,
@@ -1453,6 +1499,8 @@ def main() -> int:
                     reports.append(report)
         finally:
             save.close()
+        layout_meta["record_variant_counts"] = dict(sorted(record_variant_counts.items()))
+        layout_meta["record_variant_selection"] = "embedded_report_prefix"
         source_meta = {
             "save_file": save_path.name,
             "fmsave_version": getattr(fmsave, "__version__", "unknown"),
@@ -2046,7 +2094,7 @@ def main() -> int:
     local_passed = reader_passed and fixture_check_passed and total_check_passed
     team_layout = (team_reader or {}).get("layout") or {}
     write_json(export_dir / "team-match-stats-compatibility.json", {
-        "audit_version": "1.1-v1.5-retained-report-coverage",
+        "audit_version": "1.2-v1.5.1-per-report-layout",
         "game": source_meta.get("game"),
         "save_build": source_meta.get("game_build") or source_meta.get("build"),
         "save_known_build_upstream": source_meta.get("known_build"),
@@ -2063,9 +2111,17 @@ def main() -> int:
             "save_schema": team_layout.get("save_schema") or source_meta.get("section_schema"),
             "layout_borrowed": bool(source_meta.get("layout_borrowed")),
         },
+        "player_report_layout": {
+            "source_build": source_meta.get("layout_source_build"),
+            "source_schema": source_meta.get("layout_source_schema"),
+            "borrowed": bool(source_meta.get("layout_borrowed")),
+            "record_variant_selection": source_meta.get("record_variant_selection"),
+            "record_variant_counts": source_meta.get("record_variant_counts", {}),
+            "note": source_meta.get("layout_note"),
+        },
         "upstream_registration": {
             "status": "unverified_borrowed_layout" if source_meta.get("known_build") is False else "registered_or_not_marked_unverified",
-            "registered_reference_build": REFERENCE_BUILD,
+            "registered_reference_build": source_meta.get("layout_source_build"),
             "note": "This local audit does not alter fmsave known_build or make the save build upstream-registered.",
         },
         "local_assessment": "passed" if local_passed else "partial_or_unverified",
@@ -2096,7 +2152,12 @@ def main() -> int:
         },
         "limitations": [
             "Local evidence applies only to this checked save/build/schema and does not confer upstream registration.",
-            "FM27 build 27.0.1+2494687 remains an unregistered exact build in fmsave 0.14.3; the helper uses the registered 27.0.0 schema-6 layout with explicit local checks.",
+            (
+                f"FM27 build {source_meta.get('game_build')} remains unregistered in "
+                f"fmsave {source_meta.get('fmsave_version')}; the helper borrows the "
+                f"registered {source_meta.get('layout_source_build')} schema-6 layout "
+                "and selects each report's embedded record variant before decoding."
+            ),
             "Structural and data reconciliation are not a substitute for semantic validation on other saves.",
         ],
     })

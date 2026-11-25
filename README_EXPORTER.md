@@ -30,7 +30,7 @@ The GitHub-hosted Windows runner executes the v1.5.0 PowerShell exporter. The wo
 
 ## Compatibility note
 
-For FM27 build 27.0.1+2494687 and `match_stats_cfg` schema 6, fmsave 0.14.3 can try a shared registered FM27 schema-6 layout even though this exact build remains unregistered. The player-report helper explicitly selects the registered 27.0.0 schema-6 layout. This is structural compatibility, not an upstream build-registration or in-game field-verification claim. Inspect `team-match-stats-compatibility.json` and compare its values against in-game match reports.
+For FM27 build 27.0.1+2494687 and `match_stats_cfg` schema 6, the player-report helper borrows the registered 27.0.0 schema-6 layout. For FM27 build 27.1.1+2511875 and schema 6, it borrows the registered 27.1.0 schema-6 layout already shipped in pinned `fmsave==0.14.3`. The helper selects the embedded per-report record variant before decoding squad anchors, player metrics and record lengths (the 27.1 variant adds five bytes inside player records). These target builds remain unregistered upstream; this is explicit structural compatibility, not a claim of upstream registration or full semantic validation. Inspect `player_report_layout` in `team-match-stats-compatibility.json` and compare exported values against in-game match reports.
 
 ## Report location and validation
 
