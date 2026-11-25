@@ -75,7 +75,7 @@
       "name_zh": "中锋"
     }
   ],
-  "position_mapping_note": "Only exact single-bit numeric matches to the bundle's native tactic-position catalog are labelled. GK is the only match-history position named by the upstream fmsave reference; other labels are candidates, not UI-verified match-position semantics. Raw position_code is preserved.",
+  "position_mapping_note": "All catalog-derived labels are candidates only until screenshot-backed FM27 match-screen evidence has been visually reviewed. Numeric same-match history matches confirm only the raw number, not its in-game meaning. The raw position_code is preserved.",
   "position_candidate_row_counts": {
     "GK": 51,
     "DR": 69,
@@ -90,15 +90,15 @@
   },
   "role_code_note": "role_code is retained as a raw byte. Upstream fmsave documents its meaning as unestablished; it is not decoded by array order or by candidate roles.",
   "role_code_raw_counts": {
-    "missing": 612,
-    "12": 12,
-    "3": 11,
-    "24": 12,
     "1": 12,
     "2": 17,
-    "56": 51,
+    "3": 11,
+    "12": 12,
+    "24": 12,
+    "31": 23,
     "43": 36,
-    "31": 23
+    "56": 51,
+    "missing": 612
   },
   "role_code_position_groups": [
     {
@@ -290,5 +290,97 @@
   "rating_rows_present": 786,
   "rating_rows_missing": 0,
   "history_archive_rows": 331,
-  "same_match_history_join_rows": 174
+  "same_match_history_join_rows": 174,
+  "position_semantic_validation": {
+    "status": "pending_game_ui_validation",
+    "review_queue_file": "position-semantic-review.csv",
+    "audit_file": "position-semantic-validation.json",
+    "raw_position_codes_with_candidate_labels": 10,
+    "verified_position_codes": 0,
+    "unverified_position_codes": 10,
+    "distinct_match_threshold_per_code": 3,
+    "review_fixture_count": 4,
+    "code_coverage": {
+      "1": {
+        "total_rows": 56,
+        "identified_rows": 51,
+        "unresolved_rows": 5,
+        "review_samples": 3,
+        "distinct_matches_available": 51,
+        "distinct_players_available": 1
+      },
+      "4": {
+        "total_rows": 94,
+        "identified_rows": 69,
+        "unresolved_rows": 25,
+        "review_samples": 3,
+        "distinct_matches_available": 54,
+        "distinct_players_available": 3
+      },
+      "8": {
+        "total_rows": 97,
+        "identified_rows": 86,
+        "unresolved_rows": 11,
+        "review_samples": 3,
+        "distinct_matches_available": 56,
+        "distinct_players_available": 3
+      },
+      "16": {
+        "total_rows": 113,
+        "identified_rows": 109,
+        "unresolved_rows": 4,
+        "review_samples": 3,
+        "distinct_matches_available": 56,
+        "distinct_players_available": 4
+      },
+      "128": {
+        "total_rows": 3,
+        "identified_rows": 3,
+        "unresolved_rows": 0,
+        "review_samples": 3,
+        "distinct_matches_available": 1,
+        "distinct_players_available": 3
+      },
+      "1024": {
+        "total_rows": 169,
+        "identified_rows": 153,
+        "unresolved_rows": 16,
+        "review_samples": 3,
+        "distinct_matches_available": 55,
+        "distinct_players_available": 6
+      },
+      "2048": {
+        "total_rows": 87,
+        "identified_rows": 79,
+        "unresolved_rows": 8,
+        "review_samples": 3,
+        "distinct_matches_available": 56,
+        "distinct_players_available": 4
+      },
+      "4096": {
+        "total_rows": 83,
+        "identified_rows": 68,
+        "unresolved_rows": 15,
+        "review_samples": 3,
+        "distinct_matches_available": 54,
+        "distinct_players_available": 5
+      },
+      "8192": {
+        "total_rows": 72,
+        "identified_rows": 72,
+        "unresolved_rows": 0,
+        "review_samples": 3,
+        "distinct_matches_available": 56,
+        "distinct_players_available": 4
+      },
+      "16384": {
+        "total_rows": 102,
+        "identified_rows": 96,
+        "unresolved_rows": 6,
+        "review_samples": 3,
+        "distinct_matches_available": 56,
+        "distinct_players_available": 3
+      }
+    }
+  }
 }
