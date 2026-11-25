@@ -83,10 +83,14 @@ RAW_PLAYER_FIELD_OFFSETS = {
     "passes_attempted": 86,
     "passes_completed": 87,
 }
-# Match-report rating candidate: uint16 little-endian, hundredths, at anchor +36.
-RAW_RATING_FIELD_OFFSET = 136  # raw window starts at statistics_anchor - 100
+# Position mask is a uint16 little-endian field at statistics_anchor +10.
+# Rating offset moves with the embedded match-record variant.
+RAW_POSITION_FIELD_OFFSET = 110
+RAW_RATING_FIELD_OFFSET = 136  # baseline offset in the pre-27.1 record layout
+RAW_RATING_REFERENCE_DISTANCE_OFFSET = 40
 RAW_RATING_MIN_HUNDREDTHS = 400
 RAW_RATING_MAX_HUNDREDTHS = 1000
+MIN_POSITION_CROSSCHECKS = 25
 MIN_RATING_CROSSCHECKS = 25
 RAW_PLAYER_FIELD_VALIDATION = {
     "goals": {"matched": 320, "tested": 320},
@@ -283,6 +287,44 @@ def select_report_record_layout(report: bytes, layout: Any) -> tuple[Any, str]:
         if report.startswith(prefix):
             return candidate, prefix.hex().lower()
     return layout, "default"
+
+
+def raw_rating_offset_for_layout(base_layout: Any, selected_layout: Any) -> int:
+    """Shift the rating offset by the inserted bytes reflected in the selected layout."""
+    return RAW_RATING_FIELD_OFFSET + int(selected_layout.distance_field[1]) - int(base_layout.distance_field[1])
+
+
+def cached_probe_rating_offset(cached_source: dict[str, Any]) -> int | None:
+    """Recover a reused probe's rating offset only when its report variant is unambiguous."""
+    variants = cached_source.get("record_variant_counts")
+    if not isinstance(variants, dict) or len(variants) != 1:
+        return None
+    variant_name, count = next(iter(variants.items()))
+    if as_int(count) is None or as_int(count) <= 0:
+        return None
+    source_build = str(cached_source.get("layout_source_build") or "")
+    source_schema = as_int(cached_source.get("layout_source_schema"))
+    if not source_build or source_schema is None:
+        return None
+    match = find_layout(MatchReportLayout, SECTION, source_schema, source_build)
+    if not match.exact:
+        return None
+    base_layout = match.layout
+    if variant_name == "default":
+        selected_layout = base_layout
+    else:
+        try:
+            prefix = bytes.fromhex(str(variant_name))
+        except ValueError:
+            return None
+        selected_layout = next(
+            (candidate for candidate_prefix, candidate in (getattr(base_layout, "record_variants", ()) or ())
+             if candidate_prefix == prefix),
+            None,
+        )
+        if selected_layout is None:
+            return None
+    return raw_rating_offset_for_layout(base_layout, selected_layout)
 
 
 def discover_formal_competition_ids(
@@ -756,40 +798,57 @@ def rating_from_raw_stats(raw_stats: dict[str, Any] | None) -> float | None:
     return ((hundredths + 5) // 10) / 10  # explicit half-up rounding
 
 
-def decode_raw_player_stats(raw_window: bytes) -> dict[str, int] | None:
-    """Decode verified basic fields plus a raw match-report rating candidate.
+def decode_raw_player_stats(
+    raw_window: bytes, *, rating_offset: int | None = RAW_RATING_FIELD_OFFSET
+) -> dict[str, int] | None:
+    """Decode base statistics, the uint16 position mask, and a variant-aware rating candidate.
 
-    The window starts at statistics_anchor - 100. The rating is an unsigned
-    16-bit little-endian integer at window +136 (statistics_anchor +36), stored
-    in hundredths. It is only used after named-history cross-validation.
+    Position is stored at raw-window +110. Match rating is a uint16 little-endian
+    hundredths value whose offset moves with the embedded report-record variant.
+    Both are gated by direct same-match named-history cross-checks before publication.
     """
     required = max(RAW_PLAYER_FIELD_OFFSETS.values()) + 1
     if len(raw_window) < required:
         return None
     values = {name: int(raw_window[offset]) for name, offset in RAW_PLAYER_FIELD_OFFSETS.items()}
-    rating_end = RAW_RATING_FIELD_OFFSET + 2
-    if len(raw_window) >= rating_end:
-        candidate = int.from_bytes(
-            raw_window[RAW_RATING_FIELD_OFFSET:rating_end], byteorder="little", signed=False
+    position_end = RAW_POSITION_FIELD_OFFSET + 2
+    if len(raw_window) >= position_end:
+        values["position_code"] = int.from_bytes(
+            raw_window[RAW_POSITION_FIELD_OFFSET:position_end], byteorder="little", signed=False
         )
-        if RAW_RATING_MIN_HUNDREDTHS <= candidate <= RAW_RATING_MAX_HUNDREDTHS:
-            values["rating_hundredths"] = candidate
+    if rating_offset is not None:
+        rating_end = int(rating_offset) + 2
+        if 0 <= int(rating_offset) and len(raw_window) >= rating_end:
+            candidate = int.from_bytes(
+                raw_window[int(rating_offset):rating_end], byteorder="little", signed=False
+            )
+            if RAW_RATING_MIN_HUNDREDTHS <= candidate <= RAW_RATING_MAX_HUNDREDTHS:
+                values["rating_hundredths"] = candidate
     return values
 
 
 def raw_stats_from_probe_row(row: dict[str, Any]) -> dict[str, int] | None:
-    """Read stored stats and backfill the new rating from retained raw-window hex."""
+    """Refresh position/rating candidates from retained raw-window hex when available."""
     stored = row.get("raw_player_stats")
     stored_values: dict[str, int] | None = None
     if isinstance(stored, dict):
         try:
             if all(as_int(stored.get(name)) is not None for name in RAW_PLAYER_FIELD_OFFSETS):
                 stored_values = {name: int(stored[name]) for name in RAW_PLAYER_FIELD_OFFSETS}
-                stored_rating = as_int(stored.get("rating_hundredths"))
-                if stored_rating is not None:
-                    stored_values["rating_hundredths"] = stored_rating
+                for field in ("position_code", "rating_hundredths"):
+                    value = as_int(stored.get(field))
+                    if value is not None:
+                        stored_values[field] = value
         except (TypeError, ValueError):
             stored_values = None
+    # A present null means mixed/unknown cached variants: do not guess a rating offset.
+    rating_offset = (
+        as_int(row.get("raw_rating_offset"))
+        if "raw_rating_offset" in row
+        else RAW_RATING_FIELD_OFFSET
+    )
+    if "raw_rating_offset" in row and rating_offset is None and stored_values is not None:
+        stored_values.pop("rating_hundredths", None)
     raw_hex = row.get("raw_window_hex")
     if not isinstance(raw_hex, str) or len(raw_hex) % 2:
         return stored_values
@@ -797,13 +856,16 @@ def raw_stats_from_probe_row(row: dict[str, Any]) -> dict[str, int] | None:
         raw_window = bytes.fromhex(raw_hex)
     except ValueError:
         return stored_values
-    decoded = decode_raw_player_stats(raw_window)
+    decoded = decode_raw_player_stats(raw_window, rating_offset=rating_offset)
     if decoded is None:
         return stored_values
     if stored_values is None:
         return decoded
-    if "rating_hundredths" in decoded:
-        stored_values["rating_hundredths"] = decoded["rating_hundredths"]
+    for field in ("position_code", "rating_hundredths"):
+        if field in decoded:
+            stored_values[field] = decoded[field]
+        elif field == "rating_hundredths":
+            stored_values.pop(field, None)
     return stored_values
 
 def decode_minutes_from_raw(raw_stats: dict[str, int] | None, match_duration: int | None) -> int | None:
@@ -1068,7 +1130,7 @@ def audit_raw_history_crosschecks(
     duration_map: dict[tuple[int, str, int], dict[str, Any]],
 ) -> dict[str, dict[str, int]]:
     """Count direct raw-vs-named-history comparisons without filling missing values."""
-    fields = ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "left_at_minute", "minutes", "rating")
+    fields = ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "left_at_minute", "minutes", "position_code", "rating")
     result = {field: {"matched": 0, "tested": 0, "mismatches": 0} for field in fields}
     for report in reports:
         key = (int(report["competition_id"]), str(report["date"]), int(report["opponent_team_id"]))
@@ -1100,6 +1162,10 @@ def audit_raw_history_crosschecks(
                 "entered_at_minute": raw_stats["entered_at_minute"] if raw_stats["entered_at_minute"] > 0 else None,
                 "left_at_minute": raw_stats["left_at_minute"] if raw_stats["left_at_minute"] > 0 else None,
                 "minutes": decode_minutes_from_raw(raw_stats, duration),
+                "position_code": (
+                    as_int(raw_stats.get("position_code"))
+                    if as_int(raw_stats.get("position_code"), 0) > 0 else None
+                ),
                 "rating": rating_from_raw_stats(raw_stats),
             }
             for field in fields:
@@ -1447,6 +1513,10 @@ def main() -> int:
         reports = cached_probe.get("reports") or []
         if not isinstance(reports, list) or not reports:
             raise RuntimeError("Cached probe contains no detailed match reports")
+        cached_rating_offset = cached_probe_rating_offset(cached_source)
+        # Older probes lack a per-report variant label. Reuse a rating offset only when
+        # source metadata proves all retained reports used exactly one embedded variant.
+        # Position remains independently decodable because this variant shift is later.
         # Validate every fixture and restore the signature from the original raw record
         # prefix. The old v1.4 output stored the wrong bytes in row_signature, but retained
         # the correct raw_window_hex starting at anchor-100.
@@ -1469,7 +1539,9 @@ def main() -> int:
                 (comp, date_text, int(report.get("opponent_team_id"))), []
             )
             rows = report.get("anonymous_player_rows") or []
+            report["raw_rating_offset"] = cached_rating_offset
             for row in rows:
+                row["raw_rating_offset"] = cached_rating_offset
                 row["row_signature"] = player_record_signature_from_probe_row(row)
                 row["signature_offset_from_anchor"] = PLAYER_SIGNATURE_OFFSET_FROM_ANCHOR
                 # v1.3 probes already retain the complete variable-length player record.
@@ -1549,6 +1621,7 @@ def main() -> int:
                         if current is None or (candidate.get("has_stats") is True and current.get("has_stats") is not True):
                             history_by_uid[uid] = candidate
 
+                    report_rating_offset = raw_rating_offset_for_layout(layout, record_layout)
                     player_rows: list[dict[str, Any]] = []
                     sums: dict[str, float] = {}
                     for row_index, anchor in enumerate(anchors, start=1):
@@ -1574,7 +1647,10 @@ def main() -> int:
                             row["raw_window_start"] = lo
                             raw_window = raw_report[lo:hi]
                             row["raw_window_hex"] = raw_window.hex()
-                            row["raw_player_stats"] = decode_raw_player_stats(raw_window)
+                            row["raw_rating_offset"] = report_rating_offset
+                            row["raw_player_stats"] = decode_raw_player_stats(
+                                raw_window, rating_offset=report_rating_offset
+                            )
                         elif record_length is not None:
                             # Structured raw values are retained even when the user opts
                             # out of preserving raw hex in the diagnostic probe.
@@ -1582,7 +1658,10 @@ def main() -> int:
                             hi = min(len(raw_report), anchor + record_length)
                             if lo < 0:
                                 raise RuntimeError(f"Player record prefix precedes report start: anchor={anchor}")
-                            row["raw_player_stats"] = decode_raw_player_stats(raw_report[lo:hi])
+                            row["raw_rating_offset"] = report_rating_offset
+                            row["raw_player_stats"] = decode_raw_player_stats(
+                                raw_report[lo:hi], rating_offset=report_rating_offset
+                            )
                         player_rows.append(row)
 
                     check: dict[str, Any] = {}
@@ -1615,6 +1694,7 @@ def main() -> int:
                         "opponent_team_id": opponent_id,
                         "is_home": is_home,
                         "detailed_report": bool(squads.detailed),
+                        "raw_rating_offset": report_rating_offset,
                         "matchday_player_record_count": len(anchors),
                         "anonymous_player_rows": player_rows,
                         "candidate_player_history_rows": history_rows,
@@ -1680,6 +1760,11 @@ def main() -> int:
         reports, signature_map, season_aggregates, competition_families
     )
     raw_history_crosschecks = audit_raw_history_crosschecks(reports, signature_map, duration_map)
+    position_crosscheck = raw_history_crosschecks.get("position_code", {"matched": 0, "tested": 0, "mismatches": 0})
+    position_raw_enabled = (
+        position_crosscheck["tested"] >= MIN_POSITION_CROSSCHECKS
+        and position_crosscheck["mismatches"] == 0
+    )
     rating_crosscheck = raw_history_crosschecks.get("rating", {"matched": 0, "tested": 0, "mismatches": 0})
     rating_raw_enabled = (
         rating_crosscheck["tested"] >= MIN_RATING_CROSSCHECKS
@@ -1794,6 +1879,12 @@ def main() -> int:
                 "assists": raw_stats["assists"] if raw_stats is not None else None,
                 "passes_attempted": raw_stats["passes_attempted"] if raw_stats is not None else None,
                 "passes_completed": raw_stats["passes_completed"] if raw_stats is not None else None,
+                "position_code": (
+                    as_int(raw_stats.get("position_code"))
+                    if position_raw_enabled and raw_stats is not None
+                    and as_int(raw_stats.get("position_code"), 0) > 0
+                    else None
+                ),
             }
             history_rating_value = None
             if history and history.get("rating") not in (None, ""):
@@ -1876,7 +1967,11 @@ def main() -> int:
                     "identity_method": identity_method,
                     "identity_confidence": identity_confidence,
                     "named_history_available": has_match_history,
-                    "position_code": history.get("position_code") if history else None,
+                    "position_code": (
+                        raw_field_values["position_code"]
+                        if raw_field_values["position_code"] is not None
+                        else (history.get("position_code") if history else None)
+                    ),
                     "minutes": raw_field_values["minutes"] if raw_field_values["minutes"] is not None else (history.get("minutes") if history else None),
                     "entered_at_minute": raw_field_values["entered_at_minute"] if raw_field_values["entered_at_minute"] is not None else (history.get("entered_at_minute") if history else None),
                     "left_at_minute": raw_field_values["left_at_minute"] if raw_stats is not None else (history.get("left_at_minute") if history else None),
@@ -1908,7 +2003,7 @@ def main() -> int:
                     **base,
                     "reason": reason,
                     **raw_field_values,
-                    "position_code": None,
+                    "position_code": raw_field_values["position_code"],
                     "rating": raw_field_values["rating"],
                     "rating_raw_hundredths": raw_field_values["rating_raw_hundredths"],
                     "rating_source": raw_field_values["rating_source"],
@@ -1987,7 +2082,7 @@ def main() -> int:
             "unresolved_appearance_rows": len(unresolved_rows),
             "identified_unique_players": len({r["player_uid"] for r in identified_rows}),
             "detail_metrics": list(TEAM_SUM_FIELDS),
-            "raw_player_fields": list(RAW_PLAYER_FIELD_OFFSETS) + ["rating_hundredths"],
+            "raw_player_fields": list(RAW_PLAYER_FIELD_OFFSETS) + ["position_code", "rating_hundredths"],
             "entered_at_minute_source": "fmsave==0.14.3 PlayerMatchStats.entered_at_minute; raw-window offset +71 is dynamically checked against same-match history where available.",
             "minutes_rows_decoded": sum(1 for row in all_appearance_rows if row.get("minutes") not in (None, "")),
             "rating_rows_available": sum(1 for row in identified_rows if row.get("rating") not in (None, "")),
@@ -2067,7 +2162,7 @@ def main() -> int:
             },
             "raw_field_coverage": {
                 field: sum(1 for row in all_appearance_rows if row.get(field) not in (None, ""))
-                for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "minutes", "rating", "rating_raw_hundredths")
+                for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "minutes", "position_code", "rating", "rating_raw_hundredths")
             },
             "named_history_match_count": sum(
                 1 for report in reports
@@ -2132,7 +2227,7 @@ def main() -> int:
             "nonempty": sum(1 for row in all_appearance_rows if row.get(field) not in (None, "")),
             "missing": sum(1 for row in all_appearance_rows if row.get(field) in (None, "")),
         }
-        for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "minutes", "rating", "rating_raw_hundredths")
+        for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "minutes", "position_code", "rating", "rating_raw_hundredths")
     }
     raw_field_coverage_by_competition: dict[str, dict[str, dict[str, int]]] = {}
     for comp in sorted(comp_ids):
@@ -2142,7 +2237,7 @@ def main() -> int:
                 "nonempty": sum(1 for row in comp_rows if row.get(field) not in (None, "")),
                 "missing": sum(1 for row in comp_rows if row.get(field) in (None, "")),
             }
-            for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "minutes", "rating", "rating_raw_hundredths")
+            for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "minutes", "position_code", "rating", "rating_raw_hundredths")
         }
     retained_report_coverage = audit_retained_report_coverage(team_index, reports, comp_ids)
     player_goal_reconciliation = audit_player_goal_reconciliation(reports, fixture_index)
@@ -2167,8 +2262,17 @@ def main() -> int:
         "raw_player_field_coverage_by_competition": raw_field_coverage_by_competition,
         "raw_history_crosschecks": raw_history_crosschecks,
         "match_duration_audit": duration_audit,
+        "position_recovery": {
+            "source": "uint16 little-endian position mask at raw-window +110 (statistics_anchor +10); zero masks are omitted",
+            "available": raw_field_coverage["position_code"]["nonempty"],
+            "missing": raw_field_coverage["position_code"]["missing"],
+            "crosscheck": position_crosscheck,
+            "minimum_crosschecks": MIN_POSITION_CROSSCHECKS,
+            "raw_source_enabled": position_raw_enabled,
+        },
         "rating_recovery": {
-            "source": "uint16 little-endian at raw-window +136 (statistics_anchor +36), divided by 100 and rounded half-up to one decimal",
+            "source": "uint16 little-endian hundredths; offset follows each embedded report-record variant's distance-field displacement; /100 and rounded half-up to one decimal",
+            "raw_window_offsets": dict(sorted(Counter(str(report.get("raw_rating_offset")) for report in reports).items())),
             "available": raw_field_coverage["rating"]["nonempty"],
             "missing": raw_field_coverage["rating"]["missing"],
             "status": "raw_report_rating_locally_crosschecked" if rating_raw_enabled else "named_history_fallback_only",
@@ -2267,11 +2371,20 @@ def main() -> int:
             "player_goal_reconciliation_passed": goal_check_passed,
             "raw_player_field_crosschecks": {
                 field: raw_history_crosschecks.get(field, {"matched": 0, "tested": 0, "mismatches": 0})
-                for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "left_at_minute", "minutes", "rating")
+                for field in ("goals", "assists", "passes_attempted", "passes_completed", "entered_at_minute", "left_at_minute", "minutes", "position_code", "rating")
+            },
+            "position_field_crosscheck": {
+                "raw_window_offset": RAW_POSITION_FIELD_OFFSET,
+                "anchor_relative_offset": RAW_POSITION_FIELD_OFFSET - 100,
+                "encoding": "uint16 little-endian position mask; zero means no stored match position",
+                "minimum_required": MIN_POSITION_CROSSCHECKS,
+                **position_crosscheck,
+                "passed": position_raw_enabled,
             },
             "rating_field_crosscheck": {
-                "raw_window_offset": RAW_RATING_FIELD_OFFSET,
-                "anchor_relative_offset": RAW_RATING_FIELD_OFFSET - 100,
+                "raw_window_offset_base": RAW_RATING_FIELD_OFFSET,
+                "offset_selection": "base offset plus embedded report-record variant distance-field displacement",
+                "raw_window_offsets_used": dict(sorted(Counter(str(report.get("raw_rating_offset")) for report in reports).items())),
                 "encoding": "uint16 little-endian hundredths; /100; half-up to one decimal",
                 "minimum_required": MIN_RATING_CROSSCHECKS,
                 **rating_crosscheck,
@@ -2297,6 +2410,7 @@ def main() -> int:
     print(f"Formal fixtures expected: {len(fixtures)} | detailed reports found: {len(reports)} | missing: {len(missing_keys)}")
     print(f"Player appearances: {len(all_appearance_rows)} | raw activity rows: {appearance_count} | zero-minute rows skipped: {len(zero_minute_exclusions)}")
     print(f"Identified: {len(identified_rows)} | unresolved: {len(unresolved_rows)}")
+    print(f"Positions recovered: {sum(1 for row in all_appearance_rows if row.get('position_code') not in (None, ''))} | raw position cross-check: {position_crosscheck['matched']}/{position_crosscheck['tested']}")
     print(f"Ratings recovered: {sum(1 for row in identified_rows if row.get('rating') not in (None, ''))} | raw rating cross-check: {rating_crosscheck['matched']}/{rating_crosscheck['tested']}")
     print(f"Team-total reconciliation: {team_checks['matches']}/{team_checks['comparisons']} matched; {team_checks['mismatches']} mismatches; {team_checks['missing']} missing")
     if args.reuse_probe:
