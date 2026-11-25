@@ -3078,9 +3078,18 @@
     },
     "rating_recovery": {
       "status": "raw_report_rating_locally_crosschecked",
-      "source": "variant-aware uint16 little-endian hundredths field; offset is selected from the embedded report-record variant and recorded in raw_window_offset/anchor_relative_offset, then rounded half-up to one decimal",
-      "raw_window_offset": 136,
-      "anchor_relative_offset": 36,
+      "source": "variant-aware uint16 little-endian hundredths field; the embedded report-record variant selects the actual raw-window offset; values are rounded half-up to one decimal",
+      "raw_window_offset_base": 136,
+      "anchor_relative_offset_base": 36,
+      "offset_selection": "base offset plus embedded report-record variant distance-field displacement",
+      "raw_window_offset": 141,
+      "anchor_relative_offset": 41,
+      "raw_window_offsets_used": {
+        "141": 56
+      },
+      "anchor_relative_offsets_used": {
+        "41": 56
+      },
       "crosscheck_minimum": 25,
       "crosscheck": {
         "matched": 166,
