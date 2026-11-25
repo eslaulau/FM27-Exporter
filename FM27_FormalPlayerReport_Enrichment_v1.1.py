@@ -441,7 +441,10 @@ def build_position_semantic_validation(
             status = "conflicting_visual_evidence"
         elif (
             len(fixture_keys) >= POSITION_UI_MIN_DISTINCT_MATCHES
-            and len(player_keys) >= POSITION_UI_MIN_DISTINCT_PLAYERS
+            and len(player_keys) >= min(
+                POSITION_UI_MIN_DISTINCT_PLAYERS,
+                max(1, int(counts.get("distinct_players_available", 0))),
+            )
         ):
             status = "verified_by_visual_game_ui_evidence"
         elif len(confirmed) >= 3 and len(fixture_keys) < POSITION_UI_MIN_DISTINCT_MATCHES:
@@ -469,6 +472,10 @@ def build_position_semantic_validation(
             "visual_evidence_rows_confirmed": len(confirmed),
             "distinct_matches_visually_checked": len(fixture_keys),
             "distinct_players_visually_checked": len(player_keys),
+            "minimum_distinct_players_required": min(
+                POSITION_UI_MIN_DISTINCT_PLAYERS,
+                max(1, int(counts.get("distinct_players_available", 0))),
+            ),
             "observed_ui_position_ids": observed_ids,
             "candidate_mismatch_rows": len(mismatches),
             "semantic_status": status,
@@ -500,7 +507,10 @@ def build_position_semantic_validation(
         "visual_validation_policy": {
             "required_evidence": "A screenshot of the exact FM27 match screen showing this player's actual match position, linked to the exact fixture and identified player.",
             "minimum_distinct_matches_per_code": POSITION_UI_MIN_DISTINCT_MATCHES,
-            "minimum_distinct_players_per_code": POSITION_UI_MIN_DISTINCT_PLAYERS,
+            "minimum_distinct_players_per_code": (
+                f"At least {POSITION_UI_MIN_DISTINCT_PLAYERS}; if the save contains only one identified "
+                "player for a code, that player's evidence across distinct fixtures is sufficient."
+            ),
             "rare_code_policy": (
                 "If fewer than three distinct fixtures exist in the save, preserve up to three distinct "
                 "player/fixture samples but report insufficient_match_diversity; do not promote globally."
