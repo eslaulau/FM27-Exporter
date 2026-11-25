@@ -77,6 +77,57 @@ class PositionSemanticValidationTests(unittest.TestCase):
         self.assertEqual(len({row["sample_id"] for row in queue}), 3)
         self.assertTrue(all(row["visual_review_status"] == "pending_visual_review" for row in queue))
 
+    def test_review_queue_reuses_three_shared_matches_across_position_codes(self):
+        rows = []
+        for index, date in enumerate(("2027-04-20", "2027-04-21", "2027-04-22")):
+            for code, uid_suffix in ((1, 1), (4, 2)):
+                rows.append({
+                    "date": date,
+                    "competition_id": "7",
+                    "competition_name": "Premier Division",
+                    "round": f"Round {index + 1}",
+                    "kick_off_time": "15:00:00",
+                    "home_away": "主场",
+                    "opponent_team_id": str(500 + index),
+                    "opponent_name": f"Opponent {index + 1}",
+                    "player_uid": str(1000 + index * 10 + uid_suffix),
+                    "player_name": f"Player {index}-{uid_suffix}",
+                    "position_code": str(code),
+                    "minutes": "90",
+                })
+        # A rare code appears only in the first fixture, but has three identified players.
+        for index in range(3):
+            rows.append({
+                "date": "2027-04-20",
+                "competition_id": "7",
+                "competition_name": "Premier Division",
+                "round": "Round 1",
+                "kick_off_time": "15:00:00",
+                "home_away": "主场",
+                "opponent_team_id": "500",
+                "opponent_name": "Opponent 1",
+                "player_uid": str(2000 + index),
+                "player_name": f"Rare Player {index}",
+                "position_code": "128",
+                "minutes": "90",
+            })
+        position_map = self.position_map | {128: {"id": "DMC", "name_zh": "后腰"}}
+        queue, coverage = MODULE.build_position_review_queue(
+            rows, [], position_map,
+            game_build="27.1.1+2511875", section_schema=6,
+        )
+        audit = MODULE.build_position_semantic_validation(
+            queue, coverage, position_map, self.source, {},
+        )
+        self.assertEqual(audit["review_fixture_count"], 3)
+        self.assertEqual(
+            {(row["date"], row["opponent_team_id"]) for row in audit["review_fixtures"]},
+            {("2027-04-20", "500"), ("2027-04-21", "501"), ("2027-04-22", "502")},
+        )
+        self.assertEqual(coverage["128"]["review_samples"], 3)
+        self.assertEqual(coverage["128"]["distinct_matches_available"], 1)
+        self.assertTrue(all(coverage[str(code)]["review_samples"] == 3 for code in (1, 4)))
+
     def test_raw_numeric_history_match_does_not_verify_position_meaning(self):
         queue, coverage = MODULE.build_position_review_queue(
             self.make_rows(count=3), [], self.position_map,
