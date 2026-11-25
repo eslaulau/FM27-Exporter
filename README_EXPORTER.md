@@ -34,6 +34,8 @@ For FM27 build 27.0.1+2494687 and `match_stats_cfg` schema 6, the player-report 
 
 The formal-report coverage audit compares native match-stat rows only against the dynamically discovered formal competition IDs. Friendly/pre-season matches and native-only competition IDs outside that scope are counted separately, not reported as missing formal player reports. `player-match-report-formal-summary.json` also includes `player_goal_reconciliation`, which compares the fixture score with every raw player-report row before identity and zero-minute filtering. Goal differences remain unattributed; the exporter does not assign an unverified scorer or assume an own goal. The first-team scope audit permits a competition-ID fallback only when the match date and ordered home/away team IDs identify exactly one played fixture; the original native competition ID is preserved.
 
+For detailed player reports, the helper also reads the raw 16-bit position mask at raw-window offset +110 and the raw one-decimal rating stored as uint16 hundredths. The rating offset is selected per embedded report-record variant (rather than assuming the pre-27.1 offset). Position and rating raw sources are enabled only after at least 25 direct same-match named-history comparisons with zero mismatches. Zero position masks remain blank; unknown identities are not inferred from lineup order or preferred positions. The compatibility audit records each field's offset, sample count and cross-check result.
+
 ## Report location and validation
 
 Browse the generated report folders under [season-reports/](season-reports/). Each export is stored as:
