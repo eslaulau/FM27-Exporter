@@ -47,12 +47,12 @@ POSITION_REVIEW_FIELDS = [
     "date", "competition_id", "competition_name", "round", "kick_off_time",
     "home_away", "opponent_team_id", "opponent_name", "player_uid", "player_name",
     "position_code_raw", "candidate_position_id", "candidate_position_name_zh",
-    "game_ui_position_text", "screenshot_file", "screenshot_sha256",
+    "game_ui_position_text", "screenshot_file", "screenshot_sha256", "screenshot_git_blob_sha",
     "visual_review_position_id", "visual_review_position_name_zh",
     "visual_review_status", "reviewed_by", "reviewed_at", "notes",
 ]
 POSITION_REVIEW_RESPONSE_FIELDS = (
-    "game_ui_position_text", "screenshot_file", "screenshot_sha256",
+    "game_ui_position_text", "screenshot_file", "screenshot_sha256", "screenshot_git_blob_sha",
     "visual_review_position_id", "visual_review_position_name_zh",
     "visual_review_status", "reviewed_by", "reviewed_at", "notes",
 )
@@ -389,6 +389,7 @@ def build_position_review_queue(
                 "game_ui_position_text": "",
                 "screenshot_file": "",
                 "screenshot_sha256": "",
+                "screenshot_git_blob_sha": "",
                 "visual_review_position_id": "",
                 "visual_review_position_name_zh": "",
                 "visual_review_status": "pending_visual_review",
@@ -469,7 +470,10 @@ def build_position_semantic_validation(
             if row.get("visual_review_status") == "confirmed"
             and row.get("game_ui_position_text")
             and row.get("screenshot_file")
-            and bool(re.fullmatch(r"[0-9a-fA-F]{64}", str(row.get("screenshot_sha256") or "")))
+            and (
+                bool(re.fullmatch(r"[0-9a-fA-F]{64}", str(row.get("screenshot_sha256") or "")))
+                or bool(re.fullmatch(r"[0-9a-fA-F]{40}", str(row.get("screenshot_git_blob_sha") or "")))
+            )
             and row.get("visual_review_position_id")
             and row.get("visual_review_position_name_zh")
             and row.get("reviewed_by")
@@ -559,6 +563,16 @@ def build_position_semantic_validation(
         }
         for _, group in sorted(fixture_groups.items())
     ]
+    screenshot_inventory: dict[str, dict[str, str]] = {}
+    for row in queue:
+        file_name = str(row.get("screenshot_file") or "")
+        if not file_name:
+            continue
+        entry = screenshot_inventory.setdefault(file_name, {"file": file_name})
+        if row.get("screenshot_sha256"):
+            entry["sha256"] = str(row["screenshot_sha256"])
+        if row.get("screenshot_git_blob_sha"):
+            entry["git_blob_sha"] = str(row["screenshot_git_blob_sha"])
     return {
         "audit_version": "1.0-game-ui-position-semantic-validation",
         "overall_status": "partially_verified" if verified_codes else "pending_game_ui_validation",
@@ -592,12 +606,14 @@ def build_position_semantic_validation(
             ),
             "accepted_review_status": "confirmed",
             "required_review_fields": [
-                "game_ui_position_text", "screenshot_file", "screenshot_sha256",
+                "game_ui_position_text", "screenshot_file",
+                "screenshot_sha256 or screenshot_git_blob_sha",
                 "visual_review_position_id", "visual_review_position_name_zh",
                 "reviewed_by", "reviewed_at",
             ],
             "important": "Unreviewed screenshot references and numerical cross-checks never promote a candidate to verified.",
         },
+        "source_screenshots": [screenshot_inventory[key] for key in sorted(screenshot_inventory)],
         "review_fixture_count": len(review_fixtures),
         "review_fixtures": review_fixtures,
         "codes": codes,
