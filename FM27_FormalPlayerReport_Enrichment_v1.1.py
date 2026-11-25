@@ -57,6 +57,7 @@ POSITION_REVIEW_RESPONSE_FIELDS = (
     "visual_review_status", "reviewed_by", "reviewed_at", "notes",
 )
 POSITION_UI_MIN_DISTINCT_MATCHES = 3
+POSITION_UI_MIN_DISTINCT_PLAYERS = 2
 
 
 def read_json(path: Path) -> Any:
@@ -221,74 +222,146 @@ def build_position_review_queue(
     record_variant_scope: str = "",
     samples_per_code: int = 3,
 ) -> tuple[list[dict[str, Any]], dict[str, dict[str, int]]]:
-    """Create a reproducible in-game UI review queue without treating catalog matches as proof."""
-    all_rows = [*identified_rows, *unresolved_rows]
+    """Create a compact, reproducible UI review set covering as many codes per fixture as possible."""
     counts: Counter[str] = Counter()
     identified_counts: Counter[str] = Counter()
     unresolved_counts: Counter[str] = Counter()
     for row in identified_rows:
         value = as_int(row.get("position_code"))
-        counts[str(value) if value is not None else "missing"] += 1
-        identified_counts[str(value) if value is not None else "missing"] += 1
+        code = str(value) if value is not None else "missing"
+        counts[code] += 1
+        identified_counts[code] += 1
     for row in unresolved_rows:
         value = as_int(row.get("position_code"))
-        counts[str(value) if value is not None else "missing"] += 1
-        unresolved_counts[str(value) if value is not None else "missing"] += 1
+        code = str(value) if value is not None else "missing"
+        counts[code] += 1
+        unresolved_counts[code] += 1
 
-    by_code: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    # Organise identified samples by raw code and exact fixture. Unresolved rows contribute
+    # coverage counts but are not review samples because there is no safe player identity.
+    by_code_fixture: dict[str, dict[tuple[str, str, str], list[dict[str, Any]]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
     for row in identified_rows:
         value = as_int(row.get("position_code"))
-        if value is None:
+        fixture_key = review_fixture_key(row)
+        if value is None or fixture_key is None:
             continue
-        by_code[str(value)].append(row)
+        by_code_fixture[str(value)][fixture_key].append(row)
+
+    def row_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
+        minutes = as_int(row.get("minutes"))
+        return (
+            0 if minutes is not None and minutes > 0 else 1,
+            0 if row.get("player_uid") not in (None, "") else 1,
+            str(row.get("player_uid") or ""),
+            str(row.get("player_name") or ""),
+        )
+
+    # Choose a shared set of match screens. Rare codes that occur in fewer than three
+    # fixtures force all their available fixtures into the set. Then greedily add fixtures
+    # that cover the greatest number of still-underrepresented codes.
+    selected_fixtures: set[tuple[str, str, str]] = set()
+    code_fixture_keys = {
+        code: set(fixtures)
+        for code, fixtures in by_code_fixture.items()
+    }
+    for code, fixture_keys in code_fixture_keys.items():
+        if len(fixture_keys) < samples_per_code:
+            selected_fixtures.update(fixture_keys)
+
+    while True:
+        unfinished = {
+            code for code, fixture_keys in code_fixture_keys.items()
+            if len(fixture_keys) >= samples_per_code
+            and sum(1 for key in selected_fixtures if key in fixture_keys) < samples_per_code
+        }
+        if not unfinished:
+            break
+        remaining = set().union(*(code_fixture_keys[code] for code in unfinished)) - selected_fixtures
+        if not remaining:
+            break
+        best_fixture = max(
+            remaining,
+            key=lambda key: (
+                sum(1 for code in unfinished if key in code_fixture_keys[code]),
+                sum(len(by_code_fixture[code].get(key, [])) for code in unfinished),
+                tuple(reversed(key)),
+            ),
+        )
+        selected_fixtures.add(best_fixture)
 
     queue: list[dict[str, Any]] = []
-    for raw_code in sorted((key for key in counts if key != "missing"), key=lambda item: int(item)):
-        candidates = by_code.get(raw_code, [])
-        selected: list[dict[str, Any]] = []
-        used_fixtures: set[tuple[str, str, str]] = set()
+    for raw_code in sorted(by_code_fixture, key=lambda item: int(item)):
+        fixture_map = by_code_fixture[raw_code]
+        code_fixtures = sorted(
+            (key for key in selected_fixtures if key in fixture_map),
+            key=lambda key: (key[0], key[1], key[2]),
+        )
+        selected_rows: list[dict[str, Any]] = []
         used_players: set[str] = set()
 
-        def row_sort_key(row: dict[str, Any]) -> tuple[Any, ...]:
-            minutes = as_int(row.get("minutes"))
-            return (
-                0 if minutes is not None and minutes > 0 else 1,
-                0 if row.get("player_uid") not in (None, "") else 1,
-                str(row.get("date") or ""),
-                str(row.get("competition_id") or ""),
-                str(row.get("opponent_team_id") or ""),
-                str(row.get("player_uid") or ""),
+        # First choose one player from each selected fixture, preferring a new player.
+        for fixture_key in code_fixtures:
+            candidates = sorted(fixture_map[fixture_key], key=row_sort_key)
+            row = next(
+                (
+                    item for item in candidates
+                    if item.get("player_uid") not in (None, "")
+                    and str(item.get("player_uid")) not in used_players
+                ),
+                candidates[0] if candidates else None,
             )
-
-        ordered = sorted(candidates, key=row_sort_key)
-        # First pass prefers distinct players and distinct matches.
-        for row in ordered:
-            fixture_key = review_fixture_key(row)
-            player_key = str(row.get("player_uid") or "")
-            if fixture_key is None or fixture_key in used_fixtures:
+            if row is None:
                 continue
-            if player_key and player_key in used_players:
-                continue
-            selected.append(row)
-            used_fixtures.add(fixture_key)
-            if player_key:
-                used_players.add(player_key)
-            if len(selected) >= samples_per_code:
+            selected_rows.append(row)
+            if row.get("player_uid") not in (None, ""):
+                used_players.add(str(row.get("player_uid")))
+            if len(selected_rows) >= samples_per_code:
                 break
-        # If fewer than three distinct players exist (for example, a single goalkeeper),
-        # fill with additional distinct matches rather than silently dropping this code.
-        if len(selected) < samples_per_code:
-            for row in ordered:
+
+        # For a rare code with fewer available fixtures, add other distinct players from
+        # those same fixtures. This yields useful row-level evidence without pretending the
+        # repeated observations are independent matches.
+        if len(selected_rows) < samples_per_code:
+            selected_keys = {
+                (
+                    review_fixture_key(row),
+                    str(row.get("player_uid") or ""),
+                )
+                for row in selected_rows
+            }
+            additional_rows = sorted(
+                (
+                    row
+                    for fixture_key in code_fixtures
+                    for row in fixture_map[fixture_key]
+                ),
+                key=lambda row: (
+                    0 if row.get("player_uid") not in (None, "") else 1,
+                    str(row.get("date") or ""),
+                    str(row.get("competition_id") or ""),
+                    str(row.get("opponent_team_id") or ""),
+                    str(row.get("player_uid") or ""),
+                ),
+            )
+            for row in additional_rows:
                 fixture_key = review_fixture_key(row)
-                if fixture_key is None or fixture_key in used_fixtures:
+                player_key = str(row.get("player_uid") or "")
+                sample_key = (fixture_key, player_key)
+                if fixture_key is None or sample_key in selected_keys:
                     continue
-                selected.append(row)
-                used_fixtures.add(fixture_key)
-                if len(selected) >= samples_per_code:
+                if player_key and player_key in used_players:
+                    continue
+                selected_rows.append(row)
+                selected_keys.add(sample_key)
+                if player_key:
+                    used_players.add(player_key)
+                if len(selected_rows) >= samples_per_code:
                     break
 
         mapped = position_map.get(int(raw_code))
-        for row in selected:
+        for row in selected_rows:
             fixture_key = review_fixture_key(row) or ("", "", "")
             stable_key = "|".join((
                 game_build, str(section_schema or ""), raw_code,
@@ -324,21 +397,33 @@ def build_position_review_queue(
                 "notes": "",
             })
 
-    coverage = {
-        code: {
+    coverage: dict[str, dict[str, int]] = {}
+    for code in sorted((key for key in counts if key != "missing"), key=lambda item: int(item)):
+        code_rows = [
+            row for row in identified_rows
+            if str(as_int(row.get("position_code"))) == code
+        ]
+        coverage[code] = {
             "total_rows": counts[code],
             "identified_rows": identified_counts[code],
             "unresolved_rows": unresolved_counts[code],
             "review_samples": sum(1 for item in queue if item["position_code_raw"] == code),
+            "distinct_matches_available": len({
+                key for key in (review_fixture_key(row) for row in code_rows) if key is not None
+            }),
+            "distinct_players_available": len({
+                str(row.get("player_uid")) for row in code_rows
+                if row.get("player_uid") not in (None, "")
+            }),
         }
-        for code in sorted((key for key in counts if key != "missing"), key=lambda item: int(item))
-    }
     if "missing" in counts:
         coverage["missing"] = {
             "total_rows": counts["missing"],
             "identified_rows": identified_counts["missing"],
             "unresolved_rows": unresolved_counts["missing"],
             "review_samples": 0,
+            "distinct_matches_available": 0,
+            "distinct_players_available": 0,
         }
     return queue, coverage
 
@@ -392,6 +477,10 @@ def build_position_semantic_validation(
         ]
         fixture_keys = {review_fixture_key(row) for row in confirmed}
         fixture_keys.discard(None)
+        player_keys = {
+            str(row.get("player_uid")) for row in confirmed
+            if row.get("player_uid") not in (None, "")
+        }
         observed_ids = sorted({str(row["visual_review_position_id"]) for row in confirmed})
         mismatches = [
             row for row in confirmed
@@ -403,8 +492,18 @@ def build_position_semantic_validation(
             status = "candidate_mapping_conflicts_with_visual_evidence"
         elif len(observed_ids) > 1:
             status = "conflicting_visual_evidence"
-        elif len(fixture_keys) >= POSITION_UI_MIN_DISTINCT_MATCHES:
+        elif (
+            len(fixture_keys) >= POSITION_UI_MIN_DISTINCT_MATCHES
+            and len(player_keys) >= min(
+                POSITION_UI_MIN_DISTINCT_PLAYERS,
+                max(1, int(counts.get("distinct_players_available", 0))),
+            )
+        ):
             status = "verified_by_visual_game_ui_evidence"
+        elif len(confirmed) >= 3 and len(fixture_keys) < POSITION_UI_MIN_DISTINCT_MATCHES:
+            status = "visually_observed_but_insufficient_match_diversity"
+        elif len(fixture_keys) >= POSITION_UI_MIN_DISTINCT_MATCHES:
+            status = "visually_observed_but_insufficient_player_diversity"
         else:
             status = "pending_game_ui_validation"
 
@@ -425,6 +524,11 @@ def build_position_semantic_validation(
             **counts,
             "visual_evidence_rows_confirmed": len(confirmed),
             "distinct_matches_visually_checked": len(fixture_keys),
+            "distinct_players_visually_checked": len(player_keys),
+            "minimum_distinct_players_required": min(
+                POSITION_UI_MIN_DISTINCT_PLAYERS,
+                max(1, int(counts.get("distinct_players_available", 0))),
+            ),
             "observed_ui_position_ids": observed_ids,
             "candidate_mismatch_rows": len(mismatches),
             "semantic_status": status,
@@ -433,6 +537,28 @@ def build_position_semantic_validation(
         })
 
     verified_codes = [row for row in codes if row["semantic_status"] == "verified_by_visual_game_ui_evidence"]
+    fixture_groups: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for row in queue:
+        key = review_fixture_key(row)
+        if key is None:
+            continue
+        group = fixture_groups.setdefault(key, {
+            "date": row.get("date") or "",
+            "competition_id": row.get("competition_id") or "",
+            "opponent_team_id": row.get("opponent_team_id") or "",
+            "opponent_name": row.get("opponent_name") or "",
+            "review_sample_count": 0,
+            "position_codes": set(),
+        })
+        group["review_sample_count"] += 1
+        group["position_codes"].add(str(row.get("position_code_raw") or ""))
+    review_fixtures = [
+        {
+            **{key: value for key, value in group.items() if key != "position_codes"},
+            "position_codes": sorted(group["position_codes"], key=lambda item: int(item)),
+        }
+        for _, group in sorted(fixture_groups.items())
+    ]
     return {
         "audit_version": "1.0-game-ui-position-semantic-validation",
         "overall_status": "partially_verified" if verified_codes else "pending_game_ui_validation",
@@ -456,6 +582,14 @@ def build_position_semantic_validation(
         "visual_validation_policy": {
             "required_evidence": "A screenshot of the exact FM27 match screen showing this player's actual match position, linked to the exact fixture and identified player.",
             "minimum_distinct_matches_per_code": POSITION_UI_MIN_DISTINCT_MATCHES,
+            "minimum_distinct_players_per_code": (
+                f"At least {POSITION_UI_MIN_DISTINCT_PLAYERS}; if the save contains only one identified "
+                "player for a code, that player's evidence across distinct fixtures is sufficient."
+            ),
+            "rare_code_policy": (
+                "If fewer than three distinct fixtures exist in the save, preserve up to three distinct "
+                "player/fixture samples but report insufficient_match_diversity; do not promote globally."
+            ),
             "accepted_review_status": "confirmed",
             "required_review_fields": [
                 "game_ui_position_text", "screenshot_file", "screenshot_sha256",
@@ -464,6 +598,8 @@ def build_position_semantic_validation(
             ],
             "important": "Unreviewed screenshot references and numerical cross-checks never promote a candidate to verified.",
         },
+        "review_fixture_count": len(review_fixtures),
+        "review_fixtures": review_fixtures,
         "codes": codes,
         "verified_code_count": len(verified_codes),
         "unverified_code_count": len(codes) - len(verified_codes),

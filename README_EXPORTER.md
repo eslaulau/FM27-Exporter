@@ -49,7 +49,9 @@ Each export now writes:
 - `position-semantic-validation.json`: per-code coverage, candidate label, numeric cross-check scope,
   and explicit semantic-verification status.
 - `position-semantic-review.csv`: up to three identified player/fixture samples per observed raw code.
-  The CSV is a review queue, not proof.
+  The CSV is a review queue, not proof. The samples reuse a compact shared set of fixtures so
+one match screen can be used to inspect several position codes. The exact fixture list is repeated
+in `position-semantic-validation.json`.
 
 To complete a review, open each exact fixture in FM27 and inspect the match screen that explicitly
 shows the player's position for that match. Do not substitute the player's preferred position, the
@@ -60,10 +62,15 @@ date. Re-run `FM27_FormalPlayerReport_Enrichment_v1.1.py` against the same repor
 review responses are carried forward.
 
 A code is promoted only when at least three distinct fixtures have screenshot-backed, visually
-reviewed evidence and all reviewed rows agree with the candidate. Conflicting or mismatching evidence
-blocks promotion. Screenshot hashes and reviewer fields are metadata; the script does not itself
-inspect screenshot pixels. Until visual review is complete, verified position fields remain blank and
-the raw code is authoritative.
+reviewed evidence and all reviewed rows agree with the candidate. Evidence should cover at least two
+identified players when the save contains more than one player for that code; a code used by only one
+identified player can be checked across that player's distinct fixtures. Conflicting or mismatching
+evidence blocks promotion. If a rare code appears in fewer than three distinct fixtures, the queue
+keeps up to three distinct player/fixture samples (including different players in the same match) and
+the audit reports that fixture diversity is insufficient; it does not promote the code globally.
+Screenshot hashes and reviewer fields are metadata; the script does not itself inspect screenshot
+pixels. Until visual review is complete, verified position fields remain blank and the raw code is
+authoritative.
 
 ## Report location and validation
 
