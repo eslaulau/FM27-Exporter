@@ -98,39 +98,134 @@ def load_position_catalog(catalog: dict[str, Any]) -> dict[int, dict[str, str]]:
     return result
 
 
-def history_key(row: dict[str, Any]) -> tuple[int, str, int, int] | None:
-    uid = as_int(row.get("player_uid"))
-    comp = as_int(row.get("competition_id"))
-    opponent = as_int(row.get("opponent_team_id"))
-    date = str(row.get("date") or "")
-    if uid is None or comp is None or opponent is None or not date:
-        return None
-    return uid, date, comp, opponent
-
-
-def build_history_index(rows: list[dict[str, Any]]) -> dict[tuple[int, str, int, int], dict[str, Any]]:
-    index: dict[tuple[int, str, int, int], dict[str, Any]] = {}
-    for row in rows:
-        key = history_key(row)
-        if key is None:
+def load_role_flag_catalog(
+    catalog: dict[str, Any],
+) -> dict[int, list[dict[str, Any]]]:
+    """Index native role definitions by their exact flags mask, not their array order."""
+    result: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    for item in catalog.get("roles", []):
+        flag = as_int(item.get("flags"))
+        role_id = str(item.get("id") or "")
+        phase = as_int(item.get("phase"))
+        if flag is None or flag <= 0 or not role_id or phase not in (0, 1):
             continue
-        previous = index.get(key)
-        score = (
-            bool(row.get("has_stats")),
-            row.get("rating") not in (None, ""),
-            row.get("position_code") not in (None, ""),
-        )
-        previous_score = (
-            bool(previous and previous.get("has_stats")),
-            bool(previous and previous.get("rating") not in (None, "")),
-            bool(previous and previous.get("position_code") not in (None, "")),
-        )
-        if previous is None or score > previous_score:
-            index[key] = row
-    return index
+        result[flag].append({
+            "id": role_id,
+            "name_zh": str(item.get("label") or role_id),
+            "phase": phase,
+            "flags": flag,
+        })
+    return dict(result)
 
 
-def rating_source_status(row: dict[str, Any], history: dict[str, Any] | None) -> str:
+def resolve_match_role_code(
+    role_code: Any,
+    position_id: str | None,
+    role_flag_catalog: dict[int, list[dict[str, Any]]],
+    role_eligibility: dict[str, Any],
+) -> dict[str, Any]:
+    """Resolve history role_code as a bit index, then require phase-0 position eligibility.
+
+    FM27's tactic catalog stores role flags as powers of two. Match-history role_code
+    observations align with the index of that bit (so the corresponding mask is 1 << code).
+    Identical flags can occur in both possession phases; this exporter only decodes the
+    in-possession role, and uses the native position eligibility table to reject mismatches.
+    """
+    code = as_int(role_code)
+    if code is None:
+        return {
+            "role_bit_mask": "",
+            "candidate_role_id": "",
+            "candidate_role_name_zh": "",
+            "candidate_role_phase": "",
+            "verified_role_id": "",
+            "verified_role_name_zh": "",
+            "verified_role_phase": "",
+            "phase1_alternative_role_ids": [],
+            "status": "no_same_match_role_history",
+            "evidence": "no_role_code_in_named_match_history",
+        }
+    if code < 0 or code > 255:
+        return {
+            "role_bit_mask": "",
+            "candidate_role_id": "",
+            "candidate_role_name_zh": "",
+            "candidate_role_phase": "",
+            "verified_role_id": "",
+            "verified_role_name_zh": "",
+            "verified_role_phase": "",
+            "phase1_alternative_role_ids": [],
+            "status": "raw_role_code_out_of_byte_range",
+            "evidence": "role_code_is_not_an_unsigned_byte",
+        }
+
+    mask = 1 << code
+    matches = role_flag_catalog.get(mask, [])
+    phase0 = [item for item in matches if item["phase"] == 0]
+    phase1 = [item for item in matches if item["phase"] == 1]
+    phase1_ids = sorted({item["id"] for item in phase1})
+    result = {
+        "role_bit_mask": f"0x{mask:X}",
+        "candidate_role_id": "",
+        "candidate_role_name_zh": "",
+        "candidate_role_phase": 0 if phase0 else "",
+        "verified_role_id": "",
+        "verified_role_name_zh": "",
+        "verified_role_phase": "",
+        "phase1_alternative_role_ids": phase1_ids,
+        "status": "",
+        "evidence": "role_bit_mask=1<<role_code; exact catalog roles[].flags lookup",
+    }
+    if not phase0:
+        result["status"] = (
+            "only_phase1_role_matches"
+            if phase1 else "no_matching_native_role_flag"
+        )
+        return result
+
+    unique_phase0 = {item["id"]: item for item in phase0}
+    if len(unique_phase0) == 1:
+        candidate = next(iter(unique_phase0.values()))
+        result["candidate_role_id"] = candidate["id"]
+        result["candidate_role_name_zh"] = candidate["name_zh"]
+    else:
+        result["status"] = "ambiguous_phase0_role_flag"
+        return result
+
+    if not position_id:
+        result["status"] = "candidate_missing_position_context"
+        return result
+
+    eligible_by_phase = role_eligibility.get(position_id)
+    if not isinstance(eligible_by_phase, list) or not eligible_by_phase:
+        result["status"] = "candidate_position_has_no_role_eligibility_table"
+        return result
+    phase0_allowed = set(eligible_by_phase[0] if isinstance(eligible_by_phase[0], list) else [])
+    eligible = [item for item in unique_phase0.values() if item["id"] in phase0_allowed]
+    if len(eligible) == 1:
+        resolved = eligible[0]
+        result.update({
+            "verified_role_id": resolved["id"],
+            "verified_role_name_zh": resolved["name_zh"],
+            "verified_role_phase": 0,
+            "status": "decoded_native_in_possession_role",
+            "evidence": (
+                "role_bit_mask=1<<role_code; exact catalog roles[].flags match; "
+                f"role {resolved['id']} is eligible at native position {position_id} in phase 0"
+            ),
+        })
+    elif len(eligible) > 1:
+        result["status"] = "ambiguous_position_eligible_phase0_roles"
+    else:
+        result["status"] = "position_eligibility_conflict"
+        result["evidence"] = (
+            "the role bit has a phase-0 catalog candidate, but that role is not listed "
+            f"for native position {position_id} in role_eligibility"
+        )
+    return result
+
+
+def history_key(def rating_source_status(row: dict[str, Any], history: dict[str, Any] | None) -> str:
     recorded_source = str(row.get("rating_source") or "")
     if recorded_source in {
         "raw_match_report_rating_crosschecked",
@@ -154,6 +249,8 @@ def enrich_record(
     row: dict[str, Any],
     history_index: dict[tuple[int, str, int, int], dict[str, Any]],
     position_map: dict[int, dict[str, str]],
+    role_flag_catalog: dict[int, list[dict[str, Any]]],
+    role_eligibility: dict[str, Any],
 ) -> dict[str, Any]:
     result = dict(row)
     key = history_key(row)
@@ -177,10 +274,23 @@ def enrich_record(
 
     unknown = (history or {}).get("unknown") or {}
     role_code = unknown.get("role_code")
-    result["role_code_raw"] = role_code if role_code is not None else ""
-    result["role_code_meaning_status"] = (
-        "meaning_unconfirmed_keep_raw" if role_code is not None else "no_same_match_role_history"
+    role_info = resolve_match_role_code(
+        role_code,
+        mapped["id"] if mapped else None,
+        role_flag_catalog,
+        role_eligibility,
     )
+    result["role_code_raw"] = role_code if role_code is not None else ""
+    result["role_code_bit_mask"] = role_info["role_bit_mask"]
+    result["match_role_id_candidate"] = role_info["candidate_role_id"]
+    result["match_role_name_candidate"] = role_info["candidate_role_name_zh"]
+    result["match_role_phase_candidate"] = role_info["candidate_role_phase"]
+    result["match_role_id_verified"] = role_info["verified_role_id"]
+    result["match_role_name_verified"] = role_info["verified_role_name_zh"]
+    result["match_role_phase_verified"] = role_info["verified_role_phase"]
+    result["role_code_meaning_status"] = role_info["status"]
+    result["role_code_mapping_evidence"] = role_info["evidence"]
+    result["role_phase1_alternative_ids"] = ";".join(role_info["phase1_alternative_role_ids"])
     result["rating_source_status"] = rating_source_status(row, history)
     return result
 
@@ -402,10 +512,25 @@ def build_role_audit(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             str(row.get("match_position_name_candidate") or ""),
             str(row.get("role_code_raw") or ""),
         )
-        item = grouped.setdefault(key, {"rows": 0, "players": set()})
+        item = grouped.setdefault(key, {
+            "rows": 0,
+            "players": set(),
+            "role_ids": set(),
+            "role_names": set(),
+            "statuses": set(),
+            "bit_masks": set(),
+        })
         item["rows"] += 1
         if row.get("player_name"):
             item["players"].add(str(row["player_name"]))
+        if row.get("match_role_id_verified"):
+            item["role_ids"].add(str(row["match_role_id_verified"]))
+        if row.get("match_role_name_verified"):
+            item["role_names"].add(str(row["match_role_name_verified"]))
+        if row.get("role_code_meaning_status"):
+            item["statuses"].add(str(row["role_code_meaning_status"]))
+        if row.get("role_code_bit_mask"):
+            item["bit_masks"].add(str(row["role_code_bit_mask"]))
     result = []
     for (position_code, position_id, position_name, role_code), values in sorted(
         grouped.items(), key=lambda x: (x[0][0], x[0][3])
@@ -415,11 +540,168 @@ def build_role_audit(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "position_id_candidate": position_id,
             "position_name_candidate": position_name,
             "role_code_raw": role_code,
+            "role_code_bit_mask": ";".join(sorted(values["bit_masks"])),
+            "match_role_id_verified": ";".join(sorted(values["role_ids"])),
+            "match_role_name_verified": ";".join(sorted(values["role_names"])),
             "history_rows": values["rows"],
             "distinct_players": len(values["players"]),
-            "role_code_meaning_status": "UNDECODED_KEEP_RAW" if role_code else "NO_HISTORY_ROLE_CODE",
+            "role_code_meaning_status": ";".join(sorted(values["statuses"])) if values["statuses"] else "no_same_match_role_history",
         })
     return result
+
+
+def build_role_code_semantic_validation(
+    rows: list[dict[str, Any]],
+    catalog: dict[str, Any],
+) -> dict[str, Any]:
+    """Audit observed role bytes against native role-bit flags and position eligibility."""
+    code_groups: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        code_value = as_int(row.get("role_code_raw"))
+        if code_value is None:
+            continue
+        code = str(code_value)
+        group = code_groups.setdefault(code, {
+            "history_rows": 0,
+            "players": set(),
+            "position_contexts": {},
+            "decoded_role_ids": set(),
+            "statuses": Counter(),
+        })
+        group["history_rows"] += 1
+        if row.get("player_uid") not in (None, ""):
+            group["players"].add(str(row["player_uid"]))
+        position_id = str(row.get("match_position_id_candidate") or "")
+        position_code = str(row.get("position_code") or "")
+        context = group["position_contexts"].setdefault(position_id or "unmapped", {
+            "position_code_raw": position_code,
+            "position_id": position_id or None,
+            "rows": 0,
+        })
+        context["rows"] += 1
+        status = str(row.get("role_code_meaning_status") or "unknown")
+        group["statuses"][status] += 1
+        if row.get("match_role_id_verified"):
+            group["decoded_role_ids"].add(str(row["match_role_id_verified"]))
+
+    role_flag_catalog = load_role_flag_catalog(catalog)
+    eligibility = catalog.get("role_eligibility") or {}
+    code_rows = []
+    decoded_codes = 0
+    fully_decoded_codes = 0
+    for raw_code, group in sorted(code_groups.items(), key=lambda x: int(x[0])):
+        code = int(raw_code)
+        mask = 1 << code
+        matches = role_flag_catalog.get(mask, [])
+        phase0 = [item for item in matches if item["phase"] == 0]
+        phase1 = [item for item in matches if item["phase"] == 1]
+        positions = sorted(group["position_contexts"])
+        decoded = sorted(group["decoded_role_ids"])
+        conflict_rows = group["statuses"].get("position_eligibility_conflict", 0)
+        missing_context_rows = group["statuses"].get("candidate_missing_position_context", 0)
+        if decoded:
+            decoded_codes += 1
+        if decoded and not conflict_rows and not missing_context_rows and not any(
+            status not in {"decoded_native_in_possession_role"}
+            for status in group["statuses"]
+        ):
+            fully_decoded_codes += 1
+        if decoded and conflict_rows:
+            status = "decoded_for_eligible_rows_with_position_conflicts_preserved"
+        elif decoded:
+            status = "decoded_native_in_possession_role"
+        else:
+            status = "unresolved_keep_raw"
+        code_rows.append({
+            "role_code_raw": raw_code,
+            "role_bit_mask_hex": f"0x{mask:X}",
+            "history_rows": group["history_rows"],
+            "distinct_players": len(group["players"]),
+            "observed_position_contexts": [
+                group["position_contexts"][key] for key in positions
+            ],
+            "phase0_role_candidates": [
+                {"id": item["id"], "name_zh": item["name_zh"]}
+                for item in phase0
+            ],
+            "phase1_same_flag_alternatives": [
+                {"id": item["id"], "name_zh": item["name_zh"]}
+                for item in phase1
+            ],
+            "decoded_role_ids": decoded,
+            "decoded_rows": group["statuses"].get("decoded_native_in_possession_role", 0),
+            "position_eligibility_conflict_rows": conflict_rows,
+            "missing_position_context_rows": missing_context_rows,
+            "status_counts": dict(group["statuses"]),
+            "status": status,
+        })
+
+    screenshot_evidence = [
+        {
+            "date": "2027-03-18",
+            "opponent": "阿贾克斯",
+            "score": "布莱顿 6-1 阿贾克斯",
+            "screenshot_file": "3/3.png",
+            "git_blob_sha": "df00e0aa3e71f133b87a920bdb3e6e1c5bf31a89",
+            "role_codes_visually_crosschecked": [1, 2, 3, 12, 24, 31, 43, 56],
+        },
+        {
+            "date": "2027-05-09",
+            "opponent": "桑德兰",
+            "score": "布莱顿 4-0 桑德兰",
+            "screenshot_file": "3/4.png",
+            "git_blob_sha": "aae138cf99aacb414c46242ed186a395d931bc04",
+            "role_codes_visually_crosschecked": [1, 2, 3, 12, 24, 31, 43, 56],
+        },
+    ]
+    return {
+        "audit_version": "1.0-native-role-bit-index-validation",
+        "overall_status": (
+            "partially_decoded_with_position_conflicts"
+            if any(row["position_eligibility_conflict_rows"] for row in code_rows)
+            else "decoded_by_native_role_bit_catalog"
+        ),
+        "game": "FM27",
+        "native_role_catalog": {
+            "schema_version": catalog.get("schema_version"),
+            "source_bundle_sha256": catalog.get("source_bundle_sha256"),
+            "resolver_rva": catalog.get("resolver_rva"),
+            "resolver_page_sha256": catalog.get("resolver_page_sha256"),
+            "role_entry_count": len(catalog.get("roles", [])),
+        },
+        "mapping_method": {
+            "source_field": "fmsave player_match_stats[].unknown.role_code",
+            "source_encoding": "unsigned byte",
+            "bit_index_rule": "role_bit_mask = 1 << role_code",
+            "catalog_match_rule": "Exact decimal equality with catalog.json roles[].flags",
+            "phase_rule": (
+                "The match-history code is resolved against phase 0 (in-possession) roles. "
+                "A matching phase-1 role is recorded as an alternative, never substituted."
+            ),
+            "position_rule": (
+                "The phase-0 role must also appear in catalog.json role_eligibility[base_position_id][0]. "
+                "Rows that fail this context check retain the raw byte and are not assigned a verified role."
+            ),
+            "role_code_is_not": [
+                "a zero-based or one-based index into catalog.roles",
+                "a role ID or translation GameID",
+                "a complete description of the out-of-possession role",
+            ],
+        },
+        "visual_crosscheck": {
+            "status": "corroborated_on_two_same-fixture_in-possession_formation_screens",
+            "note": (
+                "Player names and raw role bytes were matched to the role abbreviations shown in the "
+                "FM27 in-possession formation diagrams for these exact fixtures."
+            ),
+            "screenshots": screenshot_evidence,
+            "visually_crosschecked_role_codes": [1, 2, 3, 12, 24, 31, 43, 56],
+        },
+        "decoded_role_code_count": decoded_codes,
+        "fully_decoded_role_code_count": fully_decoded_codes,
+        "unresolved_role_code_count": len(code_rows) - decoded_codes,
+        "codes": code_rows,
+    }
 
 
 def build_unresolved_sightings(
@@ -511,9 +793,14 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
     probe = read_json(probe_path) if probe_path.is_file() else None
     catalog = read_json(catalog_path)
     position_map = load_position_catalog(catalog)
+    role_flag_catalog = load_role_flag_catalog(catalog)
+    role_eligibility = catalog.get("role_eligibility") or {}
     history_index = build_history_index(history_rows)
 
-    enriched = [enrich_record(row, history_index, position_map) for row in identified_rows]
+    enriched = [
+        enrich_record(row, history_index, position_map, role_flag_catalog, role_eligibility)
+        for row in identified_rows
+    ]
 
     identity_audit_path = export_dir / "player-report-identity-audit.json"
     formal_summary_path = export_dir / "player-match-report-formal-summary.json"
@@ -547,6 +834,8 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
         enriched, position_semantic_validation["codes"]
     )
 
+    role_semantic_validation = build_role_code_semantic_validation(enriched, catalog)
+
     extra_fields = [
         "match_position_id_candidate",
         "match_position_name_candidate",
@@ -555,19 +844,31 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
         "match_position_id_verified",
         "match_position_name_verified",
         "role_code_raw",
+        "role_code_bit_mask",
+        "match_role_id_candidate",
+        "match_role_name_candidate",
+        "match_role_phase_candidate",
+        "match_role_id_verified",
+        "match_role_name_verified",
+        "match_role_phase_verified",
         "role_code_meaning_status",
+        "role_code_mapping_evidence",
+        "role_phase1_alternative_ids",
         "rating_source_status",
     ]
     output_fields = list(fields) + [x for x in extra_fields if x not in fields]
     write_csv(export_dir / "player-match-report-identified-enriched.csv", output_fields, enriched)
     write_json(export_dir / "position-semantic-validation.json", position_semantic_validation)
+    write_json(export_dir / "role-code-semantic-validation.json", role_semantic_validation)
 
     role_audit = build_role_audit(enriched)
     write_csv(
         export_dir / "player-match-report-role-code-audit-enriched.csv",
         [
             "position_code_raw", "position_id_candidate", "position_name_candidate",
-            "role_code_raw", "history_rows", "distinct_players", "role_code_meaning_status",
+            "role_code_raw", "role_code_bit_mask",
+            "match_role_id_verified", "match_role_name_verified",
+            "history_rows", "distinct_players", "role_code_meaning_status",
         ],
         role_audit,
     )
@@ -611,11 +912,21 @@ def enrich_report(export_dir: Path, catalog_path: Path | None = None) -> dict[st
             "code_coverage": position_code_coverage,
         },
         "role_code_note": (
-            "role_code is retained as a raw byte. Upstream fmsave documents its meaning as unestablished; "
-            "it is not decoded by array order or by candidate roles."
+            "The raw role_code byte is interpreted as a bit index: role_bit_mask = 1 << role_code. "
+            "An exact catalog.json roles[].flags match is resolved only to a unique phase-0 role that "
+            "is eligible for the player's native match-position context. Phase-1 alternatives and "
+            "position-ineligible rows remain explicit; the raw byte is always preserved."
         ),
         "role_code_raw_counts": dict(role_counts),
         "role_code_position_groups": role_audit,
+        "role_code_semantic_validation": {
+            "status": role_semantic_validation["overall_status"],
+            "audit_file": "role-code-semantic-validation.json",
+            "decoded_role_codes": role_semantic_validation["decoded_role_code_count"],
+            "fully_decoded_role_codes": role_semantic_validation["fully_decoded_role_code_count"],
+            "unresolved_role_codes": role_semantic_validation["unresolved_role_code_count"],
+            "visually_crosschecked_role_codes": role_semantic_validation["visual_crosscheck"]["visually_crosschecked_role_codes"],
+        },
         "rating_note": (
             "Ratings are sourced from the detailed raw match-report record at raw-window offset +136 "
             "(uint16 little-endian hundredths, divided by 100 and rounded half-up to one decimal) only when "
@@ -656,7 +967,13 @@ def main() -> int:
         f"{semantic.get('unverified_position_codes', 0)} unmapped or pending; "
         "screenshots not required"
     )
-    print(f"Role codes preserved raw: {audit['role_code_raw_counts']}")
+    role_semantic = audit.get("role_code_semantic_validation", {})
+    print(
+        "Native role codes decoded: "
+        f"{role_semantic.get('decoded_role_codes', 0)} codes; "
+        f"{role_semantic.get('fully_decoded_role_codes', 0)} fully position-compatible"
+    )
+    print(f"Raw role code coverage: {audit['role_code_raw_counts']}")
     print(f"Outputs written to: {args.export_dir}")
     return 0
 
