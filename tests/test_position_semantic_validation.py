@@ -12,6 +12,7 @@ SPEC.loader.exec_module(MODULE)
 
 
 class PositionSemanticValidationTests(unittest.TestCase):
+    """Guard raw-code candidates against unearned UI-semantic promotion."""
     def setUp(self):
         self.position_map = {
             4: {"id": "DR", "name_zh": "右后卫"},
