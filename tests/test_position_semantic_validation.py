@@ -11,20 +11,37 @@ assert SPEC is not None and SPEC.loader is not None
 SPEC.loader.exec_module(MODULE)
 
 
-class PositionSemanticValidationTests(unittest.TestCase):
-    """Guard raw-code candidates against unearned UI-semantic promotion."""
+class NativePositionMaskValidationTests(unittest.TestCase):
     def setUp(self):
-        self.position_map = {
-            4: {"id": "DR", "name_zh": "右后卫"},
-            1: {"id": "GK", "name_zh": "门将"},
+        self.catalog = {
+            "schema_version": 1,
+            "source_bundle_sha256": "a" * 64,
+            "resolver_rva": "0x64fe90",
+            "resolver_page_sha256": "b" * 64,
+            "positions": [
+                {"id": "GK", "mask": 1},
+                {"id": "DR", "mask": 4},
+                {"id": "DL", "mask": 8},
+                {"id": "DC", "mask": 16},
+                {"id": "DMC", "mask": 128},
+                {"id": "MC", "mask": 1024},
+                {"id": "AMR", "mask": 2048},
+                {"id": "AML", "mask": 4096},
+                {"id": "AMC", "mask": 8192},
+                {"id": "ST", "mask": 16384},
+                # Compound tactical slots are intentionally not equivalent to raw 16-bit match codes.
+                {"id": "DCR", "mask": 2097168},
+                {"id": "DCL", "mask": 1048592},
+            ],
         }
+        self.position_map = MODULE.load_position_catalog(self.catalog)
         self.source = {
             "game": "FM27",
             "game_build": "27.1.1+2511875",
             "fmsave_version": "0.14.3",
             "section": "match_stats_cfg",
             "section_schema": 6,
-            "record_variant_counts": {"0100013d1f": 3},
+            "record_variant_counts": {"0100013d1f": 56},
         }
 
     def make_rows(self, code=4, count=3):
@@ -32,12 +49,7 @@ class PositionSemanticValidationTests(unittest.TestCase):
             {
                 "date": f"2027-04-{20 + index:02d}",
                 "competition_id": "7",
-                "competition_name": "Premier Division",
-                "round": f"Round {index + 1}",
-                "kick_off_time": "15:00:00",
-                "home_away": "主场",
                 "opponent_team_id": str(500 + index),
-                "opponent_name": f"Opponent {index + 1}",
                 "player_uid": str(1000 + index),
                 "player_name": f"Player {index + 1}",
                 "position_code": str(code),
@@ -46,329 +58,160 @@ class PositionSemanticValidationTests(unittest.TestCase):
             for index in range(count)
         ]
 
-    def test_reenrichment_preserves_reviewed_inconclusive_statuses(self):
+    def test_catalog_uses_exact_16_bit_single_bit_masks_only(self):
+        self.assertEqual(
+            self.position_map,
+            {
+                1: {"id": "GK", "name_zh": "门将"},
+                4: {"id": "DR", "name_zh": "右后卫"},
+                8: {"id": "DL", "name_zh": "左后卫"},
+                16: {"id": "DC", "name_zh": "中后卫"},
+                128: {"id": "DMC", "name_zh": "后腰"},
+                1024: {"id": "MC", "name_zh": "中前卫"},
+                2048: {"id": "AMR", "name_zh": "右边锋"},
+                4096: {"id": "AML", "name_zh": "左边锋"},
+                8192: {"id": "AMC", "name_zh": "前腰"},
+                16384: {"id": "ST", "name_zh": "中锋"},
+            },
+        )
+
+    def test_exact_catalog_mask_and_passed_raw_crosscheck_verify_mapping(self):
+        rows = self.make_rows(code=4, count=3)
+        coverage = MODULE.build_position_code_coverage(rows, [])
+        audit = MODULE.build_position_semantic_validation(
+            coverage,
+            self.position_map,
+            self.source,
+            {"matched": 210, "tested": 210, "mismatches": 0},
+            self.catalog,
+        )
+        right_back = next(item for item in audit["codes"] if item["position_code_raw"] == "4")
+        self.assertEqual(audit["overall_status"], "verified_by_native_position_catalog")
+        self.assertEqual(audit["verified_code_count"], 1)
+        self.assertEqual(right_back["position_mask_hex"], "0x0004")
+        self.assertEqual(right_back["semantic_status"], "verified_by_native_position_mask_catalog")
+        self.assertEqual(right_back["verified_position_id"], "DR")
+        self.assertEqual(right_back["verified_position_name_zh"], "右后卫")
+        self.assertFalse(audit["validation_method"]["screenshots_required"])
+
+    def test_raw_mask_validation_does_not_require_three_fixtures_or_screenshots(self):
+        coverage = MODULE.build_position_code_coverage(self.make_rows(count=1), [])
+        audit = MODULE.build_position_semantic_validation(
+            coverage,
+            self.position_map,
+            self.source,
+            {"matched": 25, "tested": 25, "mismatches": 0},
+            self.catalog,
+        )
+        self.assertEqual(audit["verified_code_count"], 1)
+        self.assertEqual(audit["codes"][0]["semantic_status"], "verified_by_native_position_mask_catalog")
+
+    def test_raw_field_crosscheck_below_threshold_keeps_candidate_unverified(self):
+        coverage = MODULE.build_position_code_coverage(self.make_rows(count=3), [])
+        audit = MODULE.build_position_semantic_validation(
+            coverage,
+            self.position_map,
+            self.source,
+            {"matched": 24, "tested": 24, "mismatches": 0},
+            self.catalog,
+        )
+        self.assertEqual(audit["overall_status"], "pending_raw_position_crosscheck")
+        self.assertEqual(audit["verified_code_count"], 0)
+        self.assertEqual(audit["codes"][0]["semantic_status"], "pending_raw_position_crosscheck")
+
+    def test_any_raw_history_mismatch_blocks_semantic_verification(self):
+        coverage = MODULE.build_position_code_coverage(self.make_rows(count=3), [])
+        audit = MODULE.build_position_semantic_validation(
+            coverage,
+            self.position_map,
+            self.source,
+            {"matched": 209, "tested": 210, "mismatches": 1},
+            self.catalog,
+        )
+        self.assertFalse(audit["numeric_history_crosscheck"]["passed"])
+        self.assertEqual(audit["verified_code_count"], 0)
+
+    def test_unknown_or_compound_raw_code_is_not_guessed(self):
+        rows = self.make_rows(code=32, count=2)
+        rows += self.make_rows(code=2097168, count=1)
+        coverage = MODULE.build_position_code_coverage(rows, [])
+        audit = MODULE.build_position_semantic_validation(
+            coverage,
+            self.position_map,
+            self.source,
+            {"matched": 25, "tested": 25, "mismatches": 0},
+            self.catalog,
+        )
+        statuses = {item["position_code_raw"]: item["semantic_status"] for item in audit["codes"]}
+        self.assertEqual(statuses["32"], "no_exact_native_catalog_mask_match")
+        self.assertEqual(statuses["2097168"], "no_exact_native_catalog_mask_match")
+        self.assertEqual(audit["unverified_code_count"], 2)
+
+    def test_base_centre_back_mask_does_not_claim_left_or_right_centre_back(self):
+        coverage = MODULE.build_position_code_coverage(self.make_rows(code=16), [])
+        audit = MODULE.build_position_semantic_validation(
+            coverage,
+            self.position_map,
+            self.source,
+            {"matched": 25, "tested": 25, "mismatches": 0},
+            self.catalog,
+        )
+        dc = audit["codes"][0]
+        self.assertEqual(dc["verified_position_id"], "DC")
+        self.assertIn(
+            "A base code such as 16 maps to DC (centre-back); it does not identify DCL or DCR.",
+            audit["validation_method"]["limitations"],
+        )
+
+    def test_verified_fields_are_applied_only_after_crosscheck_validation(self):
         rows = [
-            {"position_code": "1"},
             {"position_code": "4"},
             {"position_code": "128"},
             {"position_code": ""},
         ]
         codes = [
             {
-                "position_code_raw": "1",
-                "semantic_status": "verified_by_visual_game_ui_evidence",
-                "verified_position_id": "GK",
-                "verified_position_name_zh": "门将",
-            },
-            {
                 "position_code_raw": "4",
-                "semantic_status": "visually_reviewed_evidence_not_sufficient_for_mapping",
-                "verified_position_id": None,
-                "verified_position_name_zh": None,
+                "semantic_status": "verified_by_native_position_mask_catalog",
+                "verified_position_id": "DR",
+                "verified_position_name_zh": "右后卫",
             },
             {
                 "position_code_raw": "128",
-                "semantic_status": "visually_reviewed_but_insufficient_match_diversity",
+                "semantic_status": "pending_raw_position_crosscheck",
                 "verified_position_id": None,
                 "verified_position_name_zh": None,
             },
         ]
         result = MODULE.apply_position_semantic_results(rows, codes)
-        self.assertEqual(result[0]["match_position_id_verified"], "GK")
-        self.assertEqual(result[0]["match_position_name_verified"], "门将")
-        self.assertEqual(
-            result[1]["match_position_semantic_status"],
-            "visually_reviewed_evidence_not_sufficient_for_mapping",
-        )
-        self.assertEqual(
-            result[2]["match_position_semantic_status"],
-            "visually_reviewed_but_insufficient_match_diversity",
-        )
+        self.assertEqual(result[0]["match_position_id_verified"], "DR")
+        self.assertEqual(result[0]["match_position_name_verified"], "右后卫")
         self.assertEqual(result[1]["match_position_id_verified"], "")
-        self.assertEqual(result[3]["match_position_semantic_status"], "no_raw_position_code_or_unmapped")
+        self.assertEqual(result[1]["match_position_semantic_status"], "pending_raw_position_crosscheck")
+        self.assertEqual(result[2]["match_position_semantic_status"], "no_raw_position_code_or_unmapped")
 
-    def test_catalog_match_never_auto_confirms_game_ui_semantics(self):
-        row = self.make_rows(count=1)[0]
-        enriched = MODULE.enrich_record(row, {}, self.position_map)
-        self.assertEqual(enriched["match_position_id_candidate"], "DR")
-        self.assertEqual(enriched["match_position_name_candidate"], "右后卫")
-        self.assertEqual(
-            enriched["match_position_semantic_status"],
-            "unverified_pending_game_ui_evidence",
-        )
-        self.assertEqual(enriched["match_position_id_verified"], "")
-        self.assertEqual(enriched["match_position_name_verified"], "")
-
-    def test_review_queue_covers_identified_and_unresolved_counts(self):
-        identified = self.make_rows(count=3)
+    def test_coverage_keeps_unresolved_rows_separate(self):
+        identified = self.make_rows(code=4, count=3)
         unresolved = [{
             "date": "2027-04-25",
             "competition_id": "7",
             "opponent_team_id": "599",
             "position_code": "4",
         }]
-        queue, coverage = MODULE.build_position_review_queue(
-            identified, unresolved, self.position_map,
-            game_build="27.1.1+2511875", section_schema=6,
-            record_variant_scope="0100013d1f",
-        )
+        coverage = MODULE.build_position_code_coverage(identified, unresolved)
         self.assertEqual(coverage["4"]["total_rows"], 4)
         self.assertEqual(coverage["4"]["identified_rows"], 3)
         self.assertEqual(coverage["4"]["unresolved_rows"], 1)
-        self.assertEqual(len(queue), 3)
-        self.assertEqual(len({row["sample_id"] for row in queue}), 3)
-        self.assertTrue(all(row["visual_review_status"] == "pending_visual_review" for row in queue))
+        self.assertEqual(coverage["4"]["distinct_matches_available"], 3)
 
-    def test_review_queue_reuses_three_shared_matches_across_position_codes(self):
-        rows = []
-        for index, date in enumerate(("2027-04-20", "2027-04-21", "2027-04-22")):
-            for code, uid_suffix in ((1, 1), (4, 2)):
-                rows.append({
-                    "date": date,
-                    "competition_id": "7",
-                    "competition_name": "Premier Division",
-                    "round": f"Round {index + 1}",
-                    "kick_off_time": "15:00:00",
-                    "home_away": "主场",
-                    "opponent_team_id": str(500 + index),
-                    "opponent_name": f"Opponent {index + 1}",
-                    "player_uid": str(1000 + index * 10 + uid_suffix),
-                    "player_name": f"Player {index}-{uid_suffix}",
-                    "position_code": str(code),
-                    "minutes": "90",
-                })
-        # A rare code appears only in the first fixture, but has three identified players.
-        for index in range(3):
-            rows.append({
-                "date": "2027-04-20",
-                "competition_id": "7",
-                "competition_name": "Premier Division",
-                "round": "Round 1",
-                "kick_off_time": "15:00:00",
-                "home_away": "主场",
-                "opponent_team_id": "500",
-                "opponent_name": "Opponent 1",
-                "player_uid": str(2000 + index),
-                "player_name": f"Rare Player {index}",
-                "position_code": "128",
-                "minutes": "90",
-            })
-        position_map = self.position_map | {128: {"id": "DMC", "name_zh": "后腰"}}
-        queue, coverage = MODULE.build_position_review_queue(
-            rows, [], position_map,
-            game_build="27.1.1+2511875", section_schema=6,
-        )
-        audit = MODULE.build_position_semantic_validation(
-            queue, coverage, position_map, self.source, {},
-        )
-        self.assertEqual(audit["review_fixture_count"], 3)
-        self.assertEqual(
-            {(row["date"], row["opponent_team_id"]) for row in audit["review_fixtures"]},
-            {("2027-04-20", "500"), ("2027-04-21", "501"), ("2027-04-22", "502")},
-        )
-        self.assertEqual(coverage["128"]["review_samples"], 3)
-        self.assertEqual(coverage["128"]["distinct_matches_available"], 1)
-        self.assertTrue(all(coverage[str(code)]["review_samples"] == 3 for code in (1, 4)))
-
-    def test_raw_numeric_history_match_does_not_verify_position_meaning(self):
-        queue, coverage = MODULE.build_position_review_queue(
-            self.make_rows(count=3), [], self.position_map,
-            game_build="27.1.1+2511875", section_schema=6,
-        )
-        audit = MODULE.build_position_semantic_validation(
-            queue, coverage, self.position_map, self.source,
-            {"matched": 174, "tested": 174, "mismatches": 0},
-        )
-        self.assertEqual(audit["overall_status"], "pending_game_ui_validation")
-        self.assertEqual(audit["codes"][0]["semantic_status"], "pending_game_ui_validation")
-        self.assertEqual(audit["numeric_history_crosscheck"]["matched"], 174)
-        self.assertIn("does not prove", audit["numeric_history_crosscheck"]["what_it_does_not_prove"])
-        self.assertEqual(audit["verified_code_count"], 0)
-
-    def test_three_distinct_screenshot_reviewed_matches_can_confirm_candidate(self):
-        queue, coverage = MODULE.build_position_review_queue(
-            self.make_rows(count=3), [], self.position_map,
-            game_build="27.1.1+2511875", section_schema=6,
-        )
-        for row in queue:
-            row.update({
-                "game_ui_position_text": "右后卫",
-                "screenshot_file": f"{row['sample_id']}.png",
-                "screenshot_sha256": "a" * 64,
-                "visual_review_position_id": "DR",
-                "visual_review_position_name_zh": "右后卫",
-                "visual_review_status": "confirmed",
-                "reviewed_by": "visual-review",
-                "reviewed_at": "2026-11-25",
-            })
-        audit = MODULE.build_position_semantic_validation(
-            queue, coverage, self.position_map, self.source,
-            {"matched": 174, "tested": 174, "mismatches": 0},
-        )
-        self.assertEqual(audit["overall_status"], "partially_verified")
-        self.assertEqual(audit["codes"][0]["semantic_status"], "verified_by_visual_game_ui_evidence")
-        self.assertEqual(audit["codes"][0]["distinct_matches_visually_checked"], 3)
-        self.assertEqual(audit["codes"][0]["verified_position_id"], "DR")
-
-    def test_rare_code_queue_keeps_distinct_players_from_one_fixture(self):
-        rows = self.make_rows(code=128, count=3)
-        for row in rows:
-            row["date"] = "2026-08-20"
-            row["opponent_team_id"] = "1275"
-            row["opponent_name"] = "Trnava"
-        queue, coverage = MODULE.build_position_review_queue(
-            rows, [], self.position_map | {128: {"id": "DMC", "name_zh": "后腰"}},
-            game_build="27.1.1+2511875", section_schema=6,
-        )
-        self.assertEqual(len(queue), 3)
-        self.assertEqual(coverage["128"]["distinct_matches_available"], 1)
-        self.assertEqual(coverage["128"]["distinct_players_available"], 3)
-
-        for row in queue:
-            row.update({
-                "game_ui_position_text": "后腰",
-                "screenshot_file": f"{row['sample_id']}.png",
-                "screenshot_sha256": "d" * 64,
-                "visual_review_position_id": "DMC",
-                "visual_review_position_name_zh": "后腰",
-                "visual_review_status": "confirmed",
-                "reviewed_by": "visual-review",
-                "reviewed_at": "2026-11-25",
-            })
-        audit = MODULE.build_position_semantic_validation(
-            queue, coverage,
-            self.position_map | {128: {"id": "DMC", "name_zh": "后腰"}},
-            self.source, {},
-        )
-        dmc = next(item for item in audit["codes"] if item["position_code_raw"] == "128")
-        self.assertEqual(dmc["semantic_status"], "visually_observed_but_insufficient_match_diversity")
-        self.assertEqual(dmc["distinct_matches_visually_checked"], 1)
-        self.assertEqual(dmc["distinct_players_visually_checked"], 3)
-        self.assertEqual(audit["verified_code_count"], 0)
-
-    def test_one_available_player_can_be_checked_across_three_matches(self):
-        rows = self.make_rows(code=1, count=3)
-        for row in rows:
-            row["player_uid"] = "1000"
-            row["player_name"] = "Goalkeeper"
-        queue, coverage = MODULE.build_position_review_queue(
-            rows, [], self.position_map,
-            game_build="27.1.1+2511875", section_schema=6,
-        )
-        self.assertEqual(len(queue), 3)
-        self.assertEqual(coverage["1"]["distinct_players_available"], 1)
-        for row in queue:
-            row.update({
-                "game_ui_position_text": "门将",
-                "screenshot_file": f"{row['sample_id']}.png",
-                "screenshot_sha256": "e" * 64,
-                "visual_review_position_id": "GK",
-                "visual_review_position_name_zh": "门将",
-                "visual_review_status": "confirmed",
-                "reviewed_by": "visual-review",
-                "reviewed_at": "2026-11-25",
-            })
-        audit = MODULE.build_position_semantic_validation(
-            queue, coverage, self.position_map, self.source, {},
-        )
-        goalkeeper = next(item for item in audit["codes"] if item["position_code_raw"] == "1")
-        self.assertEqual(goalkeeper["semantic_status"], "verified_by_visual_game_ui_evidence")
-        self.assertEqual(goalkeeper["distinct_matches_visually_checked"], 3)
-
-    def test_visual_evidence_that_disagrees_with_candidate_blocks_promotion(self):
-        queue, coverage = MODULE.build_position_review_queue(
-            self.make_rows(count=3), [], self.position_map,
-            game_build="27.1.1+2511875", section_schema=6,
-        )
-        for row in queue:
-            row.update({
-                "game_ui_position_text": "左后卫",
-                "screenshot_file": f"{row['sample_id']}.png",
-                "screenshot_sha256": "b" * 64,
-                "visual_review_position_id": "DL",
-                "visual_review_position_name_zh": "左后卫",
-                "visual_review_status": "confirmed",
-                "reviewed_by": "visual-review",
-                "reviewed_at": "2026-11-25",
-            })
-        audit = MODULE.build_position_semantic_validation(
-            queue, coverage, self.position_map, self.source, {},
-        )
-        self.assertEqual(
-            audit["codes"][0]["semantic_status"],
-            "candidate_mapping_conflicts_with_visual_evidence",
-        )
-        self.assertEqual(audit["verified_code_count"], 0)
-
-    def test_reviewed_but_inconclusive_screenshot_is_recorded_without_promotion(self):
-        queue, coverage = MODULE.build_position_review_queue(
-            self.make_rows(code=4, count=3), [], self.position_map,
-            game_build="27.1.1+2511875", section_schema=6,
-        )
-        for row in queue:
-            row.update({
-                "screenshot_file": "3/1.png",
-                "screenshot_git_blob_sha": "2" * 40,
-                "visual_review_status": "reviewed_insufficient_semantic_evidence",
-                "reviewed_by": "visual-review",
-                "reviewed_at": "2026-11-25",
-                "notes": "The image shows an in-possession formation and role labels, not an explicit match-position field.",
-            })
-        audit = MODULE.build_position_semantic_validation(
-            queue, coverage, self.position_map, self.source, {},
-        )
-        right_back = next(item for item in audit["codes"] if item["position_code_raw"] == "4")
-        self.assertEqual(
-            right_back["semantic_status"],
-            "visually_reviewed_evidence_not_sufficient_for_mapping",
-        )
-        self.assertEqual(audit["verified_code_count"], 0)
-        self.assertEqual(audit["source_screenshots"][0]["git_blob_sha"], "2" * 40)
-
-    def test_immutable_git_blob_hash_is_accepted_as_screenshot_provenance(self):
-        queue, coverage = MODULE.build_position_review_queue(
-            self.make_rows(code=1, count=3), [], self.position_map,
-            game_build="27.1.1+2511875", section_schema=6,
-        )
-        for row in queue:
-            row.update({
-                "game_ui_position_text": "门将位置",
-                "screenshot_file": "3/1.png",
-                "screenshot_git_blob_sha": "1" * 40,
-                "visual_review_position_id": "GK",
-                "visual_review_position_name_zh": "门将",
-                "visual_review_status": "confirmed",
-                "reviewed_by": "visual-review",
-                "reviewed_at": "2026-11-25",
-            })
-        audit = MODULE.build_position_semantic_validation(
-            queue, coverage, self.position_map, self.source, {},
-        )
-        goalkeeper = next(item for item in audit["codes"] if item["position_code_raw"] == "1")
-        self.assertEqual(goalkeeper["semantic_status"], "verified_by_visual_game_ui_evidence")
-        self.assertEqual(audit["source_screenshots"][0]["git_blob_sha"], "1" * 40)
-
-    def test_screenshot_metadata_without_visual_review_is_not_confirmation(self):
-        queue, coverage = MODULE.build_position_review_queue(
-            self.make_rows(count=3), [], self.position_map,
-            game_build="27.1.1+2511875", section_schema=6,
-        )
-        for row in queue:
-            row.update({
-                "game_ui_position_text": "右后卫",
-                "screenshot_file": f"{row['sample_id']}.png",
-                "screenshot_sha256": "c" * 64,
-                "visual_review_position_id": "DR",
-                "visual_review_position_name_zh": "右后卫",
-                "visual_review_status": "pending_visual_review",
-                "reviewed_by": "user",
-                "reviewed_at": "2026-11-25",
-            })
-        audit = MODULE.build_position_semantic_validation(
-            queue, coverage, self.position_map, self.source, {},
-        )
-        self.assertEqual(audit["codes"][0]["semantic_status"], "pending_game_ui_validation")
-        self.assertEqual(audit["verified_code_count"], 0)
+    def test_enriched_record_preserves_raw_code_and_marks_native_candidate_before_audit(self):
+        row = self.make_rows(count=1)[0]
+        enriched = MODULE.enrich_record(row, {}, self.position_map)
+        self.assertEqual(enriched["position_code"], "4")
+        self.assertEqual(enriched["match_position_id_candidate"], "DR")
+        self.assertEqual(enriched["match_position_mapping_evidence"], "exact_native_position_catalog_mask_match")
+        self.assertEqual(enriched["match_position_semantic_status"], "pending_raw_position_crosscheck")
+        self.assertEqual(enriched["match_position_id_verified"], "")
 
 
 if __name__ == "__main__":
