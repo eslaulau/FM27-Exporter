@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scope FM27 export artifacts to the managed first team and direct match opponents (v1.3.0).
+"""Scope FM27 export artifacts to the managed first team and direct match opponents (v1.3.1).
 
 The save is read-only. Tactical configurations are intentionally not exported or inferred:
 the user supplies the tactic used for each match. Opponent data is limited to team-level
