@@ -1,0 +1,459 @@
+{
+  "audit_version": "1.1-complete-79-role-catalog",
+  "overall_status": "decoded_by_native_role_bit_catalog",
+  "game": "FM27",
+  "native_role_catalog": {
+    "file": "native-role-catalog.json",
+    "native_role_definition_count": 79,
+    "in_possession_role_count": 40,
+    "out_of_possession_role_count": 39,
+    "distinct_role_bit_mask_count": 50,
+    "cross_phase_duplicate_flag_group_count": 29,
+    "same_flag_and_position_ambiguous_group_count": 4,
+    "role_definitions_covered_by_position_eligibility": 79,
+    "source": {
+      "schema_version": 1,
+      "source_bundle_sha256": "c9d98c9c39a278ec7aae5db22e7dc0b9f7af2de398bb8610bab9fe9d094f7f07",
+      "resolver_rva": "0x64fe90",
+      "resolver_page_sha256": "4400b89bb203a79d13f25d0ab626ca238c30c02e1b2afc38f3610e6618314a4f"
+    }
+  },
+  "mapping_method": {
+    "source_field": "fmsave player_match_stats[].unknown.role_code",
+    "source_encoding": "unsigned byte",
+    "bit_index_rule": "role_bit_mask = 1 << role_code",
+    "catalog_match_rule": "Exact decimal equality with catalog.json roles[].flags",
+    "phase_rule": "The match-history code is resolved against phase 0 (in-possession) roles. A matching phase-1 role is recorded as an alternative, never substituted.",
+    "position_rule": "The phase-0 role must also appear in catalog.json role_eligibility[base_position_id][0]. Rows that fail this context check retain the raw byte and are not assigned a verified role.",
+    "role_code_is_not": [
+      "a zero-based or one-based index into catalog.roles",
+      "a role ID or translation GameID",
+      "a complete description of the out-of-possession role"
+    ]
+  },
+  "visual_crosscheck": {
+    "status": "corroborated_on_two_same-fixture_in-possession_formation_screens",
+    "note": "Player names and raw role bytes were matched to the role abbreviations shown in the FM27 in-possession formation diagrams for these exact fixtures.",
+    "screenshots": [
+      {
+        "date": "2027-03-18",
+        "opponent": "阿贾克斯",
+        "score": "布莱顿 6-1 阿贾克斯",
+        "screenshot_file": "3/3.png",
+        "git_blob_sha": "df00e0aa3e71f133b87a920bdb3e6e1c5bf31a89",
+        "role_codes_visually_crosschecked": [
+          1,
+          2,
+          3,
+          12,
+          24,
+          31,
+          43,
+          56
+        ]
+      },
+      {
+        "date": "2027-05-09",
+        "opponent": "桑德兰",
+        "score": "布莱顿 4-0 桑德兰",
+        "screenshot_file": "3/4.png",
+        "git_blob_sha": "aae138cf99aacb414c46242ed186a395d931bc04",
+        "role_codes_visually_crosschecked": [
+          1,
+          2,
+          3,
+          12,
+          24,
+          31,
+          43,
+          56
+        ]
+      }
+    ],
+    "visually_crosschecked_role_codes": [
+      1,
+      2,
+      3,
+      12,
+      24,
+      31,
+      43,
+      56
+    ]
+  },
+  "decoded_role_code_count": 11,
+  "fully_decoded_role_code_count": 11,
+  "unresolved_role_code_count": 0,
+  "codes": [
+    {
+      "role_code_raw": "1",
+      "role_bit_mask_hex": "0x2",
+      "history_rows": 20,
+      "distinct_players": 1,
+      "observed_position_contexts": [
+        {
+          "position_code_raw": "16",
+          "position_id": "DC",
+          "rows": 20
+        }
+      ],
+      "phase0_role_candidates": [
+        {
+          "id": "CentreBack",
+          "name_zh": "中后卫"
+        }
+      ],
+      "phase1_same_flag_alternatives": [
+        {
+          "id": "OPSweeperKeeper",
+          "name_zh": "清道夫门将"
+        }
+      ],
+      "decoded_role_ids": [
+        "CentreBack"
+      ],
+      "decoded_rows": 20,
+      "position_eligibility_conflict_rows": 0,
+      "missing_position_context_rows": 0,
+      "status_counts": {
+        "decoded_native_in_possession_role": 20
+      },
+      "status": "decoded_native_in_possession_role"
+    },
+    {
+      "role_code_raw": "3",
+      "role_bit_mask_hex": "0x8",
+      "history_rows": 35,
+      "distinct_players": 3,
+      "observed_position_contexts": [
+        {
+          "position_code_raw": "4",
+          "position_id": "DR",
+          "rows": 35
+        }
+      ],
+      "phase0_role_candidates": [
+        {
+          "id": "WingBack",
+          "name_zh": "翼卫"
+        }
+      ],
+      "phase1_same_flag_alternatives": [
+        {
+          "id": "OPCentreBack",
+          "name_zh": "中后卫"
+        }
+      ],
+      "decoded_role_ids": [
+        "WingBack"
+      ],
+      "decoded_rows": 35,
+      "position_eligibility_conflict_rows": 0,
+      "missing_position_context_rows": 0,
+      "status_counts": {
+        "decoded_native_in_possession_role": 35
+      },
+      "status": "decoded_native_in_possession_role"
+    },
+    {
+      "role_code_raw": "5",
+      "role_bit_mask_hex": "0x20",
+      "history_rows": 30,
+      "distinct_players": 4,
+      "observed_position_contexts": [
+        {
+          "position_code_raw": "1024",
+          "position_id": "MC",
+          "rows": 30
+        }
+      ],
+      "phase0_role_candidates": [
+        {
+          "id": "CentralMidfielder",
+          "name_zh": "中前卫"
+        }
+      ],
+      "phase1_same_flag_alternatives": [
+        {
+          "id": "OPCoveringCentreBack",
+          "name_zh": "补位中卫"
+        }
+      ],
+      "decoded_role_ids": [
+        "CentralMidfielder"
+      ],
+      "decoded_rows": 30,
+      "position_eligibility_conflict_rows": 0,
+      "missing_position_context_rows": 0,
+      "status_counts": {
+        "decoded_native_in_possession_role": 30
+      },
+      "status": "decoded_native_in_possession_role"
+    },
+    {
+      "role_code_raw": "7",
+      "role_bit_mask_hex": "0x80",
+      "history_rows": 38,
+      "distinct_players": 8,
+      "observed_position_contexts": [
+        {
+          "position_code_raw": "2048",
+          "position_id": "AMR",
+          "rows": 38
+        }
+      ],
+      "phase0_role_candidates": [
+        {
+          "id": "Winger",
+          "name_zh": "边锋"
+        }
+      ],
+      "phase1_same_flag_alternatives": [
+        {
+          "id": "OPStoppingWideCentreBack",
+          "name_zh": "上抢边中卫"
+        }
+      ],
+      "decoded_role_ids": [
+        "Winger"
+      ],
+      "decoded_rows": 38,
+      "position_eligibility_conflict_rows": 0,
+      "missing_position_context_rows": 0,
+      "status_counts": {
+        "decoded_native_in_possession_role": 38
+      },
+      "status": "decoded_native_in_possession_role"
+    },
+    {
+      "role_code_raw": "12",
+      "role_bit_mask_hex": "0x1000",
+      "history_rows": 20,
+      "distinct_players": 2,
+      "observed_position_contexts": [
+        {
+          "position_code_raw": "1",
+          "position_id": "GK",
+          "rows": 20
+        }
+      ],
+      "phase0_role_candidates": [
+        {
+          "id": "BallPlayingGoalkeeper",
+          "name_zh": "出球门将"
+        }
+      ],
+      "phase1_same_flag_alternatives": [
+        {
+          "id": "OPWingBack",
+          "name_zh": "翼卫"
+        }
+      ],
+      "decoded_role_ids": [
+        "BallPlayingGoalkeeper"
+      ],
+      "decoded_rows": 20,
+      "position_eligibility_conflict_rows": 0,
+      "missing_position_context_rows": 0,
+      "status_counts": {
+        "decoded_native_in_possession_role": 20
+      },
+      "status": "decoded_native_in_possession_role"
+    },
+    {
+      "role_code_raw": "24",
+      "role_bit_mask_hex": "0x1000000",
+      "history_rows": 20,
+      "distinct_players": 2,
+      "observed_position_contexts": [
+        {
+          "position_code_raw": "16",
+          "position_id": "DC",
+          "rows": 20
+        }
+      ],
+      "phase0_role_candidates": [
+        {
+          "id": "BallPlayingCentreBack",
+          "name_zh": "出球中卫"
+        }
+      ],
+      "phase1_same_flag_alternatives": [],
+      "decoded_role_ids": [
+        "BallPlayingCentreBack"
+      ],
+      "decoded_rows": 20,
+      "position_eligibility_conflict_rows": 0,
+      "missing_position_context_rows": 0,
+      "status_counts": {
+        "decoded_native_in_possession_role": 20
+      },
+      "status": "decoded_native_in_possession_role"
+    },
+    {
+      "role_code_raw": "27",
+      "role_bit_mask_hex": "0x8000000",
+      "history_rows": 27,
+      "distinct_players": 4,
+      "observed_position_contexts": [
+        {
+          "position_code_raw": "4096",
+          "position_id": "AML",
+          "rows": 27
+        }
+      ],
+      "phase0_role_candidates": [
+        {
+          "id": "InsideForward",
+          "name_zh": "内锋"
+        }
+      ],
+      "phase1_same_flag_alternatives": [
+        {
+          "id": "OPPressingCentralMidfielder",
+          "name_zh": "逼抢中场"
+        }
+      ],
+      "decoded_role_ids": [
+        "InsideForward"
+      ],
+      "decoded_rows": 27,
+      "position_eligibility_conflict_rows": 0,
+      "missing_position_context_rows": 0,
+      "status_counts": {
+        "decoded_native_in_possession_role": 27
+      },
+      "status": "decoded_native_in_possession_role"
+    },
+    {
+      "role_code_raw": "31",
+      "role_bit_mask_hex": "0x80000000",
+      "history_rows": 38,
+      "distinct_players": 5,
+      "observed_position_contexts": [
+        {
+          "position_code_raw": "16384",
+          "position_id": "ST",
+          "rows": 38
+        }
+      ],
+      "phase0_role_candidates": [
+        {
+          "id": "ChannelForward",
+          "name_zh": "拉边前锋"
+        }
+      ],
+      "phase1_same_flag_alternatives": [
+        {
+          "id": "OPTrackingAttackingMidfielder",
+          "name_zh": "回防前腰"
+        }
+      ],
+      "decoded_role_ids": [
+        "ChannelForward"
+      ],
+      "decoded_rows": 38,
+      "position_eligibility_conflict_rows": 0,
+      "missing_position_context_rows": 0,
+      "status_counts": {
+        "decoded_native_in_possession_role": 38
+      },
+      "status": "decoded_native_in_possession_role"
+    },
+    {
+      "role_code_raw": "41",
+      "role_bit_mask_hex": "0x20000000000",
+      "history_rows": 28,
+      "distinct_players": 3,
+      "observed_position_contexts": [
+        {
+          "position_code_raw": "8192",
+          "position_id": "AMC",
+          "rows": 28
+        }
+      ],
+      "phase0_role_candidates": [
+        {
+          "id": "SecondStriker",
+          "name_zh": "影子前锋"
+        }
+      ],
+      "phase1_same_flag_alternatives": [
+        {
+          "id": "OPWideOutletWinger",
+          "name_zh": "拉边接应边锋"
+        }
+      ],
+      "decoded_role_ids": [
+        "SecondStriker"
+      ],
+      "decoded_rows": 28,
+      "position_eligibility_conflict_rows": 0,
+      "missing_position_context_rows": 0,
+      "status_counts": {
+        "decoded_native_in_possession_role": 28
+      },
+      "status": "decoded_native_in_possession_role"
+    },
+    {
+      "role_code_raw": "52",
+      "role_bit_mask_hex": "0x10000000000000",
+      "history_rows": 33,
+      "distinct_players": 3,
+      "observed_position_contexts": [
+        {
+          "position_code_raw": "8",
+          "position_id": "DL",
+          "rows": 33
+        }
+      ],
+      "phase0_role_candidates": [
+        {
+          "id": "InsideFullBack",
+          "name_zh": "内收边后卫"
+        }
+      ],
+      "phase1_same_flag_alternatives": [],
+      "decoded_role_ids": [
+        "InsideFullBack"
+      ],
+      "decoded_rows": 33,
+      "position_eligibility_conflict_rows": 0,
+      "missing_position_context_rows": 0,
+      "status_counts": {
+        "decoded_native_in_possession_role": 33
+      },
+      "status": "decoded_native_in_possession_role"
+    },
+    {
+      "role_code_raw": "56",
+      "role_bit_mask_hex": "0x100000000000000",
+      "history_rows": 31,
+      "distinct_players": 6,
+      "observed_position_contexts": [
+        {
+          "position_code_raw": "1024",
+          "position_id": "MC",
+          "rows": 31
+        }
+      ],
+      "phase0_role_candidates": [
+        {
+          "id": "ChannelMidfielder",
+          "name_zh": "肋部中场"
+        }
+      ],
+      "phase1_same_flag_alternatives": [],
+      "decoded_role_ids": [
+        "ChannelMidfielder"
+      ],
+      "decoded_rows": 31,
+      "position_eligibility_conflict_rows": 0,
+      "missing_position_context_rows": 0,
+      "status_counts": {
+        "decoded_native_in_possession_role": 31
+      },
+      "status": "decoded_native_in_possession_role"
+    }
+  ]
+}
