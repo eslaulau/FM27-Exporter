@@ -1,0 +1,297 @@
+{
+  "audit_version": "2.0-native-position-mask-validation",
+  "overall_status": "verified_by_native_position_catalog",
+  "game": "FM27",
+  "game_build": "27.1.1+2511875",
+  "fmsave_version": "0.14.3",
+  "section": "match_stats_cfg",
+  "section_schema": 6,
+  "record_variant_counts": {
+    "0100013d1f": 65
+  },
+  "raw_position_source": {
+    "field": "match_stats_cfg player appearance record",
+    "encoding": "uint16 little-endian native position mask",
+    "raw_window_offset": 110,
+    "anchor_relative_offset": 10,
+    "zero_value": "no stored match position; exported as blank"
+  },
+  "native_position_catalog": {
+    "schema_version": 1,
+    "source_bundle_sha256": "c9d98c9c39a278ec7aae5db22e7dc0b9f7af2de398bb8610bab9fe9d094f7f07",
+    "resolver_rva": "0x64fe90",
+    "resolver_page_sha256": "4400b89bb203a79d13f25d0ab626ca238c30c02e1b2afc38f3610e6618314a4f",
+    "position_entry_count": 24,
+    "positions": [
+      {
+        "mask": 1,
+        "id": "GK"
+      },
+      {
+        "mask": 4,
+        "id": "DR"
+      },
+      {
+        "mask": 8,
+        "id": "DL"
+      },
+      {
+        "mask": 16,
+        "id": "DC"
+      },
+      {
+        "mask": 2097168,
+        "id": "DCR"
+      },
+      {
+        "mask": 1048592,
+        "id": "DCL"
+      },
+      {
+        "mask": 32,
+        "id": "WBR"
+      },
+      {
+        "mask": 64,
+        "id": "WBL"
+      },
+      {
+        "mask": 128,
+        "id": "DMC"
+      },
+      {
+        "mask": 2097280,
+        "id": "DMR"
+      },
+      {
+        "mask": 1048704,
+        "id": "DML"
+      },
+      {
+        "mask": 256,
+        "id": "MR"
+      },
+      {
+        "mask": 512,
+        "id": "ML"
+      },
+      {
+        "mask": 1024,
+        "id": "MC"
+      },
+      {
+        "mask": 2098176,
+        "id": "MCR"
+      },
+      {
+        "mask": 1049600,
+        "id": "MCL"
+      },
+      {
+        "mask": 2048,
+        "id": "AMR"
+      },
+      {
+        "mask": 4096,
+        "id": "AML"
+      },
+      {
+        "mask": 8192,
+        "id": "AMC"
+      },
+      {
+        "mask": 2105344,
+        "id": "AMCR"
+      },
+      {
+        "mask": 1056768,
+        "id": "AMCL"
+      },
+      {
+        "mask": 16384,
+        "id": "ST"
+      },
+      {
+        "mask": 2113536,
+        "id": "STR"
+      },
+      {
+        "mask": 1064960,
+        "id": "STL"
+      }
+    ]
+  },
+  "validation_method": {
+    "mapping_rule": "The decoded uint16 match-position mask must exactly equal one unique single-bit mask in catalog.json positions[].mask. No player preferred-position, tactic-slot, role, duty, or formation inference is used.",
+    "raw_field_crosscheck_minimum": 25,
+    "raw_field_crosscheck_requirement": "At least 25 direct same-match comparisons against fmsave named history, with every compared value matching and zero mismatches.",
+    "screenshots_required": false,
+    "limitations": [
+      "A base code such as 16 maps to DC (centre-back); it does not identify DCL or DCR.",
+      "The mapping identifies the stored match-position mask, not a player's role, duty, tactic slot, or separate in-possession/out-of-possession shape.",
+      "Only exact masks represented as 16-bit single-bit entries are mapped; compound or unknown masks remain unmapped."
+    ]
+  },
+  "numeric_history_crosscheck": {
+    "matched": 226,
+    "tested": 226,
+    "mismatches": 0,
+    "passed": true,
+    "what_it_proves": "The raw match-report position field is decoded consistently with same-match named player history for the tested records.",
+    "what_it_does_not_prove": "The cross-check alone does not define position names; semantic labels come from exact equality with the native FM27 position-mask catalog."
+  },
+  "codes": [
+    {
+      "position_code_raw": "1",
+      "position_mask_hex": "0x0001",
+      "candidate_position_id": "GK",
+      "candidate_position_name_zh": "门将",
+      "total_rows": 65,
+      "identified_rows": 65,
+      "unresolved_rows": 0,
+      "distinct_matches_available": 65,
+      "distinct_players_available": 2,
+      "semantic_status": "verified_by_native_position_mask_catalog",
+      "verified_position_id": "GK",
+      "verified_position_name_zh": "门将",
+      "verification_basis": "exact_raw_uint16_mask_match_to_native_catalog_position"
+    },
+    {
+      "position_code_raw": "4",
+      "position_mask_hex": "0x0004",
+      "candidate_position_id": "DR",
+      "candidate_position_name_zh": "右后卫",
+      "total_rows": 108,
+      "identified_rows": 102,
+      "unresolved_rows": 6,
+      "distinct_matches_available": 65,
+      "distinct_players_available": 4,
+      "semantic_status": "verified_by_native_position_mask_catalog",
+      "verified_position_id": "DR",
+      "verified_position_name_zh": "右后卫",
+      "verification_basis": "exact_raw_uint16_mask_match_to_native_catalog_position"
+    },
+    {
+      "position_code_raw": "8",
+      "position_mask_hex": "0x0008",
+      "candidate_position_id": "DL",
+      "candidate_position_name_zh": "左后卫",
+      "total_rows": 113,
+      "identified_rows": 113,
+      "unresolved_rows": 0,
+      "distinct_matches_available": 65,
+      "distinct_players_available": 5,
+      "semantic_status": "verified_by_native_position_mask_catalog",
+      "verified_position_id": "DL",
+      "verified_position_name_zh": "左后卫",
+      "verification_basis": "exact_raw_uint16_mask_match_to_native_catalog_position"
+    },
+    {
+      "position_code_raw": "16",
+      "position_mask_hex": "0x0010",
+      "candidate_position_id": "DC",
+      "candidate_position_name_zh": "中后卫",
+      "total_rows": 132,
+      "identified_rows": 132,
+      "unresolved_rows": 0,
+      "distinct_matches_available": 65,
+      "distinct_players_available": 5,
+      "semantic_status": "verified_by_native_position_mask_catalog",
+      "verified_position_id": "DC",
+      "verified_position_name_zh": "中后卫",
+      "verification_basis": "exact_raw_uint16_mask_match_to_native_catalog_position"
+    },
+    {
+      "position_code_raw": "128",
+      "position_mask_hex": "0x0080",
+      "candidate_position_id": "DMC",
+      "candidate_position_name_zh": "后腰",
+      "total_rows": 3,
+      "identified_rows": 3,
+      "unresolved_rows": 0,
+      "distinct_matches_available": 1,
+      "distinct_players_available": 3,
+      "semantic_status": "verified_by_native_position_mask_catalog",
+      "verified_position_id": "DMC",
+      "verified_position_name_zh": "后腰",
+      "verification_basis": "exact_raw_uint16_mask_match_to_native_catalog_position"
+    },
+    {
+      "position_code_raw": "1024",
+      "position_mask_hex": "0x0400",
+      "candidate_position_id": "MC",
+      "candidate_position_name_zh": "中前卫",
+      "total_rows": 190,
+      "identified_rows": 178,
+      "unresolved_rows": 12,
+      "distinct_matches_available": 64,
+      "distinct_players_available": 5,
+      "semantic_status": "verified_by_native_position_mask_catalog",
+      "verified_position_id": "MC",
+      "verified_position_name_zh": "中前卫",
+      "verification_basis": "exact_raw_uint16_mask_match_to_native_catalog_position"
+    },
+    {
+      "position_code_raw": "2048",
+      "position_mask_hex": "0x0800",
+      "candidate_position_id": "AMR",
+      "candidate_position_name_zh": "右边锋",
+      "total_rows": 112,
+      "identified_rows": 110,
+      "unresolved_rows": 2,
+      "distinct_matches_available": 65,
+      "distinct_players_available": 6,
+      "semantic_status": "verified_by_native_position_mask_catalog",
+      "verified_position_id": "AMR",
+      "verified_position_name_zh": "右边锋",
+      "verification_basis": "exact_raw_uint16_mask_match_to_native_catalog_position"
+    },
+    {
+      "position_code_raw": "4096",
+      "position_mask_hex": "0x1000",
+      "candidate_position_id": "AML",
+      "candidate_position_name_zh": "左边锋",
+      "total_rows": 98,
+      "identified_rows": 98,
+      "unresolved_rows": 0,
+      "distinct_matches_available": 65,
+      "distinct_players_available": 7,
+      "semantic_status": "verified_by_native_position_mask_catalog",
+      "verified_position_id": "AML",
+      "verified_position_name_zh": "左边锋",
+      "verification_basis": "exact_raw_uint16_mask_match_to_native_catalog_position"
+    },
+    {
+      "position_code_raw": "8192",
+      "position_mask_hex": "0x2000",
+      "candidate_position_id": "AMC",
+      "candidate_position_name_zh": "前腰",
+      "total_rows": 75,
+      "identified_rows": 73,
+      "unresolved_rows": 2,
+      "distinct_matches_available": 65,
+      "distinct_players_available": 3,
+      "semantic_status": "verified_by_native_position_mask_catalog",
+      "verified_position_id": "AMC",
+      "verified_position_name_zh": "前腰",
+      "verification_basis": "exact_raw_uint16_mask_match_to_native_catalog_position"
+    },
+    {
+      "position_code_raw": "16384",
+      "position_mask_hex": "0x4000",
+      "candidate_position_id": "ST",
+      "candidate_position_name_zh": "中锋",
+      "total_rows": 122,
+      "identified_rows": 121,
+      "unresolved_rows": 1,
+      "distinct_matches_available": 65,
+      "distinct_players_available": 7,
+      "semantic_status": "verified_by_native_position_mask_catalog",
+      "verified_position_id": "ST",
+      "verified_position_name_zh": "中锋",
+      "verification_basis": "exact_raw_uint16_mask_match_to_native_catalog_position"
+    }
+  ],
+  "verified_code_count": 10,
+  "unverified_code_count": 0
+}
