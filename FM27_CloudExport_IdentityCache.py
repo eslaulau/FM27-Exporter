@@ -91,11 +91,17 @@ def candidate_metadata(cache_path: Path, team_id: int, club_uid: int, game_build
     except (OSError, ValueError, TypeError):
         return None
 
+    try:
+        cache_team_id = int(cache.get("team_id", -1))
+        cache_club_uid = int(cache.get("club_uid", -1))
+        cache_competition_id = int(cache.get("competition_id", -1))
+    except (TypeError, ValueError):
+        return None
     if (
         cache.get("game") != "FM27"
-        or int(cache.get("team_id", -1)) != team_id
-        or int(cache.get("club_uid", -1)) != club_uid
-        or int(cache.get("competition_id", -1)) != 0
+        or cache_team_id != team_id
+        or cache_club_uid != club_uid
+        or cache_competition_id != 0
     ):
         return None
 
@@ -156,9 +162,13 @@ def filter_current_roster_mappings(
     rejected: list[dict[str, Any]] = []
     signature_to_uid: dict[str, int] = {}
     uid_to_signature: dict[int, str] = {}
+    conflicted_signatures: set[str] = set()
+    conflicted_uids: set[int] = set()
 
     for raw_signature, raw_entry in mappings.items():
         signature = str(raw_signature).lower()
+        if signature in conflicted_signatures:
+            continue
         if not SIGNATURE.fullmatch(signature) or not isinstance(raw_entry, dict):
             rejected.append({"signature": signature, "reason": "invalid_cache_entry"})
             continue
@@ -167,6 +177,8 @@ def filter_current_roster_mappings(
         except (TypeError, ValueError):
             uid = -1
         name = str(raw_entry.get("player_name") or "").strip()
+        if uid in conflicted_uids:
+            continue
         if uid not in roster:
             rejected.append({
                 "signature": signature,
@@ -208,6 +220,9 @@ def filter_current_roster_mappings(
             accepted.pop(signature, None)
             uid_to_signature.pop(previous_uid, None)
             signature_to_uid.pop(signature, None)
+            conflicted_signatures.add(signature)
+            conflicted_uids.add(previous_uid)
+            conflicted_uids.add(uid)
             continue
         if previous_signature is not None and previous_signature != signature:
             rejected.append({
@@ -218,6 +233,9 @@ def filter_current_roster_mappings(
             accepted.pop(previous_signature, None)
             signature_to_uid.pop(previous_signature, None)
             uid_to_signature.pop(uid, None)
+            conflicted_signatures.add(previous_signature)
+            conflicted_signatures.add(signature)
+            conflicted_uids.add(uid)
             continue
 
         signature_to_uid[signature] = uid
