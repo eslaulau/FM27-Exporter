@@ -651,7 +651,7 @@ def load_candidates(export_dir: Path, comp_ids: set[int], roster_names: dict[int
 
     merged_rows: dict[tuple[int, str, int, int], dict[str, Any]] = {}
     stable_fields = (
-        "player_uid", "date", "competition_id", "opponent_team_id",
+        "player_uid", "player_name", "date", "competition_id", "opponent_team_id",
         "has_stats", "position_code", "minutes", "entered_at_minute",
         "left_at_minute", "goals", "assists", "rating",
         "passes_attempted", "passes_completed",
@@ -1298,11 +1298,11 @@ def infer_exact_stat_signature_mappings(
 ) -> tuple[dict[str, dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     """Recover stable record signatures from unique exact same-match stat vectors.
 
-    A match is eligible only when its active anonymous report-row count equals the
-    active named-history UID count. A row is assigned only when goals, assists,
-    passes attempted and passes completed match exactly one active named-history
-    player. Assignments are then reconciled across matches; conflicting signatures
-    and duplicate player UIDs are rejected rather than guessed.
+    A complete same-match named roster is sufficient for a single exact-vector
+    observation. When named history is incomplete, require the same signature to
+    match the same named player uniquely in at least two independent fixtures.
+    This preserves the complete-roster proof while allowing rolling FM history to
+    contribute without guessing identities from one sparse match.
     """
     fields = ["goals", "assists", "passes_attempted", "passes_completed"]
     evidence_by_signature: dict[str, list[dict[str, Any]]] = defaultdict(list)
