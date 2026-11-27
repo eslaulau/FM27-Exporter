@@ -1,0 +1,478 @@
+{
+  "enrichment_version": "1.2",
+  "input_identified_rows": 947,
+  "output_rows": 947,
+  "unresolved_rows_left_unchanged": 39,
+  "native_catalog_position_map": [
+    {
+      "mask": 1,
+      "id": "GK",
+      "name_zh": "门将"
+    },
+    {
+      "mask": 4,
+      "id": "DR",
+      "name_zh": "右后卫"
+    },
+    {
+      "mask": 8,
+      "id": "DL",
+      "name_zh": "左后卫"
+    },
+    {
+      "mask": 16,
+      "id": "DC",
+      "name_zh": "中后卫"
+    },
+    {
+      "mask": 32,
+      "id": "WBR",
+      "name_zh": "右翼卫"
+    },
+    {
+      "mask": 64,
+      "id": "WBL",
+      "name_zh": "左翼卫"
+    },
+    {
+      "mask": 128,
+      "id": "DMC",
+      "name_zh": "后腰"
+    },
+    {
+      "mask": 256,
+      "id": "MR",
+      "name_zh": "右前卫"
+    },
+    {
+      "mask": 512,
+      "id": "ML",
+      "name_zh": "左前卫"
+    },
+    {
+      "mask": 1024,
+      "id": "MC",
+      "name_zh": "中前卫"
+    },
+    {
+      "mask": 2048,
+      "id": "AMR",
+      "name_zh": "右边锋"
+    },
+    {
+      "mask": 4096,
+      "id": "AML",
+      "name_zh": "左边锋"
+    },
+    {
+      "mask": 8192,
+      "id": "AMC",
+      "name_zh": "前腰"
+    },
+    {
+      "mask": 16384,
+      "id": "ST",
+      "name_zh": "中锋"
+    }
+  ],
+  "position_mapping_note": "Raw match-position masks are mapped by exact equality with the native FM27 catalog.json positions[].mask entries. Mapping is verified only when the raw uint16 field passes at least 25 same-match named-history comparisons with zero mismatches. No screenshot is required. Raw position_code is always preserved; roles, duties, tactic slots and split in/out-of-possession positions are not inferred.",
+  "position_candidate_row_counts": {
+    "GK": 63,
+    "DR": 76,
+    "DC": 126,
+    "DL": 111,
+    "DMC": 82,
+    "AMR": 112,
+    "AMC": 1,
+    "AML": 97,
+    "ST": 114,
+    "MC": 165
+  },
+  "position_semantic_validation": {
+    "status": "verified_by_native_position_catalog",
+    "audit_file": "position-semantic-validation.json",
+    "raw_position_codes_with_candidate_labels": 10,
+    "verified_position_codes": 10,
+    "unverified_position_codes": 0,
+    "raw_field_crosscheck_minimum": 25,
+    "screenshots_required": false,
+    "code_coverage": {
+      "1": {
+        "total_rows": 63,
+        "identified_rows": 63,
+        "unresolved_rows": 0,
+        "distinct_matches_available": 63,
+        "distinct_players_available": 2
+      },
+      "4": {
+        "total_rows": 77,
+        "identified_rows": 76,
+        "unresolved_rows": 1,
+        "distinct_matches_available": 62,
+        "distinct_players_available": 5
+      },
+      "8": {
+        "total_rows": 112,
+        "identified_rows": 111,
+        "unresolved_rows": 1,
+        "distinct_matches_available": 63,
+        "distinct_players_available": 3
+      },
+      "16": {
+        "total_rows": 126,
+        "identified_rows": 126,
+        "unresolved_rows": 0,
+        "distinct_matches_available": 63,
+        "distinct_players_available": 4
+      },
+      "128": {
+        "total_rows": 104,
+        "identified_rows": 82,
+        "unresolved_rows": 22,
+        "distinct_matches_available": 61,
+        "distinct_players_available": 4
+      },
+      "1024": {
+        "total_rows": 171,
+        "identified_rows": 165,
+        "unresolved_rows": 6,
+        "distinct_matches_available": 62,
+        "distinct_players_available": 6
+      },
+      "2048": {
+        "total_rows": 112,
+        "identified_rows": 112,
+        "unresolved_rows": 0,
+        "distinct_matches_available": 63,
+        "distinct_players_available": 6
+      },
+      "4096": {
+        "total_rows": 98,
+        "identified_rows": 97,
+        "unresolved_rows": 1,
+        "distinct_matches_available": 63,
+        "distinct_players_available": 6
+      },
+      "8192": {
+        "total_rows": 1,
+        "identified_rows": 1,
+        "unresolved_rows": 0,
+        "distinct_matches_available": 1,
+        "distinct_players_available": 1
+      },
+      "16384": {
+        "total_rows": 122,
+        "identified_rows": 114,
+        "unresolved_rows": 8,
+        "distinct_matches_available": 63,
+        "distinct_players_available": 5
+      }
+    }
+  },
+  "role_code_note": "The raw role_code byte is interpreted as a bit index: role_bit_mask = 1 << role_code. An exact catalog.json roles[].flags match is resolved only to a unique phase-0 role that is eligible for the player's native match-position context. Phase-1 alternatives and position-ineligible rows remain explicit; the raw byte is always preserved.",
+  "role_code_raw_counts": {
+    "missing": 634,
+    "12": 20,
+    "3": 25,
+    "24": 20,
+    "1": 20,
+    "52": 34,
+    "4": 29,
+    "56": 28,
+    "49": 36,
+    "27": 36,
+    "5": 26,
+    "11": 39
+  },
+  "role_code_position_groups": [
+    {
+      "position_code_raw": "1",
+      "position_id_candidate": "GK",
+      "position_name_candidate": "门将",
+      "role_code_raw": "",
+      "role_code_bit_mask": "",
+      "match_role_id_verified": "",
+      "match_role_name_verified": "",
+      "history_rows": 43,
+      "distinct_players": 2,
+      "role_code_meaning_status": "no_same_match_role_history"
+    },
+    {
+      "position_code_raw": "1",
+      "position_id_candidate": "GK",
+      "position_name_candidate": "门将",
+      "role_code_raw": "12",
+      "role_code_bit_mask": "0x1000",
+      "match_role_id_verified": "BallPlayingGoalkeeper",
+      "match_role_name_verified": "出球门将",
+      "history_rows": 20,
+      "distinct_players": 2,
+      "role_code_meaning_status": "decoded_native_in_possession_role"
+    },
+    {
+      "position_code_raw": "1024",
+      "position_id_candidate": "MC",
+      "position_name_candidate": "中前卫",
+      "role_code_raw": "",
+      "role_code_bit_mask": "",
+      "match_role_id_verified": "",
+      "match_role_name_verified": "",
+      "history_rows": 111,
+      "distinct_players": 6,
+      "role_code_meaning_status": "no_same_match_role_history"
+    },
+    {
+      "position_code_raw": "1024",
+      "position_id_candidate": "MC",
+      "position_name_candidate": "中前卫",
+      "role_code_raw": "5",
+      "role_code_bit_mask": "0x20",
+      "match_role_id_verified": "CentralMidfielder",
+      "match_role_name_verified": "中前卫",
+      "history_rows": 26,
+      "distinct_players": 5,
+      "role_code_meaning_status": "decoded_native_in_possession_role"
+    },
+    {
+      "position_code_raw": "1024",
+      "position_id_candidate": "MC",
+      "position_name_candidate": "中前卫",
+      "role_code_raw": "56",
+      "role_code_bit_mask": "0x100000000000000",
+      "match_role_id_verified": "ChannelMidfielder",
+      "match_role_name_verified": "肋部中场",
+      "history_rows": 28,
+      "distinct_players": 3,
+      "role_code_meaning_status": "decoded_native_in_possession_role"
+    },
+    {
+      "position_code_raw": "128",
+      "position_id_candidate": "DMC",
+      "position_name_candidate": "后腰",
+      "role_code_raw": "",
+      "role_code_bit_mask": "",
+      "match_role_id_verified": "",
+      "match_role_name_verified": "",
+      "history_rows": 53,
+      "distinct_players": 4,
+      "role_code_meaning_status": "no_same_match_role_history"
+    },
+    {
+      "position_code_raw": "128",
+      "position_id_candidate": "DMC",
+      "position_name_candidate": "后腰",
+      "role_code_raw": "4",
+      "role_code_bit_mask": "0x10",
+      "match_role_id_verified": "DefensiveMidfielder",
+      "match_role_name_verified": "防守中场",
+      "history_rows": 29,
+      "distinct_players": 2,
+      "role_code_meaning_status": "decoded_native_in_possession_role"
+    },
+    {
+      "position_code_raw": "16",
+      "position_id_candidate": "DC",
+      "position_name_candidate": "中后卫",
+      "role_code_raw": "",
+      "role_code_bit_mask": "",
+      "match_role_id_verified": "",
+      "match_role_name_verified": "",
+      "history_rows": 86,
+      "distinct_players": 4,
+      "role_code_meaning_status": "no_same_match_role_history"
+    },
+    {
+      "position_code_raw": "16",
+      "position_id_candidate": "DC",
+      "position_name_candidate": "中后卫",
+      "role_code_raw": "1",
+      "role_code_bit_mask": "0x2",
+      "match_role_id_verified": "CentreBack",
+      "match_role_name_verified": "中后卫",
+      "history_rows": 20,
+      "distinct_players": 2,
+      "role_code_meaning_status": "decoded_native_in_possession_role"
+    },
+    {
+      "position_code_raw": "16",
+      "position_id_candidate": "DC",
+      "position_name_candidate": "中后卫",
+      "role_code_raw": "24",
+      "role_code_bit_mask": "0x1000000",
+      "match_role_id_verified": "BallPlayingCentreBack",
+      "match_role_name_verified": "出球中卫",
+      "history_rows": 20,
+      "distinct_players": 2,
+      "role_code_meaning_status": "decoded_native_in_possession_role"
+    },
+    {
+      "position_code_raw": "16384",
+      "position_id_candidate": "ST",
+      "position_name_candidate": "中锋",
+      "role_code_raw": "",
+      "role_code_bit_mask": "",
+      "match_role_id_verified": "",
+      "match_role_name_verified": "",
+      "history_rows": 75,
+      "distinct_players": 5,
+      "role_code_meaning_status": "no_same_match_role_history"
+    },
+    {
+      "position_code_raw": "16384",
+      "position_id_candidate": "ST",
+      "position_name_candidate": "中锋",
+      "role_code_raw": "11",
+      "role_code_bit_mask": "0x800",
+      "match_role_id_verified": "CentreForward",
+      "match_role_name_verified": "中锋",
+      "history_rows": 39,
+      "distinct_players": 4,
+      "role_code_meaning_status": "decoded_native_in_possession_role"
+    },
+    {
+      "position_code_raw": "2048",
+      "position_id_candidate": "AMR",
+      "position_name_candidate": "右边锋",
+      "role_code_raw": "",
+      "role_code_bit_mask": "",
+      "match_role_id_verified": "",
+      "match_role_name_verified": "",
+      "history_rows": 76,
+      "distinct_players": 6,
+      "role_code_meaning_status": "no_same_match_role_history"
+    },
+    {
+      "position_code_raw": "2048",
+      "position_id_candidate": "AMR",
+      "position_name_candidate": "右边锋",
+      "role_code_raw": "49",
+      "role_code_bit_mask": "0x2000000000000",
+      "match_role_id_verified": "InsideWinger",
+      "match_role_name_verified": "内收边锋",
+      "history_rows": 36,
+      "distinct_players": 5,
+      "role_code_meaning_status": "decoded_native_in_possession_role"
+    },
+    {
+      "position_code_raw": "4",
+      "position_id_candidate": "DR",
+      "position_name_candidate": "右后卫",
+      "role_code_raw": "",
+      "role_code_bit_mask": "",
+      "match_role_id_verified": "",
+      "match_role_name_verified": "",
+      "history_rows": 51,
+      "distinct_players": 5,
+      "role_code_meaning_status": "no_same_match_role_history"
+    },
+    {
+      "position_code_raw": "4",
+      "position_id_candidate": "DR",
+      "position_name_candidate": "右后卫",
+      "role_code_raw": "3",
+      "role_code_bit_mask": "0x8",
+      "match_role_id_verified": "WingBack",
+      "match_role_name_verified": "翼卫",
+      "history_rows": 25,
+      "distinct_players": 4,
+      "role_code_meaning_status": "decoded_native_in_possession_role"
+    },
+    {
+      "position_code_raw": "4096",
+      "position_id_candidate": "AML",
+      "position_name_candidate": "左边锋",
+      "role_code_raw": "",
+      "role_code_bit_mask": "",
+      "match_role_id_verified": "",
+      "match_role_name_verified": "",
+      "history_rows": 61,
+      "distinct_players": 6,
+      "role_code_meaning_status": "no_same_match_role_history"
+    },
+    {
+      "position_code_raw": "4096",
+      "position_id_candidate": "AML",
+      "position_name_candidate": "左边锋",
+      "role_code_raw": "27",
+      "role_code_bit_mask": "0x8000000",
+      "match_role_id_verified": "InsideForward",
+      "match_role_name_verified": "内锋",
+      "history_rows": 36,
+      "distinct_players": 5,
+      "role_code_meaning_status": "decoded_native_in_possession_role"
+    },
+    {
+      "position_code_raw": "8",
+      "position_id_candidate": "DL",
+      "position_name_candidate": "左后卫",
+      "role_code_raw": "",
+      "role_code_bit_mask": "",
+      "match_role_id_verified": "",
+      "match_role_name_verified": "",
+      "history_rows": 77,
+      "distinct_players": 3,
+      "role_code_meaning_status": "no_same_match_role_history"
+    },
+    {
+      "position_code_raw": "8",
+      "position_id_candidate": "DL",
+      "position_name_candidate": "左后卫",
+      "role_code_raw": "52",
+      "role_code_bit_mask": "0x10000000000000",
+      "match_role_id_verified": "InsideFullBack",
+      "match_role_name_verified": "内收边后卫",
+      "history_rows": 34,
+      "distinct_players": 3,
+      "role_code_meaning_status": "decoded_native_in_possession_role"
+    },
+    {
+      "position_code_raw": "8192",
+      "position_id_candidate": "AMC",
+      "position_name_candidate": "前腰",
+      "role_code_raw": "",
+      "role_code_bit_mask": "",
+      "match_role_id_verified": "",
+      "match_role_name_verified": "",
+      "history_rows": 1,
+      "distinct_players": 1,
+      "role_code_meaning_status": "no_same_match_role_history"
+    }
+  ],
+  "role_code_semantic_validation": {
+    "status": "decoded_by_native_role_bit_catalog",
+    "audit_file": "role-code-semantic-validation.json",
+    "complete_catalog_file": "native-role-catalog.json",
+    "native_role_definitions": 79,
+    "in_possession_role_definitions": 40,
+    "out_of_possession_role_definitions": 39,
+    "distinct_role_bit_masks": 50,
+    "phase_collision_groups": 29,
+    "same_position_ambiguous_groups": 4,
+    "decoded_role_codes": 11,
+    "fully_decoded_role_codes": 11,
+    "unresolved_role_codes": 0,
+    "visually_crosschecked_role_codes": [
+      1,
+      2,
+      3,
+      12,
+      24,
+      31,
+      43,
+      56
+    ]
+  },
+  "rating_note": "Ratings are sourced from the detailed raw match-report record at raw-window offset +136 (uint16 little-endian hundredths, divided by 100 and rounded half-up to one decimal) only when the current save passes at least 25 exact named-history rating cross-checks with zero mismatches. Otherwise retained same-match history remains the fallback; no performance-based estimate is used.",
+  "rating_source_status_counts": {
+    "raw_match_report_rating_recovered": 752,
+    "raw_match_report_rating_crosschecked": 195
+  },
+  "rating_rows_present": 947,
+  "rating_rows_missing": 0,
+  "history_archive_rows": 369,
+  "history_snapshot_rows": 619,
+  "history_combined_rows": 988,
+  "history_index_unique_rows": 619,
+  "history_rows_with_role_code": 341,
+  "same_match_history_join_rows": 313
+}
