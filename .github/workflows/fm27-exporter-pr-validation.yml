@@ -9,6 +9,8 @@ on:
       - "FM27_FirstTeam_Filter_v1.3.0.py"
       - "FM27_FormalPlayerReport_Enrichment_v1.1.py"
       - "FM27_CloudExport_IdentityPolicy.py"
+      - "FM27_CloudExport_IdentityCache.py"
+      - "FM27_PlayerMatchHistory_Archive_v1.0.py"
       - "tests/**"
       - ".github/workflows/**"
   push:
@@ -40,9 +42,20 @@ jobs:
           python -m py_compile FM27_FormalPlayerReport_Enrichment_v1.1.py
           python -m py_compile FM27_FirstTeam_Filter_v1.3.0.py
           python -m py_compile FM27_CloudExport_IdentityPolicy.py
+          python -m py_compile FM27_CloudExport_IdentityCache.py
+          python -m py_compile FM27_PlayerMatchHistory_Archive_v1.0.py
 
       - name: Test cloud identity publication policy
         run: python tests/test_cloud_identity_policy.py
+
+      - name: Test per-club cloud identity cache inheritance
+        run: python tests/test_cloud_identity_cache.py
+
+      - name: Test conservative sparse-history identity learning
+        run: python tests/test_sparse_identity_inference.py
+
+      - name: Test save-local player-history archive scope
+        run: python tests/test_player_history_archive_scope.py
 
       - name: Replay real-save identity regression fixture
         run: python tests/test_player_identity_inference.py

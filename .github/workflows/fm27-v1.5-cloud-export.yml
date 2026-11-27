@@ -83,7 +83,8 @@ jobs:
           $stdout = Join-Path $slot 'export.stdout.txt'
           $stderr = Join-Path $slot 'export.stderr.txt'
           $powershell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-          $argumentLine = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $exporter + '" -SavePath "' + $savePath + '"'
+          $identityCacheRoot = Join-Path $env:GITHUB_WORKSPACE 'season-reports'
+          $argumentLine = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $exporter + '" -SavePath "' + $savePath + '" -IdentityCacheRoot "' + $identityCacheRoot + '"'
           $process = Start-Process -FilePath $powershell -ArgumentList $argumentLine -Wait -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
           $analysis = @(Get-ChildItem -LiteralPath $assetWork -Directory -Filter 'FM27_Analysis_*' -ErrorAction SilentlyContinue)
           if ($process.ExitCode -ne 0 -or $analysis.Count -ne 1) {

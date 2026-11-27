@@ -636,26 +636,62 @@ def load_roster_names(export_dir: Path, team_id: int) -> dict[int, str]:
 
 
 def load_candidates(export_dir: Path, comp_ids: set[int], roster_names: dict[int, str]) -> dict[tuple[int, str, int], list[dict[str, Any]]]:
-    """Load same-match history, including historical guests only on actual appearances.
+    """Merge persistent archived history with the current snapshot.
 
-    Current first-team players retain the original behavior. A former/reserve/youth
-    player is admitted only when this exact first-team match row contains real stats
-    or positive minutes; inactive guest roster entries are excluded.
+    The archive may have been created by an older exporter that used an incomplete,
+    hardcoded list of competition IDs. The current snapshot is therefore always
+    merged as a supplement; conflicting values for the same player/match key are
+    rejected rather than silently choosing one source.
     """
     archive_path = export_dir / "player-match-stats-history-archive.json"
-    path = archive_path if archive_path.is_file() else (export_dir / "player-match-stats.json")
-    rows = read_json(path)
+    current_path = export_dir / "player-match-stats.json"
+    source_paths = [path for path in (archive_path, current_path) if path.is_file()]
+    if not source_paths:
+        raise RuntimeError("Neither player-match-stats-history-archive.json nor player-match-stats.json exists.")
+
+    merged_rows: dict[tuple[int, str, int, int], dict[str, Any]] = {}
+    stable_fields = (
+        "player_uid", "player_name", "date", "competition_id", "opponent_team_id",
+        "has_stats", "position_code", "minutes", "entered_at_minute",
+        "left_at_minute", "goals", "assists", "rating",
+        "passes_attempted", "passes_completed",
+    )
+    for source_path in source_paths:
+        rows = read_json(source_path)
+        if not isinstance(rows, list):
+            raise RuntimeError(f"{source_path.name} must contain a JSON array.")
+        for row in rows:
+            try:
+                uid = int(row["player_uid"])
+                comp = int(row["competition_id"])
+                date = str(row["date"])
+                opponent = int(row["opponent_team_id"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if comp not in comp_ids:
+                continue
+            key = (comp, date, opponent, uid)
+            previous = merged_rows.get(key)
+            if previous is None:
+                merged_rows[key] = dict(row)
+                continue
+            for field in stable_fields:
+                old_value = previous.get(field)
+                new_value = row.get(field)
+                if old_value is not None and new_value is not None and old_value != new_value:
+                    raise RuntimeError(
+                        "Conflicting named player-history sources for "
+                        f"competition/date/opponent/player={key}, field={field}: "
+                        f"archive={old_value!r}, current={new_value!r}"
+                    )
+                if old_value is None and new_value is not None:
+                    previous[field] = new_value
+            for field, value in row.items():
+                if previous.get(field) is None and value is not None:
+                    previous[field] = value
+
     result: dict[tuple[int, str, int], list[dict[str, Any]]] = defaultdict(list)
-    for row in rows:
-        try:
-            uid = int(row["player_uid"])
-            comp = int(row["competition_id"])
-            date = str(row["date"])
-            opponent = int(row["opponent_team_id"])
-        except (KeyError, TypeError, ValueError):
-            continue
-        if comp not in comp_ids:
-            continue
+    for (comp, date, opponent, uid), row in merged_rows.items():
         is_current_first_team = uid in roster_names
         guest_has_appearance = (
             row.get("has_stats") is True
@@ -1262,11 +1298,11 @@ def infer_exact_stat_signature_mappings(
 ) -> tuple[dict[str, dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     """Recover stable record signatures from unique exact same-match stat vectors.
 
-    A match is eligible only when its active anonymous report-row count equals the
-    active named-history UID count. A row is assigned only when goals, assists,
-    passes attempted and passes completed match exactly one active named-history
-    player. Assignments are then reconciled across matches; conflicting signatures
-    and duplicate player UIDs are rejected rather than guessed.
+    A complete same-match named roster is sufficient for a single exact-vector
+    observation. When named history is incomplete, require the same signature to
+    match the same named player uniquely in at least two independent fixtures.
+    This preserves the complete-roster proof while allowing rolling FM history to
+    contribute without guessing identities from one sparse match.
     """
     fields = ["goals", "assists", "passes_attempted", "passes_completed"]
     evidence_by_signature: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -1290,8 +1326,9 @@ def infer_exact_stat_signature_mappings(
             row for row in report.get("anonymous_player_rows", [])
             if is_appearance(row.get("metrics") or {}, None)
         ]
-        if not active_uids or len(active_rows) != len(active_uids):
+        if not active_uids:
             continue
+        complete_match_roster_reconciliation = len(active_rows) == len(active_uids)
 
         match_assignments: list[tuple[str, int, dict[str, Any], dict[str, int]]] = []
         used_uids: set[int] = set()
@@ -1334,6 +1371,9 @@ def infer_exact_stat_signature_mappings(
                 "exact_stat_vector_match": True,
                 "matched_fields": fields,
                 "raw_stat_vector": {field: as_int(raw_stats.get(field)) for field in fields},
+                "active_report_row_count": len(active_rows),
+                "active_named_history_player_count": len(active_uids),
+                "complete_match_roster_reconciliation": complete_match_roster_reconciliation,
                 "reason": "unique_exact_four_field_same_match_stat_vector",
             })
 
@@ -1341,6 +1381,24 @@ def infer_exact_stat_signature_mappings(
     uid_to_signature: dict[int, str] = {}
     for signature, occurrences in evidence_by_signature.items():
         identities = {(int(item["player_uid"]), str(item["player_name"])) for item in occurrences}
+        unique_match_keys = {
+            (int(item["competition_id"]), str(item["date"]), int(item["opponent_team_id"]))
+            for item in occurrences
+        }
+        complete_match_keys = {
+            (int(item["competition_id"]), str(item["date"]), int(item["opponent_team_id"]))
+            for item in occurrences
+            if item.get("complete_match_roster_reconciliation") is True
+        }
+        if not complete_match_keys and len(unique_match_keys) < 2:
+            rejected.append({
+                "signature": signature,
+                "reason": "insufficient_independent_partial_match_evidence",
+                "independent_match_count": len(unique_match_keys),
+                "required_partial_match_count": 2,
+                "occurrences": occurrences,
+            })
+            continue
         if len(identities) != 1 or not next(iter(identities))[1]:
             rejected.append({
                 "signature": signature,
@@ -1532,7 +1590,15 @@ def main() -> int:
         raise RuntimeError("No first-team overall season-stat rows were found for the requested team")
     candidates = load_candidates(export_dir, comp_ids, roster_names)
     season_aggregates = load_season_aggregate_rows(export_dir, args.team_id)
-    history_source = "player-match-stats-history-archive.json" if (export_dir / "player-match-stats-history-archive.json").is_file() else "player-match-stats.json"
+    has_history_archive = (export_dir / "player-match-stats-history-archive.json").is_file()
+    has_current_history = (export_dir / "player-match-stats.json").is_file()
+    history_source = (
+        "player-match-stats-history-archive.json + player-match-stats.json"
+        if has_history_archive and has_current_history
+        else "player-match-stats-history-archive.json"
+        if has_history_archive
+        else "player-match-stats.json"
+    )
     team_index = load_team_match_index(export_dir, args.team_id)
     signature_map, cache = load_identity_cache(
         cache_path, args.team_id, args.club_uid, roster_names, comp_ids
@@ -2173,6 +2239,7 @@ def main() -> int:
                 "The four-byte signature map was learned from the same save's league report; applying it to other formal competitions is a cross-competition transfer, not an independent row-by-row name proof for every cup/continental match.",
                 "No row index, lineup order, or performance profile is treated as a player ID; only the four-byte record signature at statistics_anchor-100 is used.",
                 "Goals, assists and pass attempts/completions are decoded from verified raw player-record offsets and cross-checked against named same-match history; season aggregates are not copied into individual rows.",
+                "A signature from an incomplete named match-history roster is learned only after the same four-field exact vector uniquely identifies the same named UID in at least two independent fixtures; a complete named-roster match can establish the mapping from one fixture.",
                 "Minutes are decoded from raw entry/exit clocks only when the match duration is established by named-history votes, a unique exact category-aggregate solution, or a regular-time competition/stage rule. Otherwise they remain blank unless exact named history supplies them.",
                 "Match-report rating is a variant-aware uint16 little-endian hundredths field; its raw-window and anchor-relative offsets are selected from the embedded report-record variant and recorded in rating_recovery. It is enabled only after at least 25 same-match named-history rating checks pass with zero mismatches.",
                 "Rows with a verified zero-minute appearance are omitted from per-player CSV reports. Team-total reconciliation still uses every raw match-report row before this filter.",
