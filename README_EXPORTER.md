@@ -127,6 +127,27 @@ is always preserved; no role is inferred from array order, player attributes, or
 order. The exporter does not claim that this byte independently identifies the
 out-of-possession role.
 
+## Cloud identity-cache continuity
+
+Cloud season exports keep player identity caches isolated by the dynamically resolved
+managed club UID and owned first-team ID. Before recovery, the cloud workflow searches
+previously published reports for that exact club/team and reuses only mappings whose
+FM27 build and four-byte signature layout match and whose player UID and exact name
+still appear in the current first-team overall roster. A different club starts with a
+separate empty cache; returning to a previously managed club can reuse its own cache.
+
+Identity learning from a complete same-match named roster retains the original
+single-fixture exact-vector rule. When the named history is incomplete, the same
+four-field exact vector (goals, assists, passes attempted and passes completed) must
+uniquely identify the same player in at least two independent fixtures. Conflicting,
+single-match sparse, stale, or cross-club mappings remain unresolved rather than
+being guessed.
+
+Formal competition IDs are discovered from the managed club's fixture match-rule
+families for each save. Only friendly/pre-season family 1 is excluded; save-local
+competition IDs are not hardcoded. The history reader merges the persistent archive
+and current snapshot, and conflicting player/match values stop the export.
+
 ## Report location and validation
 
 Browse the generated report folders under [season-reports/](season-reports/). Each export is stored as:
