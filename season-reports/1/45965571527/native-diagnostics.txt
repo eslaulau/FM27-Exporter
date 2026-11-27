@@ -1,0 +1,201 @@
+﻿===== managed club identity resolution stderr =====
+python.exe : 
+C:\Users\RUNNER~1\AppData\Local\Temp\FM27_Fmsave_3c8519f4f9424b0fa6e09433de4766ae\resolve_managed_club.py:3: 
+UnknownBuildWarning: 1.fm was saved by FM27 build 27.1.1+2511875, an unverified build: fmsave 0.14.3 has no 
+full set of layouts for it. It borrows matching layouts from 27.0.0+2486695 where it has no build-specific 
+layout, and tries an available FM27 layout when the schema differs. Readers warn about failed checks by 
+default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: structural 
+checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:65 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\RUNNER...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  with fmsave.open(sys.argv[1]) as career:
+C:\Users\RUNNER~1\AppData\Local\Temp\FM27_Fmsave_3c8519f4f9424b0fa6e09433de4766ae\resolve_managed_club.py:4: 
+UnknownBuildWarning: 1.fm: FM27 build 27.1.1+2511875 uses the club and finance layouts from 27.1.0+2505117. 
+The club table passed structural checks. Decoded fields are unverified.
+  managed = career.managed_clubs()
+
+===== info stderr =====
+fmsave.exe : fmsave: warning: 1.fm was saved by FM27 build 27.1.1+2511875, an unverified build: fmsave 
+0.14.3 has no full set of layouts for it. It borrows matching layouts from 27.0.0+2486695 where it has no 
+build-specific layout, and tries an available FM27 layout when the schema differs. Readers warn about failed 
+checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: 
+structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field 
+statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:65 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+===== validate stderr =====
+fmsave.exe : fmsave: warning: 1.fm was saved by FM27 build 27.1.1+2511875, an unverified build: fmsave 
+0.14.3 has no full set of layouts for it. It borrows matching layouts from 27.0.0+2486695 where it has no 
+build-specific layout, and tries an available FM27 layout when the schema differs. Readers warn about failed 
+checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: 
+structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field 
+statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:65 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+fmsave: warning: 1.fm: FM27 build 27.1.1+2511875 uses the club and finance layouts from 27.1.0+2505117. The 
+club table passed structural checks. Decoded fields are unverified.
+
+===== export fixtures stderr =====
+fmsave.exe : fmsave: warning: 1.fm was saved by FM27 build 27.1.1+2511875, an unverified build: fmsave 
+0.14.3 has no full set of layouts for it. It borrows matching layouts from 27.0.0+2486695 where it has no 
+build-specific layout, and tries an available FM27 layout when the schema differs. Readers warn about failed 
+checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: 
+structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field 
+statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:65 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+fmsave: warning: 1.fm: FM27 build 27.1.1+2511875 uses the club and finance layouts from 27.1.0+2505117. The 
+club table passed structural checks. Decoded fields are unverified.
+
+===== export team-match-stats stderr =====
+fmsave.exe : fmsave: warning: 1.fm was saved by FM27 build 27.1.1+2511875, an unverified build: fmsave 
+0.14.3 has no full set of layouts for it. It borrows matching layouts from 27.0.0+2486695 where it has no 
+build-specific layout, and tries an available FM27 layout when the schema differs. Readers warn about failed 
+checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: 
+structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field 
+statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:65 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+fmsave: warning: 1.fm: FM27 build 27.1.1+2511875 uses the club and finance layouts from 27.1.0+2505117. The 
+club table passed structural checks. Decoded fields are unverified.
+fmsave: warning: team_match_stats failed checks: advisory: match_reports_with_trailing_walks=13 (expected 
+0..0). Please report it at https://github.com/rhiever/fmsave/issues with the output of fmsave validate.
+
+===== export players stderr =====
+fmsave.exe : fmsave: warning: 1.fm was saved by FM27 build 27.1.1+2511875, an unverified build: fmsave 
+0.14.3 has no full set of layouts for it. It borrows matching layouts from 27.0.0+2486695 where it has no 
+build-specific layout, and tries an available FM27 layout when the schema differs. Readers warn about failed 
+checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: 
+structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field 
+statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:65 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+fmsave: warning: 1.fm: FM27 build 27.1.1+2511875 uses the club and finance layouts from 27.1.0+2505117. The 
+club table passed structural checks. Decoded fields are unverified.
+
+===== export player-season-stats stderr =====
+fmsave.exe : fmsave: warning: 1.fm was saved by FM27 build 27.1.1+2511875, an unverified build: fmsave 
+0.14.3 has no full set of layouts for it. It borrows matching layouts from 27.0.0+2486695 where it has no 
+build-specific layout, and tries an available FM27 layout when the schema differs. Readers warn about failed 
+checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: 
+structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field 
+statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:65 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+fmsave: warning: 1.fm: FM27 build 27.1.1+2511875 uses the club and finance layouts from 27.1.0+2505117. The 
+club table passed structural checks. Decoded fields are unverified.
+
+===== export player-match-stats stderr =====
+fmsave.exe : fmsave: warning: 1.fm was saved by FM27 build 27.1.1+2511875, an unverified build: fmsave 
+0.14.3 has no full set of layouts for it. It borrows matching layouts from 27.0.0+2486695 where it has no 
+build-specific layout, and tries an available FM27 layout when the schema differs. Readers warn about failed 
+checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: 
+structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field 
+statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:65 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+fmsave: warning: 1.fm: FM27 build 27.1.1+2511875 uses the club and finance layouts from 27.1.0+2505117. The 
+club table passed structural checks. Decoded fields are unverified.
+
+===== export selections stderr =====
+fmsave.exe : fmsave: warning: 1.fm was saved by FM27 build 27.1.1+2511875, an unverified build: fmsave 
+0.14.3 has no full set of layouts for it. It borrows matching layouts from 27.0.0+2486695 where it has no 
+build-specific layout, and tries an available FM27 layout when the schema differs. Readers warn about failed 
+checks by default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: 
+structural checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field 
+statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:65 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fmsave: warning...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+fmsave: warning: 1.fm: FM27 build 27.1.1+2511875 uses the club and finance layouts from 27.1.0+2505117. The 
+club table passed structural checks. Decoded fields are unverified.
+
+===== player match history archive stdout =====
+PLAYER MATCH HISTORY ARCHIVE OK
+{
+  "archive_dir": "D:\\a\\_temp\\FM27-v1.5.0-45965571527\\downloads\\1\\FM27_PlayerMatchHistoryArchives\\1_8cf2d0e3e946",
+  "archive_rows": 354,
+  "archive_fixture_keys": 16,
+  "source_snapshots": 1,
+  "rows_added_this_run": 354,
+  "current_snapshot_history_fixture_keys": 16,
+  "current_snapshot_formal_fixture_keys": 46,
+  "ignored_rows": 241,
+  "branch_guard": "passed"
+}
+HISTORY ARCHIVE ROUTE OK
+{
+  "archive_dir": "D:\\a\\_temp\\FM27-v1.5.0-45965571527\\downloads\\1\\FM27_PlayerMatchHistoryArchives\\1_8cf2d0e3e946",
+  "route_file": "D:\\a\\_temp\\FM27-v1.5.0-45965571527\\downloads\\1\\FM27_PlayerMatchHistoryArchives\\.routes\\8cf2d0e3e946af257f5405a4ea485afabed08556c8b2f218c681aa7a7cc0a288.json",
+  "branch_number": 1,
+  "source": "new_save_archive",
+  "branch_guard": "passed"
+}
+
+===== player match report recovery stdout =====
+Enrichment complete: 893 identified rows; 893 retained-history ratings; 71 unresolved identities.
+Native position masks: {'GK': 61, 'DR': 85, 'DC': 127, 'DL': 109, 'DMC': 80, 'AMR': 102, 'AMC': 1, 'ST': 113, 'MC': 129, 'AML': 86}
+Native position-mask validation: 10 verified / 0 unmapped or pending; screenshots not required
+Native role codes decoded: 10 codes; 10 fully position-compatible
+Complete native role catalog: 79 roles (40 in-possession / 39 out-of-possession); 4 phase/position ambiguity groups
+Raw role code coverage: {'missing': 577, '12': 20, '3': 33, '24': 20, '1': 20, '52': 33, '4': 33, '56': 24, '27': 73, '5': 20, '11': 40}
+Outputs written to: D:\a\_temp\FM27-v1.5.0-45965571527\downloads\1\FM27_Analysis_20261127_082609
+Formal competitions: 7,661,662,663,2945
+Formal fixtures expected: 61 | detailed reports found: 61 | missing: 0
+Player appearances: 964 | raw activity rows: 975 | zero-minute rows skipped: 11
+Identified: 893 | unresolved: 71
+Positions recovered: 964 | raw position cross-check: 209/209
+Ratings recovered: 893 | raw rating cross-check: 193/193
+Team-total reconciliation: 1159/1159 matched; 0 mismatches; 0 missing
+Outputs written to: D:\a\_temp\FM27-v1.5.0-45965571527\downloads\1\FM27_Analysis_20261127_082609
+
+===== player match report recovery stderr =====
+python.exe : D:\a\FM27-Exporter\FM27-Exporter\FM27_PlayerMatchReport_Recovery_v1.9_Formal.py:1628: 
+UnknownBuildWarning: 1.fm was saved by FM27 build 27.1.1+2511875, an unverified build: fmsave 0.14.3 has no 
+full set of layouts for it. It borrows matching layouts from 27.0.0+2486695 where it has no build-specific 
+layout, and tries an available FM27 layout when the schema differs. Readers warn about failed checks by 
+default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: structural 
+checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:65 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\a\FM27-Expor...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  save = fmsave.open(str(save_path))
+
