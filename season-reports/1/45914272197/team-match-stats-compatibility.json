@@ -1,0 +1,172 @@
+{
+  "audit_version": "1.3-v1.5.2-formal-scope-goal-audit",
+  "game": "FM27",
+  "save_build": "27.1.1+2511875",
+  "save_known_build_upstream": false,
+  "fmsave_version": "0.14.3",
+  "section": "match_stats_cfg",
+  "save_section_schema": 6,
+  "reader": {
+    "name": "team_match_stats",
+    "status": "ok",
+    "record_count": 7122,
+    "layout_region": "match_stats_cfg",
+    "layout_source_build": "27.0.0+2486695",
+    "layout_source_schema": 6,
+    "save_schema": 6,
+    "layout_borrowed": true
+  },
+  "player_report_layout": {
+    "source_build": "27.1.0+2505117",
+    "source_schema": 6,
+    "borrowed": true,
+    "record_variant_selection": "embedded_report_prefix",
+    "record_variant_counts": {
+      "0100013d1f": 60
+    },
+    "note": "Uses the registered FM27 27.1.0 schema-6 layout for build 27.1.1+2511875. Each report's embedded record-variant prefix is selected before decoding squad anchors, player metrics and record lengths; the target build itself remains unregistered."
+  },
+  "upstream_registration": {
+    "status": "unverified_borrowed_layout",
+    "registered_reference_build": "27.1.0+2505117",
+    "note": "This local audit does not alter fmsave known_build or make the save build upstream-registered."
+  },
+  "local_assessment": "passed",
+  "local_checks": {
+    "team_match_stats_reader_passed": true,
+    "managed_first_team_team_match_stats_rows": 65,
+    "formal_fixture_schedule_coverage": {
+      "played_formal_fixtures_in_schedule": 60,
+      "retained_player_detail_reports_decoded": 60,
+      "fixtures_without_a_retained_player_detail_report": 0,
+      "note": "This is schedule coverage, not a parser pass/fail check: FM27 saves retain reports for only some played fixtures."
+    },
+    "retained_report_coverage": {
+      "formal_competition_ids": [
+        7,
+        661,
+        662,
+        2945
+      ],
+      "native_team_match_stats_matches_retained_all_competitions": 65,
+      "native_team_match_stats_matches_excluded_outside_formal_scope": 5,
+      "native_match_stats_competition_ids_excluded": [
+        131,
+        395,
+        8208
+      ],
+      "native_team_match_stats_matches_retained": 60,
+      "player_detail_reports_decoded": 60,
+      "decoded_reports_matching_native_retained_matches": 60,
+      "native_retained_matches_missing_player_detail": [],
+      "player_detail_reports_without_native_match_stats_row": [],
+      "duplicate_player_detail_report_keys": [],
+      "passed": true,
+      "note": "Coverage is compared only inside the dynamically discovered formal competition IDs. Native matches outside that scope (including friendlies/pre-season and unrecognized native-only competition IDs) are counted separately and are not treated as missing formal player-detail reports."
+    },
+    "player_team_total_reconciliation": {
+      "comparisons": 1140,
+      "matches": 1140,
+      "mismatches": 0,
+      "missing": 0
+    },
+    "player_goal_reconciliation": {
+      "audit_version": "1.1-raw-player-record-goals-vs-fixture-score",
+      "method": "sum goals decoded by raw_stats_from_probe_row() from every retained raw player record before identity and zero-minute filtering; normalized metrics are not used; missing raw goal values make that match incomplete",
+      "matches_checked": 60,
+      "matches_with_equal_team_and_player_goals": 60,
+      "matches_with_unattributed_team_goals": 0,
+      "matches_with_player_goals_over_team_score": 0,
+      "matches_with_incomplete_raw_player_goals": 0,
+      "matches_without_fixture_score": 0,
+      "team_score_goals_total": 124,
+      "raw_player_record_goals_total": 124,
+      "raw_player_record_goals_known_sum_total": 124,
+      "raw_player_records_missing_goals_total": 0,
+      "unattributed_team_goals_total": 0,
+      "player_goals_over_score_total": 0,
+      "duplicate_report_match_keys": [],
+      "passed": true,
+      "unresolved_matches": [],
+      "note": "Positive score/player-goal differences remain unattributed. An own goal is one possible explanation, but is not asserted without a separate match-event source. The audit reads raw player-record fields, includes rows later excluded from player appearances, and does not substitute normalized metrics or zero for missing raw values."
+    },
+    "player_goal_reconciliation_passed": true,
+    "raw_player_field_crosschecks": {
+      "goals": {
+        "matched": 209,
+        "tested": 209,
+        "mismatches": 0
+      },
+      "assists": {
+        "matched": 209,
+        "tested": 209,
+        "mismatches": 0
+      },
+      "passes_attempted": {
+        "matched": 209,
+        "tested": 209,
+        "mismatches": 0
+      },
+      "passes_completed": {
+        "matched": 209,
+        "tested": 209,
+        "mismatches": 0
+      },
+      "entered_at_minute": {
+        "matched": 66,
+        "tested": 66,
+        "mismatches": 0
+      },
+      "left_at_minute": {
+        "matched": 65,
+        "tested": 65,
+        "mismatches": 0
+      },
+      "minutes": {
+        "matched": 209,
+        "tested": 209,
+        "mismatches": 0
+      },
+      "position_code": {
+        "matched": 209,
+        "tested": 209,
+        "mismatches": 0
+      },
+      "rating": {
+        "matched": 190,
+        "tested": 190,
+        "mismatches": 0
+      }
+    },
+    "position_field_crosscheck": {
+      "raw_window_offset": 110,
+      "anchor_relative_offset": 10,
+      "encoding": "uint16 little-endian position mask; zero means no stored match position",
+      "minimum_required": 25,
+      "matched": 209,
+      "tested": 209,
+      "mismatches": 0,
+      "passed": true
+    },
+    "rating_field_crosscheck": {
+      "raw_window_offset_base": 136,
+      "offset_selection": "base offset plus embedded report-record variant distance-field displacement",
+      "raw_window_offsets_used": {
+        "141": 60
+      },
+      "encoding": "uint16 little-endian hundredths; /100; half-up to one decimal",
+      "minimum_required": 25,
+      "matched": 190,
+      "tested": 190,
+      "mismatches": 0,
+      "passed": true
+    },
+    "zero_minute_rows_excluded": 22
+  },
+  "limitations": [
+    "Local evidence applies only to this checked save/build/schema and does not confer upstream registration.",
+    "FM27 build 27.1.1+2511875 remains unregistered in fmsave 0.14.3; the helper borrows the registered 27.1.0+2505117 schema-6 layout and selects each report's embedded record variant before decoding.",
+    "Structural and data reconciliation are not a substitute for semantic validation on other saves.",
+    "Player-goal differences against the fixture score remain explicitly unattributed until separately verified; they are not assigned to a player or automatically labelled own goals."
+  ]
+}

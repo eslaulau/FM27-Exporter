@@ -1,0 +1,202 @@
+[
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 0,
+    "player_uid": 37076335,
+    "player_name": "巴尔特·费尔布鲁亨"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 1,
+    "player_uid": 37059627,
+    "player_name": "费迪·卡迪奥卢"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 2,
+    "player_uid": 2000262615,
+    "player_name": "卢卡·武什科维奇"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 3,
+    "player_uid": 29032618,
+    "player_name": "刘易斯·邓克"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 4,
+    "player_uid": 48031584,
+    "player_name": "奥利维尔·博斯卡利"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 5,
+    "player_uid": 92016698,
+    "player_name": "帕斯卡·格罗斯"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 6,
+    "player_uid": 2000124285,
+    "player_name": "杰克·欣谢尔伍德"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 7,
+    "player_uid": 45111868,
+    "player_name": "三笘薫"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 8,
+    "player_uid": 49048357,
+    "player_name": "乔治尼奥·鲁特"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 9,
+    "player_uid": 2000194768,
+    "player_name": "扬库巴·明泰"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": false,
+    "slot": 10,
+    "player_uid": 2000120348,
+    "player_name": "埃文·弗格森"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 0,
+    "player_uid": 5108096,
+    "player_name": "贾森·斯蒂尔"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 1,
+    "player_uid": 37059387,
+    "player_name": "帕斯卡尔·斯特鲁伊克"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 2,
+    "player_uid": 93141010,
+    "player_name": "亚辛·阿亚里"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 3,
+    "player_uid": 2000227357,
+    "player_name": "斯特法诺斯·齐马斯"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 4,
+    "player_uid": 37071126,
+    "player_name": "马茨·魏费尔"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 5,
+    "player_uid": 2000035859,
+    "player_name": "迭戈·戈麦斯"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 6,
+    "player_uid": 2000273835,
+    "player_name": "哈拉兰波斯·科斯图拉斯"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 7,
+    "player_uid": 18110459,
+    "player_name": "马克西姆·德屈佩"
+  },
+  {
+    "club_uid": 618,
+    "club_name": "布莱顿足球俱乐部",
+    "team_id": 472,
+    "team_slot": 0,
+    "substitute": true,
+    "slot": 8,
+    "player_uid": 2000219732,
+    "player_name": "切马"
+  }
+]
