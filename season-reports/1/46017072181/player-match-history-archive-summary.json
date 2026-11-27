@@ -1,0 +1,23 @@
+{
+  "archive_dir": "D:\\a\\_temp\\FM27-v1.5.0-46017072181\\downloads\\1\\FM27_PlayerMatchHistoryArchives\\1_4a50c6901340",
+  "archive_rows": 555,
+  "archive_fixture_keys": 33,
+  "source_snapshots": 1,
+  "rows_added_this_run": 555,
+  "current_snapshot_history_fixture_keys": 33,
+  "current_snapshot_formal_fixture_keys": 62,
+  "ignored_rows": 32,
+  "branch_guard": "passed",
+  "formal_competition_ids": [
+    7,
+    661,
+    662,
+    2945
+  ],
+  "excluded_competition_ids": [
+    131,
+    395,
+    8208
+  ],
+  "unclassified_competition_ids": []
+}

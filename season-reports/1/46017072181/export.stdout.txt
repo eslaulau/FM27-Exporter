@@ -1,0 +1,114 @@
+
+FM27 Save Batch Exporter
+Read-only: the save file will not be modified.
+fmsave 0.14.3 can try a shared FM27 schema-matched layout for unregistered builds; review validation and compatibility audit.
+
+Python detected: Python 3.12.10
+Using FM27 save: D:\a\_temp\FM27-v1.5.0-46017072181\downloads\1\1.fm
+
+Installing/checking pinned fmsave 0.14.3 (automatic upgrades disabled)...
+Collecting fmsave==0.14.3
+  Downloading fmsave-0.14.3-py3-none-any.whl.metadata (14 kB)
+Collecting backports-zstd>=1.7 (from fmsave==0.14.3)
+  Downloading backports_zstd-1.8.1-cp312-cp312-win_amd64.whl.metadata (7.0 kB)
+Downloading fmsave-0.14.3-py3-none-any.whl (544 kB)
+   ---------------------------------------- 544.4/544.4 kB 8.8 MB/s  0:00:00
+Downloading backports_zstd-1.8.1-cp312-cp312-win_amd64.whl (319 kB)
+Installing collected packages: backports-zstd, fmsave
+
+Successfully installed backports-zstd-1.8.1 fmsave-0.14.3
+Confirmed fmsave 0.14.3; automatic upgrades are disabled.
+Managed club resolved: 布莱顿足球俱乐部 | UID 618 | first-team ID 472
+
+Reading save metadata...
+Validating readable sections...
+Exporting: fixtures
+Note: fixtures produced parser warnings; see native-diagnostics.txt.
+Exporting: team-match-stats
+Note: team-match-stats produced parser warnings; see native-diagnostics.txt.
+Exporting: players
+Note: players produced parser warnings; see native-diagnostics.txt.
+Exporting: player-season-stats
+Note: player-season-stats produced parser warnings; see native-diagnostics.txt.
+Exporting: player-match-stats
+Note: player-match-stats produced parser warnings; see native-diagnostics.txt.
+Exporting: selections
+Note: selections produced parser warnings; see native-diagnostics.txt.
+FIRST-TEAM FILTER v1.3.1 COMPLETE
+Club: σ╕âΦÄ▒Θí┐Φ╢│τÉâΣ┐▒Σ╣ÉΘâ¿ (UID 618) | first-team ID: 472
+Fixtures: 109 | player profiles: 33 | tracked players: 46
+Team stats: 134 rows across 67 matches; fixture joins=67 (exact=66, unique fallback=1)
+Tactical configuration extraction/inference disabled; opponent player data excluded.
+Using save-scoped named match-history archives: D:\a\_temp\FM27-v1.5.0-46017072181\downloads\1\FM27_PlayerMatchHistoryArchives
+
+PLAYER MATCH HISTORY ARCHIVE OK
+{
+  "archive_dir": "D:\\a\\_temp\\FM27-v1.5.0-46017072181\\downloads\\1\\FM27_PlayerMatchHistoryArchives\\1_4a50c6901340",
+  "archive_rows": 555,
+  "archive_fixture_keys": 33,
+  "source_snapshots": 1,
+  "rows_added_this_run": 555,
+  "current_snapshot_history_fixture_keys": 33,
+  "current_snapshot_formal_fixture_keys": 62,
+  "ignored_rows": 32,
+  "branch_guard": "passed",
+  "formal_competition_ids": [
+    7,
+    661,
+    662,
+    2945
+  ],
+  "excluded_competition_ids": [
+    131,
+    395,
+    8208
+  ],
+  "unclassified_competition_ids": []
+}
+HISTORY ARCHIVE ROUTE OK
+{
+  "archive_dir": "D:\\a\\_temp\\FM27-v1.5.0-46017072181\\downloads\\1\\FM27_PlayerMatchHistoryArchives\\1_4a50c6901340",
+  "route_file": "D:\\a\\_temp\\FM27-v1.5.0-46017072181\\downloads\\1\\FM27_PlayerMatchHistoryArchives\\.routes\\4a50c6901340e975bcda9ff5d300c7fa1470087bcc31072dbce2628dfb09e5f4.json",
+  "branch_number": 1,
+  "source": "new_save_archive",
+  "branch_guard": "passed"
+}
+Per-club identity cache: {"status":"seeded","club_uid":618,"team_id":472,"current_first_team_players":26,"reused_mappings":24,"rejected_mappings":121,"source_run_ids":["45850910254","45955914738","45965571527","45970581438","45976248114"],"source_reports":["1/45850910254","1/45955914738","1/45965571527","1/45970581438","1/45976248114"],"output":"C:\\Users\\runneradmin\\AppData\\Local\\Temp\\FM27_Fmsave_8e7dac05bd1944e9a37f6c3ebd289b31\\FM27_PlayerIdentityCache_Formal_v1.1_team-472_club-618.json"}
+
+Recovering player detailed match reports across competitions discovered from this save (friendly/pre-season rules excluded)...
+Enrichment complete: 823 identified rows; 823 retained-history ratings; 159 unresolved identities.
+Native position masks: {'DR': 65, 'DC': 126, 'DL': 110, 'DMC': 2, 'AMR': 101, 'AMC': 63, 'AML': 102, 'MC': 164, 'ST': 82, 'GK': 8}
+Native position-mask validation: 10 verified / 0 unmapped or pending; screenshots not required
+Native role codes decoded: 11 codes; 11 fully position-compatible
+Complete native role catalog: 79 roles (40 in-possession / 39 out-of-possession); 4 phase/position ambiguity groups
+Raw role code coverage: {'missing': 547, '27': 40, '3': 22, '24': 21, '1': 20, '52': 34, '56': 30, '45': 31, '41': 21, '31': 30, '12': 2, '5': 25}
+Outputs written to: D:\a\_temp\FM27-v1.5.0-46017072181\downloads\1\FM27_Analysis_20261127_143427
+Identity cache quarantined 121 stale mapping(s); only strict same-match reconciliation may restore them.
+Formal competitions: 7,661,662,2945
+Formal fixtures expected: 62 | detailed reports found: 62 | missing: 0
+Player appearances: 982 | raw activity rows: 987 | zero-minute rows skipped: 5
+Identified: 823 | unresolved: 159
+Positions recovered: 982 | raw position cross-check: 277/277
+Ratings recovered: 823 | raw rating cross-check: 249/249
+Team-total reconciliation: 1178/1178 matched; 0 mismatches; 0 missing
+Outputs written to: D:\a\_temp\FM27-v1.5.0-46017072181\downloads\1\FM27_Analysis_20261127_143427
+python.exe : D:\a\FM27-Exporter\FM27-Exporter\FM27_PlayerMatchReport_Recovery_v1.9_Formal.py:1694: 
+UnknownBuildWarning: 1.fm was saved by FM27 build 27.1.1+2511875, an unverified build: fmsave 0.14.3 has no 
+full set of layouts for it. It borrows matching layouts from 27.0.0+2486695 where it has no build-specific 
+layout, and tries an available FM27 layout when the schema differs. Readers warn about failed checks by 
+default. Please report problems at https://github.com/rhiever/fmsave/issues. FM27 coverage: structural 
+checks are not semantic or in-game verification. Run fmsave validate SAVE --json for FM27 field statuses.
+At D:\a\FM27-Exporter\FM27-Exporter\Run_FM27_Formal_Season_Export_v1.5.0.ps1:67 char:5
++     & $FilePath @Arguments 1> $stdoutPath 2> $stderrPath
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\a\FM27-Expor...field statuses.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  save = fmsave.open(str(save_path))
+Detailed player rows identified: 823; unresolved: 159
+Team-stat reconciliation: 1178/1178; named-history cross-check: 1/24
+WARNING: recovery output is partial or has checks to review; unresolved rows were not guessed.
+
+Export bundle created with warnings. See export-warnings.txt.
+Output folder: D:\a\_temp\FM27-v1.5.0-46017072181\downloads\1\FM27_Analysis_20261127_143427
+ZIP file: D:\a\_temp\FM27-v1.5.0-46017072181\downloads\1\FM27_Analysis_20261127_143427.zip
