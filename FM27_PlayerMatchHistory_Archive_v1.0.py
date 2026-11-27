@@ -12,7 +12,45 @@ import argparse, json, os, shutil, sys, tempfile
 from pathlib import Path
 from datetime import datetime, timezone
 
-FORMAL = {7, 637, 661, 662}
+NON_COMPETITIVE_MATCH_RULE_FAMILIES = frozenset({1})
+
+
+def discover_formal_competition_ids(fixtures, team_id):
+    """Discover save-local formal competition IDs from this club's fixture rules.
+
+    Competition IDs are save-local. Only match-rule family 1 (friendlies and
+    pre-season) is excluded; unknown rule families are retained conservatively.
+    """
+    families_by_competition = {}
+    unclassified = set()
+    for row in fixtures:
+        home = intv(row.get('home_team_id'))
+        away = intv(row.get('away_team_id'))
+        if team_id not in (home, away):
+            continue
+        competition_id = intv(row.get('competition_id'))
+        if competition_id is None:
+            continue
+        template = row.get('match_rules_template')
+        family = intv(template[0]) if isinstance(template, list) and template else None
+        if family is None:
+            unclassified.add(competition_id)
+        else:
+            families_by_competition.setdefault(competition_id, set()).add(family)
+
+    formal = {
+        competition_id
+        for competition_id, families in families_by_competition.items()
+        if any(family not in NON_COMPETITIVE_MATCH_RULE_FAMILIES for family in families)
+    }
+    excluded = {
+        competition_id
+        for competition_id, families in families_by_competition.items()
+        if families and families.issubset(NON_COMPETITIVE_MATCH_RULE_FAMILIES)
+    }
+    formal.update(unclassified)
+    formal.difference_update(excluded)
+    return formal, excluded, unclassified
 STABLE_FIELDS = (
     "player_uid", "player_name", "date", "competition_id", "opponent_team_id",
     "has_stats", "position_code", "minutes", "entered_at_minute", "left_at_minute", "goals",
@@ -97,10 +135,16 @@ def main():
     if not isinstance(fixtures, list) or not isinstance(stats, list):
         raise RuntimeError('fixtures.json and player-match-stats.json must be JSON arrays.')
 
+    formal_competition_ids, excluded_competition_ids, unclassified_competition_ids = (
+        discover_formal_competition_ids(fixtures, a.team_id)
+    )
+    if not formal_competition_ids:
+        raise RuntimeError('Could not discover any formal first-team competition IDs from fixture match-rule families.')
+
     fingerprints = {}
     for f in fixtures:
         fp = fingerprint(f, a.team_id)
-        if not fp or not fp['played'] or fp['competition_id'] not in FORMAL:
+        if not fp or not fp['played'] or fp['competition_id'] not in formal_competition_ids:
             continue
         if fp['home_goals'] is None or fp['away_goals'] is None or not fp['date']:
             continue
@@ -136,8 +180,9 @@ def main():
             'game': 'FM27',
             'team_id': a.team_id,
             'club_uid': a.club_uid,
-            'formal_competition_ids': sorted(FORMAL),
-            'excluded_competition_ids': [131],
+            'formal_competition_ids': sorted(formal_competition_ids),
+            'excluded_competition_ids': sorted(excluded_competition_ids),
+            'unclassified_competition_ids': sorted(unclassified_competition_ids),
             'fixture_fingerprints': {},
             'source_snapshots': [],
             'row_conflicts': [],
@@ -164,7 +209,7 @@ def main():
         except (KeyError, TypeError, ValueError):
             ignored += 1
             continue
-        if comp not in FORMAL:
+        if comp not in formal_competition_ids:
             ignored += 1
             continue
         fk = fixture_key(comp, date, opp)
@@ -209,8 +254,11 @@ def main():
             'ignored_rows': ignored,
         })
     manifest.update({
-        'archive_version': 2,
+        'archive_version': 3,
         'field_schema': 'v1.1-entered-at-minute',
+        'formal_competition_ids': sorted(formal_competition_ids),
+        'excluded_competition_ids': sorted(excluded_competition_ids),
+        'unclassified_competition_ids': sorted(unclassified_competition_ids),
         'updated_at_utc': datetime.now(timezone.utc).isoformat(),
         'fixture_fingerprints': merged_fps,
         'source_snapshots': snapshots,
@@ -232,6 +280,9 @@ def main():
         'current_snapshot_formal_fixture_keys': len(fingerprints),
         'ignored_rows': ignored,
         'branch_guard': 'passed',
+        'formal_competition_ids': sorted(formal_competition_ids),
+        'excluded_competition_ids': sorted(excluded_competition_ids),
+        'unclassified_competition_ids': sorted(unclassified_competition_ids),
     }
     atomic_json(export_dir/'player-match-history-archive-summary.json', summary)
     print('PLAYER MATCH HISTORY ARCHIVE OK')
