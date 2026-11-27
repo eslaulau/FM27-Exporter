@@ -117,7 +117,7 @@ class CloudIdentityCacheTests(unittest.TestCase):
             self.assertEqual(result["status"], "seeded")
             self.assertEqual(list(seed["mappings"]), ["02001600"])
             self.assertEqual(seed["mappings"]["02001600"]["player_uid"], 10)
-            self.assertEqual(seed["seed_source"]["workflow_run_id"], "123456789")
+            self.assertEqual(seed["seed_source"]["source_reports"][0]["workflow_run_id"], "123456789")
             self.assertGreaterEqual(result["rejected_mappings"], 2)
 
     def test_new_club_does_not_inherit_another_clubs_cache(self) -> None:
