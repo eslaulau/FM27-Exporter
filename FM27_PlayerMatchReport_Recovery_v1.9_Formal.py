@@ -1326,8 +1326,9 @@ def infer_exact_stat_signature_mappings(
             row for row in report.get("anonymous_player_rows", [])
             if is_appearance(row.get("metrics") or {}, None)
         ]
-        if not active_uids or len(active_rows) != len(active_uids):
+        if not active_uids:
             continue
+        complete_match_roster_reconciliation = len(active_rows) == len(active_uids)
 
         match_assignments: list[tuple[str, int, dict[str, Any], dict[str, int]]] = []
         used_uids: set[int] = set()
@@ -1370,6 +1371,9 @@ def infer_exact_stat_signature_mappings(
                 "exact_stat_vector_match": True,
                 "matched_fields": fields,
                 "raw_stat_vector": {field: as_int(raw_stats.get(field)) for field in fields},
+                "active_report_row_count": len(active_rows),
+                "active_named_history_player_count": len(active_uids),
+                "complete_match_roster_reconciliation": complete_match_roster_reconciliation,
                 "reason": "unique_exact_four_field_same_match_stat_vector",
             })
 
@@ -1377,6 +1381,24 @@ def infer_exact_stat_signature_mappings(
     uid_to_signature: dict[int, str] = {}
     for signature, occurrences in evidence_by_signature.items():
         identities = {(int(item["player_uid"]), str(item["player_name"])) for item in occurrences}
+        unique_match_keys = {
+            (int(item["competition_id"]), str(item["date"]), int(item["opponent_team_id"]))
+            for item in occurrences
+        }
+        complete_match_keys = {
+            (int(item["competition_id"]), str(item["date"]), int(item["opponent_team_id"]))
+            for item in occurrences
+            if item.get("complete_match_roster_reconciliation") is True
+        }
+        if not complete_match_keys and len(unique_match_keys) < 2:
+            rejected.append({
+                "signature": signature,
+                "reason": "insufficient_independent_partial_match_evidence",
+                "independent_match_count": len(unique_match_keys),
+                "required_partial_match_count": 2,
+                "occurrences": occurrences,
+            })
+            continue
         if len(identities) != 1 or not next(iter(identities))[1]:
             rejected.append({
                 "signature": signature,
