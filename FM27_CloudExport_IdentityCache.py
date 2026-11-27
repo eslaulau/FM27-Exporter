@@ -275,33 +275,88 @@ def build_seed(
         reverse=True,
     )
 
-    selected = None
     selected_mappings: dict[str, dict[str, Any]] = {}
     rejected: list[dict[str, Any]] = []
+    signature_to_uid: dict[str, int] = {}
+    uid_to_signature: dict[int, str] = {}
+    conflicted_signatures: set[str] = set()
+    conflicted_uids: set[int] = set()
+    contributing_candidates: list[dict[str, Any]] = []
+
+    # Merge compatible history for this club across reports. Newer reports are
+    # considered first; conflicting signature/UID claims are quarantined.
     for candidate in candidates:
         filtered, rejected_items = filter_current_roster_mappings(candidate["mappings"], roster)
-        if filtered:
-            selected = candidate
-            selected_mappings = filtered
-            rejected = rejected_items
-            break
+        rejected.extend(rejected_items)
+        contributed = False
+        for signature, entry in filtered.items():
+            if signature in conflicted_signatures:
+                continue
+            uid = int(entry["player_uid"])
+            if uid in conflicted_uids:
+                continue
+            previous_uid = signature_to_uid.get(signature)
+            previous_signature = uid_to_signature.get(uid)
+            if previous_uid is not None and previous_uid != uid:
+                selected_mappings.pop(signature, None)
+                previous_signature_for_uid = uid_to_signature.pop(previous_uid, None)
+                if previous_signature_for_uid:
+                    selected_mappings.pop(previous_signature_for_uid, None)
+                    conflicted_signatures.add(previous_signature_for_uid)
+                signature_to_uid.pop(signature, None)
+                conflicted_signatures.add(signature)
+                conflicted_uids.update({previous_uid, uid})
+                rejected.append({
+                    "signature": signature,
+                    "player_uid": uid,
+                    "previous_player_uid": previous_uid,
+                    "reason": "cross_report_signature_identity_conflict",
+                })
+                continue
+            if previous_signature is not None and previous_signature != signature:
+                selected_mappings.pop(previous_signature, None)
+                signature_to_uid.pop(previous_signature, None)
+                uid_to_signature.pop(uid, None)
+                conflicted_signatures.update({previous_signature, signature})
+                conflicted_uids.add(uid)
+                rejected.append({
+                    "signature": signature,
+                    "player_uid": uid,
+                    "previous_signature": previous_signature,
+                    "reason": "cross_report_player_signature_conflict",
+                })
+                continue
+            if previous_uid is None and previous_signature is None:
+                selected_mappings[signature] = entry
+                signature_to_uid[signature] = uid
+                uid_to_signature[uid] = signature
+                contributed = True
+        if contributed:
+            contributing_candidates.append(candidate)
+
+    selected = contributing_candidates[0] if contributing_candidates else None
+    contributing_candidates.reverse()
+    contributing_reports = []
+    for candidate in contributing_candidates:
+        try:
+            report_path = candidate["cache_path"].parent.relative_to(report_root).as_posix()
+        except ValueError:
+            report_path = candidate["cache_path"].parent.as_posix()
+        contributing_reports.append({
+            "report_path": report_path,
+            "workflow_run_id": candidate["run_id"],
+            "source_sha256_verified": candidate["source_sha256"],
+        })
 
     seed_source = None
-    if selected is not None:
-        try:
-            report_path = selected["cache_path"].parent.relative_to(report_root)
-            report_path_text = report_path.as_posix()
-        except ValueError:
-            report_path_text = selected["cache_path"].parent.as_posix()
+    if selected_mappings:
         seed_source = {
-            "source": "previous_published_same_club_cloud_report",
-            "report_path": report_path_text,
-            "workflow_run_id": selected["run_id"],
-            "source_sha256_verified": selected["source_sha256"],
+            "source": "previous_published_same_club_cloud_reports",
+            "source_reports": contributing_reports,
             "source_game_build": game_build,
-            "validated_mappings_in_source": len(selected["mappings"]),
             "reused_current_roster_mappings": len(selected_mappings),
             "filtered_or_rejected_mappings": len(rejected),
+            "cross_report_conflicts": len(conflicted_signatures) + len(conflicted_uids),
             "filter_policy": "exact club/team, exact game build/signature layout, current first-team UID and exact name, one-to-one signature mapping",
         }
 
@@ -324,8 +379,8 @@ def build_seed(
         "current_first_team_players": len(roster),
         "reused_mappings": len(selected_mappings),
         "rejected_mappings": len(rejected),
-        "source_run_id": selected["run_id"] if selected is not None else None,
-        "source_report": seed_source["report_path"] if seed_source else None,
+        "source_run_ids": [item["workflow_run_id"] for item in contributing_reports],
+        "source_reports": [item["report_path"] for item in contributing_reports],
         "output": str(output),
     }
 
