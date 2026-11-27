@@ -636,26 +636,62 @@ def load_roster_names(export_dir: Path, team_id: int) -> dict[int, str]:
 
 
 def load_candidates(export_dir: Path, comp_ids: set[int], roster_names: dict[int, str]) -> dict[tuple[int, str, int], list[dict[str, Any]]]:
-    """Load same-match history, including historical guests only on actual appearances.
+    """Merge persistent archived history with the current snapshot.
 
-    Current first-team players retain the original behavior. A former/reserve/youth
-    player is admitted only when this exact first-team match row contains real stats
-    or positive minutes; inactive guest roster entries are excluded.
+    The archive may have been created by an older exporter that used an incomplete,
+    hardcoded list of competition IDs. The current snapshot is therefore always
+    merged as a supplement; conflicting values for the same player/match key are
+    rejected rather than silently choosing one source.
     """
     archive_path = export_dir / "player-match-stats-history-archive.json"
-    path = archive_path if archive_path.is_file() else (export_dir / "player-match-stats.json")
-    rows = read_json(path)
+    current_path = export_dir / "player-match-stats.json"
+    source_paths = [path for path in (archive_path, current_path) if path.is_file()]
+    if not source_paths:
+        raise RuntimeError("Neither player-match-stats-history-archive.json nor player-match-stats.json exists.")
+
+    merged_rows: dict[tuple[int, str, int, int], dict[str, Any]] = {}
+    stable_fields = (
+        "player_uid", "date", "competition_id", "opponent_team_id",
+        "has_stats", "position_code", "minutes", "entered_at_minute",
+        "left_at_minute", "goals", "assists", "rating",
+        "passes_attempted", "passes_completed",
+    )
+    for source_path in source_paths:
+        rows = read_json(source_path)
+        if not isinstance(rows, list):
+            raise RuntimeError(f"{source_path.name} must contain a JSON array.")
+        for row in rows:
+            try:
+                uid = int(row["player_uid"])
+                comp = int(row["competition_id"])
+                date = str(row["date"])
+                opponent = int(row["opponent_team_id"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if comp not in comp_ids:
+                continue
+            key = (comp, date, opponent, uid)
+            previous = merged_rows.get(key)
+            if previous is None:
+                merged_rows[key] = dict(row)
+                continue
+            for field in stable_fields:
+                old_value = previous.get(field)
+                new_value = row.get(field)
+                if old_value is not None and new_value is not None and old_value != new_value:
+                    raise RuntimeError(
+                        "Conflicting named player-history sources for "
+                        f"competition/date/opponent/player={key}, field={field}: "
+                        f"archive={old_value!r}, current={new_value!r}"
+                    )
+                if old_value is None and new_value is not None:
+                    previous[field] = new_value
+            for field, value in row.items():
+                if previous.get(field) is None and value is not None:
+                    previous[field] = value
+
     result: dict[tuple[int, str, int], list[dict[str, Any]]] = defaultdict(list)
-    for row in rows:
-        try:
-            uid = int(row["player_uid"])
-            comp = int(row["competition_id"])
-            date = str(row["date"])
-            opponent = int(row["opponent_team_id"])
-        except (KeyError, TypeError, ValueError):
-            continue
-        if comp not in comp_ids:
-            continue
+    for (comp, date, opponent, uid), row in merged_rows.items():
         is_current_first_team = uid in roster_names
         guest_has_appearance = (
             row.get("has_stats") is True
@@ -1532,7 +1568,15 @@ def main() -> int:
         raise RuntimeError("No first-team overall season-stat rows were found for the requested team")
     candidates = load_candidates(export_dir, comp_ids, roster_names)
     season_aggregates = load_season_aggregate_rows(export_dir, args.team_id)
-    history_source = "player-match-stats-history-archive.json" if (export_dir / "player-match-stats-history-archive.json").is_file() else "player-match-stats.json"
+    has_history_archive = (export_dir / "player-match-stats-history-archive.json").is_file()
+    has_current_history = (export_dir / "player-match-stats.json").is_file()
+    history_source = (
+        "player-match-stats-history-archive.json + player-match-stats.json"
+        if has_history_archive and has_current_history
+        else "player-match-stats-history-archive.json"
+        if has_history_archive
+        else "player-match-stats.json"
+    )
     team_index = load_team_match_index(export_dir, args.team_id)
     signature_map, cache = load_identity_cache(
         cache_path, args.team_id, args.club_uid, roster_names, comp_ids
