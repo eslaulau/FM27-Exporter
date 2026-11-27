@@ -8,7 +8,8 @@
 param(
     [string]$SavePath = '',
     [string]$ReuseExportDir = '',
-    [string]$HistoryArchiveDir = ''
+    [string]$HistoryArchiveDir = '',
+    [string]$IdentityCacheRoot = ''
 )
 
 # Resolve this bundle's own directory without relying on the caller's working directory.
@@ -39,6 +40,7 @@ $script:SavePath = [System.IO.Path]::GetFullPath($SavePath)
 $script:ReuseExportDir = $ReuseExportDir
 $script:ReuseMode = -not [string]::IsNullOrWhiteSpace($ReuseExportDir)
 $script:HistoryArchiveDir = $HistoryArchiveDir
+$script:IdentityCacheRoot = $IdentityCacheRoot
 
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
@@ -165,20 +167,11 @@ function Invoke-PlayerMatchReportRecovery {
         throw ('Required companion file missing: ' + $helperPath)
     }
 
-    # Identity caches are scoped to BOTH the dynamically resolved club UID and first-team ID.
-    # Never load the repository-wide historical cache as a generic seed.
+    # Identity caches are scoped to BOTH the managed club UID and first-team ID.
+    # Cloud runs seed only from a previously published report for this exact club/team.
     $cachePath = Join-Path $script:TempDir ('FM27_PlayerIdentityCache_Formal_v1.1_team-{0}_club-{1}.json' -f $script:TeamId, $script:ClubUid)
-    $cacheObject = [ordered]@{
-        cache_version = '1.2-managed-club-scoped'
-        game = 'FM27'
-        team_id = [int]$script:TeamId
-        club_uid = [int]$script:ClubUid
-        competition_id = 0
-        scope = 'single save run; exact managed club UID and owned first-team ID; no cross-club seed mappings'
-        seed_source = $null
-        mappings = @{}
-        rejected_mappings = @()
-    }
+    $cacheReady = $false
+
     if ($script:ReuseMode) {
         $priorCachePath = Join-Path $script:OutDir 'FM27_PlayerIdentityCache_Formal_v1.1_learned.json'
         if (Test-Path -LiteralPath $priorCachePath -PathType Leaf) {
@@ -186,10 +179,53 @@ function Invoke-PlayerMatchReportRecovery {
             if ([int]$priorCache.team_id -ne $script:TeamId -or [int]$priorCache.club_uid -ne $script:ClubUid) {
                 throw ('Refusing identity cache reuse: cached club/team {0}/{1}, current club/team {2}/{3}.' -f $priorCache.club_uid, $priorCache.team_id, $script:ClubUid, $script:TeamId)
             }
-            $cacheObject = $priorCache
+            $priorCache | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $cachePath -Encoding UTF8
+            $cacheReady = $true
+            Write-Host ('Reusing identity cache from the explicitly selected export directory: ' + $priorCachePath) -ForegroundColor Green
         }
     }
-    $cacheObject | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $cachePath -Encoding UTF8
+
+    if (-not $cacheReady -and -not [string]::IsNullOrWhiteSpace($script:IdentityCacheRoot)) {
+        $seedHelperPath = Join-Path $script:BundleRoot 'FM27_CloudExport_IdentityCache.py'
+        if (-not (Test-Path -LiteralPath $seedHelperPath -PathType Leaf)) {
+            throw ('Required cloud identity-cache helper missing: ' + $seedHelperPath)
+        }
+        $seedArgs = @()
+        if ($script:PythonPrefix.Count -gt 0) { $seedArgs += $script:PythonPrefix }
+        $seedArgs += @(
+            $seedHelperPath,
+            '--report-root', $script:IdentityCacheRoot,
+            '--current-export-dir', $script:OutDir,
+            '--team-id', [string]$script:TeamId,
+            '--club-uid', [string]$script:ClubUid,
+            '--output', $cachePath
+        )
+        $seedResult = Invoke-NativeCapture -FilePath $script:PythonExe -Arguments $seedArgs -Label 'cloud_identity_cache_seed'
+        Add-Diagnostic -Title 'cloud identity cache seed stdout' -Text $seedResult.StdOut
+        Add-Diagnostic -Title 'cloud identity cache seed stderr' -Text $seedResult.StdErr
+        if ($seedResult.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $cachePath -PathType Leaf)) {
+            throw ('Could not prepare the per-club cloud identity cache seed. ' + $seedResult.StdErr)
+        }
+        if (-not [string]::IsNullOrWhiteSpace($seedResult.StdOut)) {
+            Write-Host ('Per-club identity cache: ' + $seedResult.StdOut.Trim()) -ForegroundColor Cyan
+        }
+        $cacheReady = $true
+    }
+
+    if (-not $cacheReady) {
+        $cacheObject = [ordered]@{
+            cache_version = '1.3-cloud-club-roster-seed'
+            game = 'FM27'
+            team_id = [int]$script:TeamId
+            club_uid = [int]$script:ClubUid
+            competition_id = 0
+            scope = 'exact managed club UID and owned first-team ID; no cross-club mappings'
+            seed_source = $null
+            mappings = @{}
+            rejected_mappings = @()
+        }
+        $cacheObject | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $cachePath -Encoding UTF8
+    }
 
     if ($script:ReuseMode) {
         $priorReportFiles = @(
