@@ -336,3 +336,80 @@ Run #12 自动选出的最高命中函数 `0x46A8C40` 有大量表面上的 `+0x
 `0x45AC0 → 0x496F840 候选位置/方向记录 → 0x494F820 历史样本与时空验证 → 0x4865900/0x4873400 阶段/OOP 候选筛选 → 0x4874AC0 候选状态/PI gate`。
 
 仍未确认的是**被接受的候选位置被谁提交为球员移动目标/运动状态**。下一轮要把调用者/间接调用/对象记录消费者连起来；与此同时，只继续追参数源，不扩展到无关模块。
+
+
+## 2026-11-28：Movement Commit Run #2/#3 完成；候选排名与接受链推进一层；参数源扫描改用 UnwindInfo
+
+### Movement Commit Run #2：此前超时的大型消费者成功反编译
+
+- Workflow：[Run #2](https://github.com/eslaulau/FM27-Exporter/actions/runs/46129914873)，success
+- Artifact：`15256934221`，307 KB；SHA-256 `42d5f78f74fd6b1122bf2f286ddd5334d692ae49642a98b96a136053852d0b23`
+- 提升 Ghidra timeout 后，`0x4936080`（53,578 bytes）完整反编译，约 6,417 行 C 伪代码。
+
+**新增机制证据：**
+- `0x4936080` 初始化多槽输出候选记录；
+- 遍历多组历史时间/候选位置样本；
+- 使用 360 单位角度表计算候选相对方向；
+- 以位置距离、角度差、tick/phase、球队状态、球员状态和 PI/OOP 槽位状态等共同更新复合累计代价；
+- 对候选执行 `0x494DA10` 额外时空门控；
+- 只有候选代价改善时才覆盖输出记录中的坐标/方向/距离/flags；
+- 返回输出候选结构，未在本函数中发现 `MATCH_PLAYER+0x140/+0x144` 当前位置写回。
+
+这说明它是候选位置/轨迹排名器，不是最终移动执行器。
+
+### Movement Commit Run #3：找到候选排名器唯一直接 caller
+
+- Workflow：[Run #3](https://github.com/eslaulau/FM27-Exporter/actions/runs/46130255627)，success
+- Artifact：`15256564698`，308,866 bytes
+- SHA-256：`bbb07ef46c0ddf189c2ccee7384c0b01a39b0699cee12f9457bca2efc203b9ba`
+- Scanner：144,876 runtime functions；13 个目标；191 个候选 caller；444 个 CALL/JMP/Jcc；14 个静态函数指针命中。
+
+**唯一直接调用点：**
+- `0x4936080` 的直接 caller 是 `0x48ADC70)；
+- CALL site RVA `0x48ADCF5)；
+- caller range `0x48ADC70–0x48ADE5F)。
+
+`0x48ADC70` 的接受流程：
+1. 调用 `0x4936080` 写本地候选输出；
+2. 读取候选区间/状态值，结合 TEAM 当前 tick `+0x154EC)、候选边界及若干 flags 判断；
+3. 失败分支可能清除参数 flags 后递归重试；
+4. 接受分支调用 `0x4C35210(dst, candidate, 0xF0)` 将候选记录传给上层输出缓冲区。
+
+`0x4C35210` 在大量不同模块中以 `(dst, src, size)` 形式调用，size 包括 `0xC0/0xD0/0xF0)、`count*4`、`count*0x10` 等；它没有独立 `.pdata` 函数边界。当前只能标为**通用内存/记录复制辅助入口候选**，不能命名为 Movement Director 或最终移动提交函数。
+
+### Movement Commit Run #4 正在进行
+
+- Workflow：[Run #4](https://github.com/eslaulau/FM27-Exporter/actions/runs/46130539648)
+- 新增扫描目标：`0x48ADC70` 和 `0x4C35210)；
+- 目标：找出 `0x48ADC70` 的 match tick/player update caller，以及 `0x4C35210` 的函数边界/调用者特征；
+- 当前 Ghidra 反编译步骤 in progress，尚无 Artifact。
+
+### 参数源专项 Run #4 失败于过滤质量，不是引擎分析
+
+- Workflow：[Parameter Source Run #4](https://github.com/eslaulau/FM27-Exporter/actions/runs/46129581510)，success
+- Artifact：`15257088899`，2,198,011 bytes；SHA-256 `3131dd7c873146907049d9c8a8bfe27b49c2546b92e616bc5ecb75da4e870def`
+- 实际 scanner 统计：RSP base refs 排除 248；通过旧 prologue 识别的 RBP 栈帧 refs 为 0；保留 RBP refs 1,300。
+- 最高命中 `0x46A8C40` 有 262 个表面写引用，全部为 `[RBP+offset]`。其 Ghidra 伪代码中有大量栈局部变量，故这些命中不是 MATCH_PLAYER 参数向量写入。
+- 其他 8 个最高命中候选也同样全部是 RBP 基址；无一个 TEAM 系数字段有直接写操作。
+
+**质量修复：**不能只根据前 12/32 条指令来判断 RBP 栈帧。现已改用 Windows x64 PE `.pdata` 对应的 UNWIND_INFO：
+- header 第 4 byte 的 low nibble 是 frame register；
+- register id 5 = RBP；
+- 若 UnwindInfo 声明 RBP frame register，则过滤该函数全部 RBP+offset 目标命中；
+- 无 frame register 的函数才回退检查前 32 条 prologue 指令。
+- 修正 Commit：`1e11d5a018fa28b2203edd8155326e7b4033910b`
+
+参数源专项 Run #5：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46130421400)，目前扫描成功，Ghidra 反编译 in progress。完成前不认定参数向量写入源已找到。
+
+### 本轮分析报告与记录提交
+
+- Movement Commit 新增 Section 15（Run #2/#3 的候选排名/接受链）：`91cf12d8027f394617fa56dbf9c2dfc8ea864b52`
+- UnwindInfo 过滤机制记录（Section 13.7）：`165e96659e0bb935e7f1a32e8984468985b72d67`
+- 本项目持续台账在本次再追加上述工作流结果、当前状态和下一步，不将未完成运行写成结论。
+
+### 下一步只做两条直接任务
+
+1. **球员移动提交：**由 Run #4 追 `0x48ADC70` 的直接 caller 和接受记录的后续消费者；定位真正每 tick 运动状态/目标位置写回字段。不要把 `0x4C35210` 当作运动算法。
+2. **战术参数来源：**等 Run #5 检查 UnwindInfo 过滤后的真实对象基址候选；无可信固定偏移写入时，改从 `0xF8050`、`0x185090`、`0x3C720` 的对象初始化和数据复制源追踪参数向量。TEAM 系数块目前读多写零，继续沿整块对象复制/配置装载查找。
+
+行为链闭合后立即转向射门/传球结果实际计算与比分事件写入，不做无关系统扩展。
