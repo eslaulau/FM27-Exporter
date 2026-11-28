@@ -8,6 +8,7 @@ on:
       - "scripts/ghidra/ExportMatchEnginePressingCore.java"
       - "scripts/ghidra/ExportNativeRttiTargets.java"
       - "scripts/ghidra/TraceNativeScoreAndTactic.java"
+      - "scripts/ghidra/DecompileNativeRttiXrefFunctions.java"
       - "scripts/engine_analysis/fm27_package_audit.py"
       - "scripts/ghidra/AnnotateIl2CppMethods.java"
       - "scripts/engine_analysis/extract_il2cpp_match_methods.py"
@@ -190,6 +191,17 @@ jobs:
           ARGS+=(
             -postScript TraceNativeScoreAndTactic.java "$PWD/analysis/native-score-trace"
           )
+          XREF_TSV="analysis/package-audit/native-rtti/native-rtti-code-xrefs.tsv"
+          if [ -s "$XREF_TSV" ]; then
+            ARGS+=(
+              -postScript DecompileNativeRttiXrefFunctions.java
+              "$PWD/$XREF_TSV"
+              "$PWD/analysis/native-rtti-callers"
+            )
+          else
+            echo "Native RTTI code xrefs unavailable; caller-function pass skipped." \
+              > analysis/native-rtti-callers-skipped.txt
+          fi
           "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-native" FM27NativeUnified \
             "${ARGS[@]}" \
             > analysis/native-engine-unified-console.log 2>&1
