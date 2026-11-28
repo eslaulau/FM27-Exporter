@@ -40,6 +40,22 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         seeds.put(0x4c351e0L, "IOOP_SCORE_INDIRECT_THUNK");
         seeds.put(0x3e6d980L, "MATCH_OOP_SCORING_PROVIDER_SINGLETON");
         seeds.put(0x38254f0L, "MATCH_WEIGHTS_PROVIDER_SINGLETON");
+        seeds.put(0x4576270L, "MATCH_PRESSING_FACTORY_VTABLE_SLOT");
+        seeds.put(0x45762a0L, "MATCH_PRESSING_FACTORY_SINGLETON");
+        seeds.put(0x28d7300L, "PLAYER_POSITIONS_PACKET_SLOT_1");
+        seeds.put(0x28d7460L, "PLAYER_POSITIONS_PACKET_SLOT_2");
+        seeds.put(0x2bbf350L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_1");
+        seeds.put(0x2bbf420L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_2");
+        seeds.put(0x2bbf580L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_4");
+        seeds.put(0x2bbfcc0L, "REMOVE_TWEAK_TACTIC_CHANGE_SLOT_1");
+        seeds.put(0x2bbfd90L, "REMOVE_TWEAK_TACTIC_CHANGE_SLOT_2");
+        seeds.put(0x42f5b40L, "TACTICS_CREATOR_OOP_POSITION_CHANGE_SLOT_1");
+        seeds.put(0x42f5bd0L, "TACTICS_CREATOR_OOP_POSITION_CHANGE_SLOT_2");
+        seeds.put(0x42f59f0L, "TACTICS_CREATOR_OOP_POSITION_CHANGE_SLOT_3");
+        seeds.put(0x42f8cc0L, "TACTIC_ROLES_CHANGE_SLOT_1");
+        seeds.put(0x42f8d40L, "TACTIC_ROLES_CHANGE_SLOT_2");
+        seeds.put(0x42f8a40L, "TACTIC_ROLES_CHANGE_SLOT_3");
+        seeds.put(0x42f9080L, "TACTICS_CHANGE_OPP_PLAYER_SPECIFIC_SLOT_1");
         seeds.put(0x4c2da40L, "MATCH_OOP_SCORING_PROVIDER_VTABLE_SLOT");
         seeds.put(0x4c2a2f0L, "MATCH_WEIGHTS_PROVIDER_VTABLE_SLOT");
 
