@@ -71,8 +71,11 @@ def pe_summary(path: Path) -> dict:
                     if no is not None:
                         f.seek(no); imports.append(f.read(512).split(b"\0",1)[0].decode("ascii","replace"))
                     f.seek(io+(i+1)*20)
+        exception_dir = dirs[3] if len(dirs)>3 else (0,0)
         return {"is_pe":True,"machine":hex(machine),"pe32_plus":is64,"timestamp":timestamp,
                 "image_base":hex(image_base),"entry_rva":hex(entry),"size_of_image":hex(image_size),
+                "exception_directory":{"rva":hex(exception_dir[0]),"size":hex(exception_dir[1])},
+                "data_directories":[{"index":i,"rva":hex(x[0]),"size":hex(x[1])} for i,x in enumerate(dirs)],
                 "characteristics":hex(characteristics),"sections":sections,"import_dlls":imports}
 
 def targeted_strings(path: Path, limit: int = 2500) -> list[str]:
@@ -297,21 +300,32 @@ def native_rtti_scan(path: Path, pe: dict, out_dir: Path) -> dict:
             }.values())
             code_xrefs.sort(key=lambda x: (int(x["to_rva"], 16), int(x["from_rva"], 16)))
 
-            # Map each candidate code reference to its containing x64 function
-            # using PE .pdata RUNTIME_FUNCTION entries.
+            # Resolve the PE Exception Directory (Data Directory index 3).
+            # This DLL uses non-standard section names and has no literal ".pdata" section.
             runtime_functions = []
-            for sec in sections:
-                if sec["name"] != ".pdata":
-                    continue
-                off = sec["raw_ptr"]
-                limit = min(off + sec["raw_size"], len(mm))
-                while off + 12 <= limit:
-                    begin_rva, end_rva, unwind_rva = struct.unpack_from("<3I", mm, off)
-                    if (begin_rva < end_rva <= image_size and
-                        is_exec(begin_rva) and is_exec(end_rva - 1) and
-                        unwind_rva < image_size):
-                        runtime_functions.append((begin_rva, end_rva, unwind_rva))
-                    off += 12
+            exception_dir = pe.get("exception_directory", {})
+            exception_rva = int(exception_dir.get("rva", "0x0"), 16)
+            exception_size = int(exception_dir.get("size", "0x0"), 16)
+            def rva_to_raw(rva: int):
+                if rva < pe.get("headers_size", 0):
+                    return rva
+                for section in sections:
+                    if section["va"] <= rva < section["va"] + section["raw_size"]:
+                        return section["raw_ptr"] + (rva - section["va"])
+                return None
+
+            if exception_rva and exception_size >= 12:
+                exception_off = rva_to_raw(exception_rva)
+                if exception_off is not None:
+                    limit = min(exception_off + exception_size, len(mm))
+                    off = exception_off
+                    while off + 12 <= limit:
+                        begin_rva, end_rva, unwind_rva = struct.unpack_from("<3I", mm, off)
+                        if (begin_rva < end_rva <= image_size and
+                            is_exec(begin_rva) and is_exec(end_rva - 1) and
+                            unwind_rva < image_size):
+                            runtime_functions.append((begin_rva, end_rva, unwind_rva))
+                        off += 12
             runtime_functions.sort()
             runtime_starts = [x[0] for x in runtime_functions]
             for x in code_xrefs:
