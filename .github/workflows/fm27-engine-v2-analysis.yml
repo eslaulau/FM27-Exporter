@@ -10,6 +10,8 @@ on:
       - "scripts/engine_analysis/fm27_package_audit.py"
       - "scripts/ghidra/AnnotateIl2CppMethods.java"
       - "scripts/engine_analysis/extract_il2cpp_match_methods.py"
+      - "scripts/engine_analysis/extract_il2cpp_tactic_bridge_methods.py"
+      - "scripts/ghidra/DecompileTacticBridgeMethods.java"
   workflow_dispatch:
 permissions:
   contents: read
@@ -105,6 +107,13 @@ jobs:
               > analysis/il2cpp/method-map-summary.log 2>&1
           else
             echo "script.json missing or empty; skipping managed method map" > analysis/il2cpp/method-map-summary.log
+            : > analysis/il2cpp/tactic-bridge-methods.tsv
+          fi
+          if [ -s analysis/il2cpp/script.json ]; then
+            python scripts/engine_analysis/extract_il2cpp_tactic_bridge_methods.py \
+              --input analysis/il2cpp/script.json \
+              --output analysis/il2cpp/tactic-bridge-methods.tsv \
+              > analysis/il2cpp/tactic-bridge-methods-summary.log 2>&1
           fi
           set -e
 
@@ -143,6 +152,9 @@ jobs:
             -postScript AnnotateIl2CppMethods.java \
               "$PWD/analysis/il2cpp/match-relevant-methods.tsv" \
               "$PWD/analysis/gameassembly" \
+            -postScript DecompileTacticBridgeMethods.java \
+              "$PWD/analysis/il2cpp/tactic-bridge-methods.tsv" \
+              "$PWD/analysis/gameassembly-tactic-bridge" \
             > analysis/gameassembly/ghidra-console.log 2>&1
           echo $? > analysis/gameassembly/ghidra-exit-code.txt
           tail -n 180 analysis/gameassembly/ghidra-console.log || true
