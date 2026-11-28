@@ -45,6 +45,12 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         seeds.put(0x45762a0L, "MATCH_PRESSING_FACTORY_SINGLETON");
         seeds.put(0x28d7300L, "PLAYER_POSITIONS_PACKET_SLOT_1");
         seeds.put(0x28d7460L, "PLAYER_POSITIONS_PACKET_SLOT_2");
+        seeds.put(0x4bfe840L, "MATCH_BASE_SLOT_0");
+        seeds.put(0x28cfcf0L, "MATCH_BASE_SLOT_1");
+        seeds.put(0x28d6400L, "MATCH_BASE_SLOT_2");
+        seeds.put(0x2b088a0L, "MATCH_PLAYING_DATA_SLOT_0");
+        seeds.put(0x4845300L, "MATCH_PLAYING_DATA_SLOT_1");
+        seeds.put(0x496bb40L, "MATCH_PLAYING_DATA_SLOT_2");
         seeds.put(0x2bbf350L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_1");
         seeds.put(0x2bbf420L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_2");
         seeds.put(0x2bbf580L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_4");
