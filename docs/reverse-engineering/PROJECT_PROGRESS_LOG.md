@@ -827,3 +827,60 @@ Run #11（Workflow `46137041278`，Artifact `15260182294`）扫描成功，确�
 - Run #13（46137512772）被 Run #14 的新提交取消，无有效 Artifact。
 
 下一轮目标保持不变：直接/静态查找 0x42D3910、0x42D58E0、0x3FEF0 的上游调用者和调度指针，确认 match-level movement updater 的顶层入口；不再重复字段扫描或全量 IL2CPP。
+
+
+## 2026-11-28：Shot/XG 事件链核对（Native Hotspots Run #7）——已排除“事件记录器就是概率公式”的误归因
+
+### Artifact
+
+- Workflow：[Native Hotspots Run #7](https://github.com/eslaulau/FM27-Exporter/actions/runs/46124508570)，success。
+- Artifact：`15255297010`，1,261,823 bytes。
+- SHA-256：`7596b26c66518b15e207b9403bce18d159e0733898d82a47fd4312199bb821ef`。
+
+### 已确认：0x4C01760 是 XG_SHOT_DATA 事件/统计写入路径，不是已经解出的 xG 公式
+
+`0x4C01760`（788 bytes）在主分支：
+- 将 match `+0x148B0` 的计数/值累加到 team `+0x70C` 和 player `+0x21C4)；
+- 调用 `0x498D400` 取一个 32-bit 值，将返回值传给 `0x166400`；
+- 调用 `0x4D1F0` 构建/标记 shot event context；
+- 调用 `0x164680` 根据球位置设置几何区域 bitmask；
+- 调用 `0x1691C0` 去重并完成 shot event payload 的创建/通知。
+
+目前无法把 `0x498D400` 返回值命名为 xG，因为该 target 当前无独立 .pdata 函数体，且尚未定位其 enclosing code/value source。
+
+### Supporting functions 的边界
+
+- `0x166400`（133 bytes）：将 value、side 和类别/标志封装为短记录，追加至 400-byte 上限的 team stat/event buffer；不计算 value。
+- `0x4D1F0`（645 bytes）：通过 `0x4D480` 取得上下文容器，以 key 二分查找，再设置记录 bit flags；是上下文标记，不是概率公式。
+- `0x164680`（494 bytes）：以球的二维坐标与球门区域边界比较，形成目标/区域 bitmask；是几何分类，没有读到得分概率计算。
+- `0x1691C0`（1,019 bytes）：根据 side、区域、时间 key、player 等信息去重/分配/登记 shot event payload；是 event finalizer，不是射门结果物理模型。
+
+### 重要更名/防止误归因：0x481A6A0
+
+`0x481A6A0`（21,842 bytes）虽被 RTTI/seed 名称标记为 Advanced Shot Zone processor，但它实际包含 per-player space/candidate 计算：
+- 调用 `0x47E44C0` 做方向/对手预测位置空间冲突计算；
+- 处理时间样本、球员/球队状态、空间历史 helper；
+- 写球员 `+0x1BB0..+0x1C65` 周边 movement/candidate record；
+- 调用 `0x4D1F0` 做事件/上下文标记。
+
+它是 **shot-zone-associated spatial/player candidate processor**，与球员空间行为主线相连；不能把函数名称中的 Shot Zone 当作 xG probability 计算证据。
+
+### RTTI 找到下一批真正贴近球路/结果的目标
+
+Run #56 RTTI map 确认：
+- `simatch::XG_SHOT_DATA` vtable `0x4F94388`，方法 `0x1B6490`、`0x28D6F60`、`0x28D6FB0`；
+- `simatch::UBALL_KICK_SAMPLE_DATA::EVENT_T` vtable `0x5205250`，方法 `0x42D2440`；其 vtable 在 `0x3E4E0`、`0x5DBD0`、`0x19EDD0` 被引用/构造；
+- `simatch::USET_PIECE_ATTEMPT_DATA::EVENT_T` vtable `0x520E820`，方法 `0x42DDC80`；
+- `simatch::USET_PIECE_OUTCOME_DATA::EVENT_T` vtable `0x4F94318`，方法 `0x28D6E30`。
+
+这些方法目前只作事件类入口，不把它们当作物理公式。下一步沿球踢出样本的创建者/消费者，定位球速、轨迹、门将拦截与球门越线结果计算。
+
+详细技术报告：[ShotEvent_XGBoundary Run #7](https://github.com/eslaulau/FM27-Exporter/blob/main/docs/reverse-engineering/FM27_27.1.1_ShotEvent_XGBoundary_Run7_20261128.md)，Commit `9b6c4c271f7de93f7dbd2becb76e269963a54045`。
+
+### Shot/result 线下一轮只做四个方向
+
+1. 解析 `0x498D400` 的 enclosing code/实际返回值来源。
+2. 追踪 `0x3E4E0`、`0x19EDD0`、`0x5DBD0` 与 `0x42D2440` 的 ball-kick sample 创建/消费关系。
+3. 追踪 XG_SHOT_DATA 方法 `0x1B6490/0x28D6F60/0x28D6FB0`，确认是否只是序列化与事件分发。
+4. 追踪定位球 attempt/outcome 方法 `0x42DDC80`、`0x28D6E30`，识别真实 shot attempt/outcome 的公共计算入口。
+
