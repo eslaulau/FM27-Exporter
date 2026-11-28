@@ -78,6 +78,8 @@ jobs:
             --target 0x83A490:MATCH_UPDATE_PRE_HANDOFF_STAGE \
             --target 0x42D3910:MATCH_LEVEL_PLAYER_MOVEMENT_TICK_DRIVER \
             --target 0x42D58E0:MATCH_MOVEMENT_TICK_SUBROUTINE \
+            --target 0x47C5350:MATCH_STATE_MACHINE_TICK_DISPATCHER \\
+            --target 0x47C58C0:MATCH_STATE_PHASE_1_HANDLER \\
             --target 0x3FEF0:MATCH_TICK_WRAPPER
           cat analysis/movement-commit/native-target-call-summary.json
       - uses: actions/setup-java@v4
