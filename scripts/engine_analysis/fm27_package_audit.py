@@ -283,21 +283,50 @@ def native_rtti_scan(path: Path, pe: dict, out_dir: Path) -> dict:
                 for x in code_xrefs
             }.values())
             code_xrefs.sort(key=lambda x: (int(x["to_rva"], 16), int(x["from_rva"], 16)))
+
+            # Map each candidate code reference to its containing x64 function
+            # using PE .pdata RUNTIME_FUNCTION entries.
+            runtime_functions = []
+            for sec in sections:
+                if sec["name"] != ".pdata":
+                    continue
+                off = sec["raw_ptr"]
+                limit = min(off + sec["raw_size"], len(mm))
+                while off + 12 <= limit:
+                    begin_rva, end_rva, unwind_rva = struct.unpack_from("<3I", mm, off)
+                    if (begin_rva < end_rva <= image_size and
+                        is_exec(begin_rva) and is_exec(end_rva - 1) and
+                        unwind_rva < image_size):
+                        runtime_functions.append((begin_rva, end_rva, unwind_rva))
+                    off += 12
+            runtime_functions.sort()
+            runtime_starts = [x[0] for x in runtime_functions]
+            for x in code_xrefs:
+                caller_rva = int(x["from_rva"], 16)
+                idx = bisect.bisect_right(runtime_starts, caller_rva) - 1
+                if idx >= 0:
+                    begin_rva, end_rva, unwind_rva = runtime_functions[idx]
+                    if begin_rva <= caller_rva < end_rva:
+                        x["caller_function_rva"] = f"0x{begin_rva:X}"
+                        x["caller_function_end_rva"] = f"0x{end_rva:X}"
+                        x["unwind_info_rva"] = f"0x{unwind_rva:X}"
+
             (out_dir / "native-rtti-code-xrefs.json").write_text(
                 json.dumps({
                     "method": "x64 RIP-relative operand pattern scan over executable sections",
                     "note": "Candidate references only; confirm each address by Ghidra disassembly.",
                     "target_count": len(ref_targets),
                     "reference_count": len(code_xrefs),
+                    "runtime_function_count": len(runtime_functions),
                     "references": code_xrefs,
                 }, ensure_ascii=False, indent=2), encoding="utf-8"
             )
             with (out_dir / "native-rtti-code-xrefs.tsv").open("w", encoding="utf-8") as xout:
-                xout.write("from_rva\tto_rva\treference_kind\ttarget_name\tinstruction_pattern\n")
+                xout.write("from_rva\tto_rva\treference_kind\ttarget_name\tinstruction_pattern\tcaller_function_rva\tcaller_function_end_rva\tunwind_info_rva\n")
                 for x in code_xrefs:
                     xout.write(
                         f'{x["from_rva"]}\t{x["to_rva"]}\t{x["reference_kind"]}\t'
-                        f'{x["target_name"]}\t{x["instruction_pattern"]}\n'
+                        f'{x["target_name"]}\t{x["instruction_pattern"]}\t{x.get("caller_function_rva","")}\t{x.get("caller_function_end_rva","")}\t{x.get("unwind_info_rva","")}\n'
                     )
 
             json_path = out_dir / "native-rtti-vtables.json"
