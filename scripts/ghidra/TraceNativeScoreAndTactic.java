@@ -235,14 +235,31 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
                 refs.println("BYTES\tRVA=0x"+Long.toHexString(rva)+"\t"+hex);
                 if (rva==0x52ceaa8L && n>=8) {
                     long pointer=currentProgram.getMemory().getLong(a);
-                    refs.println("INDIRECT_POINTER\tDATA_RVA=0x52ceaa8\tPOINTER=0x"+
-                        Long.toHexString(pointer));
-                    if (pointer>0) {
-                        Address pointerAddress=currentProgram.getAddressFactory()
-                            .getDefaultAddressSpace().getAddress(pointer);
-                        long pointerRva=pointerAddress.subtract(currentProgram.getImageBase());
-                        refs.println("INDIRECT_POINTER_RVA=0x"+Long.toHexString(pointerRva));
-                        if (pointerRva>=0) indirectDataTargets.add(pointerRva);
+                    long imageBase=currentProgram.getImageBase().getOffset();
+                    long imageSize=currentProgram.getImageSize();
+                    refs.println("INDIRECT_POINTER\tDATA_RVA=0x52ceaa8\tRAW=0x"+
+                        Long.toHexString(pointer)+"\tIMAGE_BASE=0x"+
+                        Long.toHexString(imageBase)+"\tIMAGE_SIZE=0x"+
+                        Long.toHexString(imageSize));
+                    long pointerRva=-1;
+                    String pointerKind="UNRESOLVED";
+                    if (pointer>=0 && pointer<imageSize) {
+                        pointerRva=pointer;
+                        pointerKind="RVA";
+                    } else if (pointer>=imageBase && pointer<imageBase+imageSize) {
+                        pointerRva=pointer-imageBase;
+                        pointerKind="VA";
+                    }
+                    refs.println("INDIRECT_POINTER_RESOLVED\tKIND="+pointerKind+
+                        "\tRVA=0x"+Long.toHexString(pointerRva));
+                    if (pointerRva>=0) {
+                        Address target=currentProgram.getImageBase().add(pointerRva);
+                        MemoryBlock targetBlock=currentProgram.getMemory().getBlock(target);
+                        refs.println("INDIRECT_POINTER_TARGET\tVA="+target+
+                            "\tBLOCK="+(targetBlock==null?"<none>":targetBlock.getName())+
+                            "\tEXEC="+(targetBlock!=null && targetBlock.isExecute()));
+                        if (targetBlock!=null && targetBlock.isExecute())
+                            indirectDataTargets.add(pointerRva);
                     }
                 }
             } catch(Exception ex) { refs.println("READ_ERROR\t"+ex); }
