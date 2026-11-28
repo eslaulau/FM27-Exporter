@@ -694,3 +694,41 @@ action/output buffer
 - 本工作流仍未传入 dynamic movement-record TSV（摘要为 `MOVEMENT_FIELD_TSV_MISSING`），所以只用于校验 handoff / tick 调用者，坐标 writer 搜索由 Record Run #6 承担。
 
 **下一项坐标 writer 扫描状态：**Movement Record Run #6 [Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136282836) 已完成新增字段扫描步骤，当前 Ghidra 在反编译候选 reader/writer，Artifact 尚未生成。
+
+
+### Position writer 候选突破：Movement Record Run #6（尚待调用入口验证）
+
+- Workflow：[Movement Record Run #6](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136282836)，success。
+- Artifact：`15259702827`，1,045,237 bytes；SHA-256 `71a5a1f48e28b0ee430a7ac500fc1ad6508bcc7e7cf437d0c0217d8da30cf0d4`。
+- 新增 scanner 同时分析 `MATCH_PLAYER+0x140/+0x144` 和 `+0x1BB0..+0x1C7C` movement record 字段。
+- 候选统计：632 个 ranked functions；292 个 movement-record field functions；343 个 position-write functions；40 个动态函数进入 Ghidra 优先反编译。
+- 只有一个函数满足“movement record + position write + 同一基址寄存器”最高强度条件：`0x2AFB290`，函数体 2,279 bytes。
+
+**0x2AFB290 新证据：**
+- 机器指令显示同一基址寄存器上写入 `+0x140`、`+0x1BB0`、`+0x1BC0)、状态 `+0x1C64` 及 `+0x1C6C/+0x1C70`；同时读取 `+0x1C44) 和 `+0x140`。
+- 伪代码明确遍历 team/player pointer 数组（`param_1+0x138`，计数 `+0x72E`），并逐个处理 player 对象。
+- 根据 player 时间字段（`puVar6[0x82]`，偏移 `+0x208`）与 match tick（`+0x154EC`）比较，在时间条件满足时把缓存数据 `+0x150/+0x158` 复制到活动字段 `+0x140/+0x148`。
+- 同函数还使用二维差值查 `0x1858B6748` 方向表，更新每球员方向缓存；并写入 movement record 与状态标签。
+
+该函数因此是目前最高置信度的“每球员位置状态 + movement record 更新”候选。但它的 Ghidra 直接 CALL caller 计数为 0，且尚未证明它就是 `0x61660` 候选 handoff 的下游 consumer；必须继续检查间接入口、vtable/静态函数指针与 match update caller。
+
+详细报告：[PositionWriterCandidate 0x2AFB290](https://github.com/eslaulau/FM27-Exporter/blob/main/docs/reverse-engineering/FM27_27.1.1_PositionWriterCandidate_0x2AFB290_20261128.md)，Commit `a94f884de99b05278b133cbb92e185942e25ae5f`。
+
+### 下一轮调用图与 post-handoff 消费者扫描
+
+- Movement Commit Run #10：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136817103)，修复 shell continuation 后执行 `0x2AFB290`、`0x51820`、`0x83A490` 的 CALL/JMP/static pointer 扫描，目前 Ghidra 正在反编译 caller。
+- Handoff Run #8：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136666185)，success；Artifact `15259403569`，212,259 bytes。
+  - `0x3FEF0` 再次确认调用顺序 `0x83A490 → 0x5DBD0 → 0x51820)。
+  - `0x51820) 有 25 个 direct callees，并且是 `0x3FEF0) 的直接 callee。
+  - 它读取 `MATCH_PLAYER+0x1BB0/+0x1BB4` 等 movement record 字段，依据双方 tick/阶段/slot 状态与位置边界进行判断；随后组织玩家/记录上下文并调用 `0x84D000`、`0x5AFE0`、`0x47E44C0`、`0x2B08DF0` 等后续处理函数。
+  - `0x83A490) 是时间/任务队列预处理路径：钳制更新参数并处理队列记录；暂不能命名为 movement 算法。
+- Handoff Run #9：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136889150)，正在反编译上述 `0x51820) 后续消费者。
+- Movement Record Run #7：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136889158)，重新运行动态 writer/consumer seeds；Run #6 曾在新增 post-handoff seeds 时被新提交取消，不产生部分结论。
+
+**脚本/工作流修复记录：**
+- 加入 `+0x140/+0x144` 和同基址优先级评分：`7c775dfad3425d56ec254a3ba427ffd9c9ed6d79`、`19a4e4a0355e010f767722d8b54f78880ba930d2`。
+- 修复 Handoff caller 集合并发修改：`19a4e4a0355e010f767722d8b54f78880ba930d2`。
+- 扩展 match tick pre/post handoff seeds：`4cbd98090049d12f0d5b6ba1e7bd513eef0d7e3f`。
+- 扩展 post-handoff record consumers：`8ebca595907802c1430ef5710eed617caeaa639f`。
+- Movement Commit workflow 增加 position-writer target，shell continuation 修正：`2c233c436e8c0ff13515cb046966478857cfaad5`、`8cbf5ba49b5fc3b74d567d9b38f1883752706bb3`、`9ce61d276bbc9976da6bb3ebeaaad5228e1b464a`。前两次工作流分别因并发取消/错误续行未产生有效扫描结果；当前以 Run #10 结果为准。
+
