@@ -128,6 +128,8 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         seeds.put(0x4c2daa0L, "IOOP_SCORING_PROVIDER_METHOD");
         seeds.put(0x3e6d580L, "OOP_ATTRIBUTE_SCORER_CONFIG_RELEASE");
         seeds.put(0x3e6d570L, "PITCH_PROXIMITY_SCORER_CONFIG_RELEASE");
+        seeds.put(0x4c15850L, "UDYNAMIC_SCORES_IOOP_SCORE_VTABLE_INITIALIZER");
+        seeds.put(0x4c157f0L, "UDYNAMIC_POSITION_SCORES_IOOP_SCORE_VTABLE_INITIALIZER");
         seeds.put(0x148310L, "CANDIDATE_STATE_UPDATE_CALLER");
         seeds.put(0x2f5bba0L, "TACTICS_MANAGER_CORE");
         seeds.put(0x2f5ba70L, "TACTICS_MANAGER_SECONDARY");
