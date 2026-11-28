@@ -4,6 +4,9 @@ on:
     paths:
       - ".github/workflows/fm27-native-hotspot-analysis.yml"
       - "scripts/ghidra/TraceNativeHotspots.java"
+      - "scripts/engine_analysis/scan_parameter_accessor_sources.py"
+      - "scripts/engine_analysis/scan_direction_generator_fields.py"
+      - "scripts/engine_analysis/scan_native_match_player_fields.py"
   workflow_dispatch:
 permissions:
   contents: read
