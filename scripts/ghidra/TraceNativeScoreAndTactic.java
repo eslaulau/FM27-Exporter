@@ -118,6 +118,16 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         seeds.put(0x492d060L, "MOVEMENT_DIRECTOR_SPATIAL_ENTRY_TRANSFORM");
         seeds.put(0x492d840L, "MOVEMENT_DIRECTOR_SPATIAL_POST_TRANSFORM");
         seeds.put(0x494f820L, "MOVEMENT_CANDIDATE_FINAL_VALIDATOR");
+        seeds.put(0x0a32e0L, "CANDIDATE_TRAJECTORY_VALIDATOR_CALLER_A");
+        seeds.put(0x4936080L, "CANDIDATE_TRAJECTORY_VALIDATOR_CALLER_B");
+        seeds.put(0x494da10L, "CANDIDATE_TRAJECTORY_VALIDATOR_CALLER_C");
+        seeds.put(0x4bf9ba0L, "OOP_SCORING_PROVIDER_INITIALIZER");
+        seeds.put(0x4bfae10L, "OOP_ATTRIBUTE_SCORER_CONFIG_MEMBER");
+        seeds.put(0x4bfa570L, "PITCH_PROXIMITY_SCORER_CONFIG_MEMBER");
+        seeds.put(0x4c2da40L, "IOOP_SCORING_PROVIDER_POSITION_METHOD");
+        seeds.put(0x4c2daa0L, "IOOP_SCORING_PROVIDER_METHOD");
+        seeds.put(0x3e6d580L, "OOP_ATTRIBUTE_SCORER_CONFIG_RELEASE");
+        seeds.put(0x3e6d570L, "PITCH_PROXIMITY_SCORER_CONFIG_RELEASE");
         seeds.put(0x148310L, "CANDIDATE_STATE_UPDATE_CALLER");
         seeds.put(0x2f5bba0L, "TACTICS_MANAGER_CORE");
         seeds.put(0x2f5ba70L, "TACTICS_MANAGER_SECONDARY");
@@ -162,7 +172,14 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         }
         if (existing != null) currentProgram.getFunctionManager().removeFunction(entry);
 
-        Address end = entry.add(WINDOW);
+        Address end = entry.add(rva == 0x492d840L ? 0x100L : WINDOW);
+        // 0x492D840 is a valid direct CALL target just beyond the preceding
+        // spatial-transform function, but Ghidra imports it as a defined
+        // orphan code unit. Clear only this small temporary range so it can
+        // be decoded as an independent helper on the next pass.
+        if (rva == 0x492d840L) {
+            currentProgram.getListing().clearCodeUnits(entry,end,false);
+        }
         if (end.compareTo(block.getEnd()) > 0) end = block.getEnd();
         DisassembleCommand cmd = new DisassembleCommand(entry, new AddressSet(entry,end), true);
         cmd.applyTo(currentProgram, monitor);
