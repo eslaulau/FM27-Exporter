@@ -913,3 +913,57 @@ Run #56 RTTI map 确认：
 - 0x4C01760、0x164680、0x1691C0：射门区域与事件记账路径。
 
 这条专线必须区分事件/统计登记与实际球路、门将拦截、射门得分概率；未解出数值来源前不把它叫做 xG 公式。
+
+
+## 2026-11-28：Shot Outcome Run #1 产物核实；新增匹配 tick 的方向/轨迹行为计算证据
+
+### Run #1 Artifact
+
+- Workflow：[Shot Outcome Run #1](https://github.com/eslaulau/FM27-Exporter/actions/runs/46138404863)，success。
+- Artifact：`15261245259`，342,398 bytes（压缩包内容 2.37 MB）。
+- Ghidra 完成 18 个 seed/enclosing functions、4 个 caller、96 个 direct callees 的反编译。
+
+### 重要标签纠正：0x42D2440 只是事件对象 release callback
+
+RTTI 表中 `simatch::UBALL_KICK_SAMPLE_DATA::EVENT_T` vtable `0x5205250` 只有一个方法 `0x42D2440`。它执行的是线程局部内存池/SList 回收、引用计数递减与 free/cleanup，不是射门/球路计算。之前 workflow label `BALL_KICK_SAMPLE_EVENT_HANDLER` 已修正为 `BALL_KICK_SAMPLE_EVENT_OBJECT_RELEASE_CALLBACK`。
+
+vtable 的引用出现在 `0x3E4E0)、`0x19EDD0)、`0x5DBD0)；这三处才是事件 producer 侧真正应分析的函数。
+
+### 新确认的主线行为计算
+
+**0x5DBD0 match-candidate tick 同时调用：**
+- `0x3E4E0)：sites `0x5DF73)、`0x5FB13)、`0x60E90)；
+- `0x19EDD0)：sites `0x5E628)、`0x5FDCA)。
+
+因此候选 handoff `0x61660)、方向/空间预测 `0x19EDD0)、轨迹样本更新 `0x3E4E0) 都进入同一 match tick orchestrator `0x5DBD0)。
+
+**0x3E4E0（5,001 bytes）**：
+- 读取 match tick `+0x154EC) 与 sample/event subscription list `+0x15588)；
+- subscriber flag `0x80) 满足时，通过 `0x42D5DF0) 发送 UBallKickSample event，携带当前 sample/time payload；
+- 管理有界的 time-indexed sample buffer，推进历史样本（`0x47BA760)；
+- 用 2D delta + `0x1858B6748) 查表量化方向；
+- 应用 pitch/boundary/time 条件，把位置、方向及辅助样本写入 `+0x6C0..+0x6F4) 内部记录。
+
+更准确分类：**match 时间序列轨迹/样本状态构造器**，条件性发出 Ball Kick Sample event；不能仅因事件名把整个函数叫作球飞行模拟。
+
+**0x19EDD0（3,938 bytes）**：
+- 读取 match tick、当前球员 `+0x140/+0x144) 与目标/参考位置；
+- 通过 `0x1858B6748) 对球员到目标点的方向进行量化/缓存；
+- 根据球员状态、阶段和样本时间门控决定是否重算；
+- 使用 LCG-like 更新（`state * 0x5851F42D4C957F2D + increment)）生成方向扰动；
+- 结合 `0x185890D98) 距离/方向表得到二维偏移，叠加到候选目标点；
+- 检查边界与相邻对象冲突，并调用 `0x4707560/0x4707690) 处理目标/空间上下文；
+- 写入时间、状态、位置样本记录，并在特定分支调用 `0x3E4E0) 更新轨迹序列。
+
+更准确分类：**球员方向/空间预测与候选点生成器**，包含方向量化、确定性扰动、距离缩放向量、边界/空间冲突检查。这是决定球员行为的实际计算机制，且在 match tick 内执行。
+
+详见 [ShotEvent_XGBoundary 技术报告 Section 7–9](https://github.com/eslaulau/FM27-Exporter/blob/main/docs/reverse-engineering/FM27_27.1.1_ShotEvent_XGBoundary_Run7_20261128.md)。
+
+### 修复无 .pdata 叶函数的反编译缺口
+
+`0x498D400)、`0x1B6490)、`0x28D6FB0) 没有单独的 PE .pdata entry。新 Ghidra fallback 对可执行地址做有限范围 disassembly，并在 RET/IRET/JMP 停止，尝试把这类小型 leaf helper 纳入反编译：
+- Script Commit：`31cd34d97de8dd9f11fff1311b8029d782d22d6d)；
+- Target label correction Commit：`1c5bbd1c0d3a45e018a8a2bc3c817cbcd9a7103b)；
+- 新 Shot Outcome Run #2 由提交自动触发，以新 Artifact 验证 `0x498D400) 的数值来源。
+
+**结果计算边界：**当前尚未找到真实 xG 概率公式、球飞行物理、门将拦截/扑救和球门越线结果公式。0x4C01760 仍是射门事件/统计记账路径；必须先解出 0x498D400 和 ball/goalkeeper outcome 计算。
