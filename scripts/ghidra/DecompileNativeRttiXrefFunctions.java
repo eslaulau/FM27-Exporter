@@ -37,6 +37,7 @@ public class DecompileNativeRttiXrefFunctions extends GhidraScript {
 
     private int priority(String name) {
         String s=name.toUpperCase();
+        if(s.contains("MATCH_PLAYER_FIELD") || s.contains("TEAM_OOP_FIELD")) return 0;
         if(s.contains("MATCH_DECISION_PROVIDER")) return 0;
         if(s.contains("MATCH_MANAGER_TACTICAL_INPUT") ||
            s.contains("MATCH_MANAGER_ADDITIONAL_TACTICAL_INPUT") ||
