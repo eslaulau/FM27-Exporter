@@ -41,6 +41,11 @@ public class DecompileMovementXrefFunctions extends GhidraScript {
         // These specific callers are the bottleneck for proving whether the
         // current-position writer belongs to the match tick/update path.
         // Rank them above generic memcpy/candidate-record callsites.
+        if (s.contains("MATCH_TICK_EVENT_ROUTER")) return -16;
+        if (s.contains("MATCH_STATE_MACHINE_TICK_ADVANCE") ||
+            s.contains("MATCH::PLAY") ||
+            s.contains("ITERATE_ONE_SLICE") ||
+            s.contains("MATCH_BALL")) return -15;
         if (s.contains("MATCH_STATE_MACHINE_TICK_DISPATCHER")) return -13;
         if (s.contains("MATCH_LEVEL_PLAYER_MOVEMENT_TICK_DRIVER")) return -12;
         if (s.contains("MATCH_MOVEMENT_TICK_SUBROUTINE")) return -11;
