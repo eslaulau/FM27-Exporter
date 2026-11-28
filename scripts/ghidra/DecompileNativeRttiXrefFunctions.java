@@ -23,6 +23,7 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Reference;
 
 public class DecompileNativeRttiXrefFunctions extends GhidraScript {
     private static final int MAX_FUNCTIONS = 160;
@@ -219,6 +220,7 @@ public class DecompileNativeRttiXrefFunctions extends GhidraScript {
         PrintWriter summary=new PrintWriter(new File(out,"native-rtti-caller-summary.txt"),"UTF-8");
         PrintWriter asm=new PrintWriter(new File(out,"native-rtti-caller-disassembly.txt"),"UTF-8");
         PrintWriter dec=new PrintWriter(new File(out,"native-rtti-caller-decompilations.txt"),"UTF-8");
+        PrintWriter refs=new PrintWriter(new File(out,"native-rtti-caller-xrefs.txt"),"UTF-8");
         summary.println("PROGRAM="+currentProgram.getName());
         summary.println("INPUT_XREF_FILE="+input.getAbsolutePath());
         summary.println("UNIQUE_CALLER_FUNCTIONS="+ordered.size());
@@ -268,6 +270,6 @@ public class DecompileNativeRttiXrefFunctions extends GhidraScript {
         }
         dec.println("\n// ANALYZED_CALLER_FUNCTIONS="+analyzed);
         decomp.dispose();
-        summary.close();asm.close();dec.close();
+        summary.close();asm.close();dec.close();refs.close();
     }
 }
