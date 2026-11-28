@@ -10,6 +10,7 @@ on:
       - "scripts/ghidra/TraceNativeScoreAndTactic.java"
       - "scripts/ghidra/DecompileNativeRttiXrefFunctions.java"
       - "scripts/engine_analysis/scan_native_match_player_fields.py"
+      - "scripts/engine_analysis/derive_role_duty_compact_ids.py"
       - "scripts/engine_analysis/fm27_package_audit.py"
       - "scripts/ghidra/AnnotateIl2CppMethods.java"
       - "scripts/engine_analysis/extract_il2cpp_match_methods.py"
@@ -240,6 +241,17 @@ jobs:
           echo $? > analysis/native-engine-unified-exit-code.txt
           tail -n 300 analysis/native-engine-unified-console.log || true
           set -e
+
+      - name: Generate verified IP/OOP role and duty compact-ID map
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/engine_analysis/derive_role_duty_compact_ids.py \
+            --dump analysis/il2cpp/dump.cs \
+            --decomp analysis/native-score-trace/native-score-tactic-decompilations.txt \
+            --outdir analysis/role-duty-map
+          test -s analysis/role-duty-map/role-duty-compact-ids.tsv
+          cat analysis/role-duty-map/role-duty-compact-ids-summary.json
 
       - name: Upload package audit, IL2CPP maps and Ghidra output
         if: always()
