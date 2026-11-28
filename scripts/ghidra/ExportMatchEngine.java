@@ -48,6 +48,45 @@ public class ExportMatchEngine extends GhidraScript {
         symbols.println("Pointer size: " + currentProgram.getDefaultPointerSize());
 
         Set<Function> selected = new LinkedHashSet<>();
+
+        // RTTI-derived virtual method entry RVAs from the matched
+        // game_plugin.dll build 27.1.1+2511875. These are independent of
+        // symbol names and seed direct decompilation of the simulation core.
+        long[] vtableRvas = {
+            // MATCH_MOVEMENT_DIRECTOR (15 slots)
+            0x1bc240L, 0x4c2fd10L, 0x42d64e0L, 0x42d64f0L, 0x42d6500L,
+            0x42d6510L, 0x42d6520L, 0x4993230L, 0x42d6530L, 0x42d6540L,
+            0x42d6550L, 0x42d6560L, 0x42d6570L, 0x42d6580L, 0x42d6590L,
+            // MATCH_WEIGHTS_PROVIDER
+            0x4c2a2f0L,
+            // MATCH_OOP_SCORING_PROVIDER
+            0x4c2da40L,
+            // MATCH_PRESSING_FACTORY
+            0x4576270L,
+            // MATCH_PRESSING_MANAGER_DEFENDER / MIDFIELDER / ATTACKER
+            0x1c0160L, 0x47fa990L, 0x1c0190L, 0x4996d50L, 0x1c01c0L, 0x4997910L,
+            // TACTIC_INFO
+            0x27d3f0L, 0x27d420L, 0x27d430L,
+            // TACTICAL_ROLE
+            0x323f70L, 0x323fa0L, 0x121f990L, 0x121f9a0L, 0x121f980L,
+            0x226590L, 0x2265a0L, 0x2265b0L, 0x121f9b0L, 0x121f970L,
+            // MATCH_MANAGER
+            0x153ce0L, 0x4c70L, 0x26f9700L, 0x16b030L, 0xe4f800L,
+            0xe4f810L, 0x11d0L, 0xe4f820L, 0xd7be0L, 0xd7c80L,
+            0x1511a0L, 0x1327f0L, 0x132800L, 0x270c1d0L,
+            // MATCH_PLAYER
+            0x2b087a0L, 0x1b6640L, 0x2b02030L, 0x183820L, 0x19d0L,
+            0x2b08890L, 0x4956e00L, 0x2b08450L, 0xd7be0L, 0xd7c80L,
+            0x1511a0L, 0xfa660L, 0xfa7d0L
+        };
+        for (long rva : vtableRvas) {
+            var entry = currentProgram.getImageBase().add(rva);
+            Function f = currentProgram.getFunctionManager().getFunctionAt(entry);
+            if (f == null) f = currentProgram.getFunctionManager().getFunctionContaining(entry);
+            symbols.println("RTTI_VTABLE_ENTRY\\tRVA=0x" + Long.toHexString(rva) +
+                "\\tADDRESS=" + entry + "\\tFUNCTION=" + (f == null ? "<unresolved>" : f.getName()));
+            if (f != null) selected.add(f);
+        }
         SymbolIterator si = currentProgram.getSymbolTable().getAllSymbols(true);
         while (si.hasNext() && !monitor.isCancelled()) {
             Symbol sym = si.next();
