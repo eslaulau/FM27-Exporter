@@ -25,7 +25,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.SourceType;
 
 public class DecompileNativeRttiXrefFunctions extends GhidraScript {
-    private static final int MAX_FUNCTIONS = 96;
+    private static final int MAX_FUNCTIONS = 160;
     private static final long MAX_BODY_BYTES = 0x30000L;
 
     private static class Caller {
@@ -37,7 +37,40 @@ public class DecompileNativeRttiXrefFunctions extends GhidraScript {
 
     private int priority(String name) {
         String s=name.toUpperCase();
-        if(s.contains("MATCH_PLAYER_FIELD") || s.contains("TEAM_OOP_FIELD")) return 0;
+
+        // First inspect the compact role/duty identifiers used directly by
+        // decision predicates; these are more specific than raw config records.
+        if (s.contains("MATCH_PLAYER_FIELD_22D8") ||
+            s.contains("MATCH_PLAYER_FIELD_22DC") ||
+            s.contains("MATCH_PLAYER_FIELD_22E0") ||
+            s.contains("MATCH_PLAYER_FIELD_22E4")) return 0;
+
+        if (s.contains("MATCH_PLAYER_FIELD_1300") ||
+            s.contains("MATCH_PLAYER_FIELD_12B8") ||
+            s.contains("MATCH_PLAYER_FIELD_13D8") ||
+            s.contains("MATCH_PLAYER_FIELD_1390")) return 1;
+
+        if (s.contains("MATCH_PLAYER_FIELD_23F1")) return 2;
+
+        if (s.contains("MATCH_PLAYER_FIELD_1278") ||
+            s.contains("MATCH_PLAYER_FIELD_1350") ||
+            s.contains("MATCH_PLAYER_FIELD_12C0") ||
+            s.contains("MATCH_PLAYER_FIELD_1398")) return 3;
+
+        if (s.contains("TEAM_OOP_FIELD") ||
+            s.contains("MATCH_PLAYER_FIELD_1938") ||
+            s.contains("MATCH_PLAYER_FIELD_1978") ||
+            s.contains("MATCH_PLAYER_FIELD_1C58") ||
+            s.contains("MATCH_PLAYER_FIELD_1C98") ||
+            s.contains("MATCH_PLAYER_FIELD_1FBC")) return 4;
+
+        if (s.contains("MATCH_PLAYER_FIELD_23CD") ||
+            s.contains("MATCH_PLAYER_FIELD_23CF") ||
+            s.contains("MATCH_PLAYER_FIELD_23A0") ||
+            s.contains("MATCH_PLAYER_FIELD_23C7") ||
+            s.contains("MATCH_PLAYER_FIELD_1925") ||
+            s.contains("MATCH_PLAYER_FIELD_16E0")) return 5;
+
         if(s.contains("MATCH_DECISION_PROVIDER")) return 0;
         if(s.contains("MATCH_MANAGER_TACTICAL_INPUT") ||
            s.contains("MATCH_MANAGER_ADDITIONAL_TACTICAL_INPUT") ||
@@ -53,7 +86,6 @@ public class DecompileNativeRttiXrefFunctions extends GhidraScript {
         if(s.contains("TACTIC_CHANGE") || s.contains("POSITION_PACKET")) return 7;
         return 9;
     }
-
     private String safe(String s) {
         String x=s.replaceAll("[^A-Za-z0-9_$]","_");
         return x.length()>100?x.substring(0,100):x;
@@ -187,6 +219,41 @@ public class DecompileNativeRttiXrefFunctions extends GhidraScript {
             if(f!=null) analyzed++;
         }
         summary.println("ANALYZED_CALLER_FUNCTIONS="+analyzed);
+        // Emit one-hop callers/callees for this prioritized consumer set.
+        for (Caller caller : ordered) {
+            Function f=currentProgram.getFunctionManager().getFunctionAt(
+                currentProgram.getImageBase().add(caller.start));
+            if (f==null) continue;
+            Set<Long> callees=new LinkedHashSet<>();
+            InstructionIterator insIt=currentProgram.getListing().getInstructions(f.getBody(),true);
+            while(insIt.hasNext()) {
+                Instruction ins=insIt.next();
+                for(Reference ref:currentProgram.getReferenceManager().getReferencesFrom(ins.getAddress())) {
+                    if(ref.getReferenceType().isCall()) {
+                        try {
+                            long rva=ref.getToAddress().subtract(currentProgram.getImageBase());
+                            if(rva>=0) callees.add(rva);
+                        } catch(Exception ignored) {}
+                    }
+                }
+            }
+            for(Long rva:callees) {
+                refs.println("OUTGOING_CALL\tCALLER=0x"+Long.toHexString(caller.start)+
+                    "\tTARGET_RVA=0x"+Long.toHexString(rva));
+            }
+            ghidra.program.model.symbol.ReferenceIterator incoming =
+                currentProgram.getReferenceManager().getReferencesTo(f.getEntryPoint());
+            int inCount=0;
+            while(incoming.hasNext() && inCount<80) {
+                ghidra.program.model.symbol.Reference ref=incoming.next();
+                if(!ref.getReferenceType().isCall()) continue;
+                Function parent=currentProgram.getFunctionManager().getFunctionContaining(ref.getFromAddress());
+                refs.println("INCOMING_CALL\tTARGET_RVA=0x"+Long.toHexString(caller.start)+
+                    "\tFROM="+ref.getFromAddress()+
+                    "\tCALLER="+(parent==null?"<unknown>":parent.getEntryPoint()+" "+parent.getName()));
+                inCount++;
+            }
+        }
         dec.println("\n// ANALYZED_CALLER_FUNCTIONS="+analyzed);
         decomp.dispose();
         summary.close();asm.close();dec.close();
