@@ -21,8 +21,13 @@ FIELD_LABELS = {
     0x1350: "MATCH_PLAYER_SECONDARY_RECORD_MIRROR",
     0x23CD: "MATCH_PLAYER_DERIVED_SLOT_BYTE",
     0x23CF: "MATCH_PLAYER_TACTIC_REFRESH_BYTE",
+    0x23EF: "MATCH_PLAYER_PI_BEHAVIOR_GATE_FLAG",
     0x23A0: "MATCH_PLAYER_SLOT_DERIVED_VALUE",
     0x23C7: "MATCH_PLAYER_SIDE_ORIENTATION_BYTE",
+    0x23D0: "MATCH_PLAYER_CANDIDATE_STATE_A",
+    0x23D1: "MATCH_PLAYER_CANDIDATE_STATE_B",
+    0x23E0: "MATCH_PLAYER_CANDIDATE_GATE_BYTE",
+    0x20C0: "MATCH_PLAYER_AUXILIARY_CONTEXT_POINTER",
     0x16E0: "MATCH_PLAYER_SLOT_AUXILIARY_VALUE",
     0x1925: "MATCH_PLAYER_STATE_BYTE",
     0x1938: "TEAM_IP_SLOT_RECORDS",
@@ -158,17 +163,27 @@ def main():
                         operands=ins.operands
                     except Exception:
                         continue
-                    found=[]
+                    found={}
                     for op in operands:
                         if op.type==CS_OP_MEM and op.mem.disp in FIELD_LABELS:
-                            found.append(op.mem.disp)
+                            access=getattr(op,"access",0)
+                            access_name=("R" if access & 1 else "")+("W" if access & 2 else "")
+                            if not access_name:
+                                access_name="?"
+                            try:
+                                base_reg=ins.reg_name(op.mem.base) if op.mem.base else ""
+                            except Exception:
+                                base_reg=""
+                            found[op.mem.disp]=(access_name,base_reg)
                     if not found:
                         continue
                     ins_rva=ins.address-image_base
-                    for disp in sorted(set(found)):
+                    for disp,(access_name,base_reg) in sorted(found.items()):
                         hits.append({
                             "field_offset":f"0x{disp:X}",
                             "field_label":FIELD_LABELS[disp],
+                            "access":access_name,
+                            "base_register":base_reg,
                             "from_rva":f"0x{ins_rva:X}",
                             "function_start_rva":f"0x{begin:X}",
                             "function_end_rva":f"0x{end:X}",
@@ -199,11 +214,11 @@ def main():
             (args.out/"match-player-field-xrefs.json").write_text(
                 json.dumps(hits,indent=2),encoding="utf-8")
             with (args.out/"match-player-field-xrefs.tsv").open("w",encoding="utf-8") as out:
-                out.write("field_offset\tfield_label\tfrom_rva\tfunction_start_rva\tfunction_end_rva\tinstruction\tunwind_info_rva\n")
+                out.write("field_offset\tfield_label\taccess\tbase_register\tfrom_rva\tfunction_start_rva\tfunction_end_rva\tinstruction\tunwind_info_rva\n")
                 for x in hits:
                     out.write("\t".join(x[k] for k in (
-                        "field_offset","field_label","from_rva","function_start_rva",
-                        "function_end_rva","instruction","unwind_info_rva"))+"\n")
+                        "field_offset","field_label","access","base_register","from_rva",
+                        "function_start_rva","function_end_rva","instruction","unwind_info_rva"))+"\n")
             ranked=sorted(function_fields.items(),key=lambda x:(-len(x[1]),x[0]))
             with (args.out/"match-player-field-consumer-functions.tsv").open("w",encoding="utf-8") as out:
                 out.write("function_start_rva\tfunction_end_rva\tfield_count\tfield_offsets\tfield_labels\n")
@@ -218,7 +233,7 @@ def main():
                 for x in hits:
                     label="MATCH_PLAYER_FIELD_"+x["field_offset"].replace("0x","")
                     out.write(
-                        f'{x["from_rva"]}\t{x["field_offset"]}\tFIELD_ACCESS\t{label}\t'
+                        f'{x["from_rva"]}\t{x["field_offset"]}\t{x["access"]}_FIELD_ACCESS\t{label}\t'
                         f'{x["instruction"]}\t{x["function_start_rva"]}\t'
                         f'{x["function_end_rva"]}\t{x["unwind_info_rva"]}\n'
                     )
