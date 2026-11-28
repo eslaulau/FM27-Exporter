@@ -30,7 +30,7 @@ jobs:
                   target = (root / name).resolve()
                   if target != root and root not in target.parents:
                       raise SystemExit(f"Unsafe ZIP path: {item.filename!r}")
-                  if item.is_dir():
+                  if item.is_dir() or name.endswith("/"):
                       target.mkdir(parents=True, exist_ok=True)
                   else:
                       target.parent.mkdir(parents=True, exist_ok=True)
