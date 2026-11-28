@@ -23,7 +23,7 @@ public class TraceNativeHotspots extends GhidraScript {
     private static final long EXCEPTION_RVA = 0x18176000L;
     private static final long EXCEPTION_SIZE = 0x1A8710L;
     private static final int MAX_CALLERS = 80;
-    private static final int MAX_CALLEES = 48;
+    private static final int MAX_CALLEES = 96;
 
     private final Map<Long,long[]> ranges = new TreeMap<>();
     private final Map<Long,Function> functions = new LinkedHashMap<>();
@@ -56,6 +56,37 @@ public class TraceNativeHotspots extends GhidraScript {
         seeds.put(0x4BFAE10L, "OOP_ATTRIBUTE_SCORER_CONFIG_MEMBER");
         seeds.put(0x4BFA570L, "PITCH_PROXIMITY_SCORER_CONFIG_MEMBER");
         seeds.put(0x4C2DA40L, "MATCH_OOP_SCORING_PROVIDER_VTABLE_SLOT");
+        // MATCH_PLAYER direction-input derivation helpers.
+        seeds.put(0x48362D0L, "DIRECTION_INPUT_A_DERIVATION_HELPER");
+        seeds.put(0x49A20L, "DIRECTION_INPUT_A_SECONDARY_HELPER");
+        seeds.put(0x49ED0L, "DIRECTION_INPUT_B_DERIVATION_HELPER");
+        seeds.put(0x49B40L, "DIRECTION_INPUT_A_CONSTRAINT_HELPER");
+        // Advanced shot-zone high-frequency direct callees.
+        seeds.put(0x47BA710L, "SHOT_ZONE_SAMPLE_ITERATOR_CORE");
+        seeds.put(0x4C35210L, "SHOT_ZONE_DYNAMIC_SCORE_DISPATCH_A");
+        seeds.put(0x4703F10L, "SHOT_ZONE_NUMERIC_HELPER_A");
+        seeds.put(0x4800C40L, "SHOT_ZONE_PHASE_STATE_GATE");
+        seeds.put(0x4943510L, "SHOT_ZONE_NUMERIC_HELPER_B");
+        seeds.put(0x4709800L, "SHOT_ZONE_NUMERIC_HELPER_C");
+        seeds.put(0x49534D0L, "SHOT_ZONE_NUMERIC_HELPER_D");
+        seeds.put(0x4C35230L, "SHOT_ZONE_DYNAMIC_SCORE_DISPATCH_B");
+        seeds.put(0x4820300L, "SHOT_ZONE_NUMERIC_HELPER_E");
+        seeds.put(0x48A6E20L, "SHOT_ZONE_NUMERIC_HELPER_F");
+        seeds.put(0x48235E0L, "SHOT_ZONE_NUMERIC_HELPER_G");
+        seeds.put(0x481FCC0L, "SHOT_ZONE_NUMERIC_HELPER_H");
+        seeds.put(0x48210D0L, "SHOT_ZONE_NUMERIC_HELPER_I");
+        seeds.put(0x47C82C0L, "SHOT_ZONE_NUMERIC_HELPER_J");
+        seeds.put(0x47C8120L, "SHOT_ZONE_NUMERIC_HELPER_K");
+        seeds.put(0x482FD50L, "SHOT_ZONE_NUMERIC_HELPER_L");
+        seeds.put(0x47BEB40L, "SHOT_ZONE_NUMERIC_HELPER_M");
+        seeds.put(0x4764B90L, "SHOT_ZONE_NUMERIC_HELPER_N");
+        seeds.put(0x13F820L, "SHOT_ZONE_NUMERIC_HELPER_O");
+        seeds.put(0x47D0E10L, "SHOT_ZONE_NUMERIC_HELPER_P");
+        seeds.put(0x484CE10L, "SHOT_ZONE_NUMERIC_HELPER_Q");
+        seeds.put(0x498C940L, "SHOT_ZONE_NUMERIC_HELPER_R");
+        seeds.put(0x4782B90L, "SHOT_ZONE_NUMERIC_HELPER_S");
+        seeds.put(0x47A2F20L, "SHOT_ZONE_NUMERIC_HELPER_T");
+        seeds.put(0x4C0E300L, "SHOT_ZONE_DYNAMIC_SCORE_DISPATCH_C");
     }
 
     private String safe(String s) {
@@ -84,9 +115,7 @@ public class TraceNativeHotspots extends GhidraScript {
     private Function ensureFunction(long rva, String name, PrintWriter summary) throws Exception {
         Address entry = currentProgram.getImageBase().add(rva);
         Function existing = currentProgram.getFunctionManager().getFunctionAt(entry);
-        if (existing != null) {
-            // The PE loader or an earlier script may already have created the
-            // exact entry. Reuse it rather than colliding with its namespace.
+        if (existing != null && existing.getBody().getNumAddresses() > 1) {
             functions.put(rva,existing);
             summary.println("REUSE_ENTRY_FUNCTION\\t"+name+"\\tRVA=0x"+
                 Long.toHexString(rva)+"\\tBYTES="+existing.getBody().getNumAddresses()+
@@ -94,7 +123,7 @@ public class TraceNativeHotspots extends GhidraScript {
             return existing;
         }
         Function containing = currentProgram.getFunctionManager().getFunctionContaining(entry);
-        if (containing != null) {
+        if (existing == null && containing != null) {
             functions.put(rva,containing);
             summary.println("REUSE_CONTAINING_FUNCTION\\t"+name+"\\tRVA=0x"+
                 Long.toHexString(rva)+"\\tENTRY="+containing.getEntryPoint()+
@@ -103,7 +132,7 @@ public class TraceNativeHotspots extends GhidraScript {
         }
         long[] range = exactRange(rva);
         if (range == null) {
-            summary.println("NO_PDATA_RANGE\t"+name+"\tRVA=0x"+Long.toHexString(rva));
+            summary.println("NO_PDATA_RANGE\\t"+name+"\\tRVA=0x"+Long.toHexString(rva));
             return null;
         }
         MemoryBlock block = currentProgram.getMemory().getBlock(entry);
@@ -112,18 +141,20 @@ public class TraceNativeHotspots extends GhidraScript {
             return null;
         }
         Address end = currentProgram.getImageBase().add(range[0]-1);
-        DisassembleCommand cmd = new DisassembleCommand(entry,new AddressSet(entry,end),true);
+        AddressSet fullRange = new AddressSet(entry,end);
+        DisassembleCommand cmd = new DisassembleCommand(entry,fullRange,true);
         cmd.applyTo(currentProgram,monitor);
+        // Include instructions already created by the PE loader as well as
+        // newly disassembled ones; loader-created entry stubs can have 1-byte bodies.
         AddressSet body = new AddressSet();
-        InstructionIterator iterator = currentProgram.getListing().getInstructions(
-            cmd.getDisassembledAddressSet(),true);
+        InstructionIterator iterator = currentProgram.getListing().getInstructions(fullRange,true);
         while(iterator.hasNext()) {
             Instruction ins = iterator.next();
             body.add(ins.getMinAddress(),ins.getMaxAddress());
         }
         if (!body.contains(entry) || body.getNumAddresses()<2) {
-            summary.println("DECODE_TOO_SMALL\t"+name+"\tRVA=0x"+
-                Long.toHexString(rva)+"\tstatus="+cmd.getStatusMsg());
+            summary.println("DECODE_TOO_SMALL\\t"+name+"\\tRVA=0x"+
+                Long.toHexString(rva)+"\\tstatus="+cmd.getStatusMsg());
             return null;
         }
         // Remove only functions whose bodies overlap this exact pdata range.
@@ -140,7 +171,20 @@ public class TraceNativeHotspots extends GhidraScript {
                 "\\t"+oldFunction.getName());
             currentProgram.getFunctionManager().removeFunction(oldFunction.getEntryPoint());
         }
-        Function f;
+        Function f = existing;
+        if (f != null) {
+            try {
+                f.setBody(body);
+                summary.println("EXTEND_ENTRY_FUNCTION\\t"+name+"\\tRVA=0x"+
+                    Long.toHexString(rva)+"\\tBYTES="+f.getBody().getNumAddresses());
+                functions.put(rva,f);
+                return f;
+            } catch (Exception ex) {
+                summary.println("SET_BODY_FAILED\\t"+name+"\\tRVA=0x"+
+                    Long.toHexString(rva)+"\\t"+ex);
+                currentProgram.getFunctionManager().removeFunction(entry);
+            }
+        }
         try {
             f = currentProgram.getFunctionManager().createFunction(
                 safe(name),entry,body,SourceType.ANALYSIS);
