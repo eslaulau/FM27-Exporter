@@ -212,6 +212,94 @@ def native_rtti_scan(path: Path, pe: dict, out_dir: Path) -> dict:
             relevant_tables.sort(key=lambda x: (x["type_name"], x["vftable_rva"]))
 
             out_dir.mkdir(parents=True, exist_ok=True)
+            # Recover common x64 RIP-relative code references to RTTI type descriptors
+            # and vftables. This is a bounded byte-pattern index, not a full disassembly.
+            ref_targets = {}
+            for rva, decorated in type_descs.items():
+                if important.search(decorated):
+                    ref_targets[rva] = ("TYPE_DESCRIPTOR", demangle(decorated))
+            for table in tables:
+                ref_targets[table["vftable_rva"]] = ("VFTABLE", table["type_name"])
+
+            code_xrefs = []
+            # REX.W/R + common RIP-relative memory operands: LEA/MOV/CMP/TEST/etc.
+            rex_ops = {0x8D, 0x8B, 0x89, 0x3B, 0x39, 0x85, 0xC7}
+            plain_ops = {0x8D, 0x8B, 0x89, 0x3B, 0x39, 0x85}
+            for sec in sections:
+                if not sec.get("executable") or sec["raw_size"] < 8:
+                    continue
+                lo = sec["raw_ptr"]
+                hi = min(lo + sec["raw_size"], len(mm))
+                blob = mm[lo:hi]
+                length = len(blob)
+                for pos in range(max(0, length - 10)):
+                    first = blob[pos]
+                    second = blob[pos + 1]
+                    if 0x40 <= first <= 0x4F and second in rex_ops and pos + 7 <= length:
+                        modrm = blob[pos + 2]
+                        if (modrm & 0xC7) == 0x05:
+                            disp = struct.unpack_from("<i", blob, pos + 3)[0]
+                            ins_len = 10 if second == 0xC7 else 7
+                            target_rva = sec["va"] + pos + ins_len + disp
+                            if target_rva in ref_targets:
+                                kind, name = ref_targets[target_rva]
+                                code_xrefs.append({
+                                    "from_rva": f"0x{sec['va'] + pos:X}",
+                                    "to_rva": f"0x{target_rva:X}",
+                                    "reference_kind": kind,
+                                    "target_name": name,
+                                    "instruction_pattern": f"{first:02X} {second:02X} {modrm:02X}",
+                                })
+                    elif first in plain_ops and pos + 6 <= length:
+                        modrm = blob[pos + 1]
+                        if (modrm & 0xC7) == 0x05:
+                            disp = struct.unpack_from("<i", blob, pos + 2)[0]
+                            target_rva = sec["va"] + pos + 6 + disp
+                            if target_rva in ref_targets:
+                                kind, name = ref_targets[target_rva]
+                                code_xrefs.append({
+                                    "from_rva": f"0x{sec['va'] + pos:X}",
+                                    "to_rva": f"0x{target_rva:X}",
+                                    "reference_kind": kind,
+                                    "target_name": name,
+                                    "instruction_pattern": f"{first:02X} {modrm:02X}",
+                                })
+                    elif first == 0xFF and pos + 6 <= length and blob[pos + 1] in (0x15, 0x25):
+                        disp = struct.unpack_from("<i", blob, pos + 2)[0]
+                        target_rva = sec["va"] + pos + 6 + disp
+                        if target_rva in ref_targets:
+                            kind, name = ref_targets[target_rva]
+                            code_xrefs.append({
+                                "from_rva": f"0x{sec['va'] + pos:X}",
+                                "to_rva": f"0x{target_rva:X}",
+                                "reference_kind": kind,
+                                "target_name": name,
+                                "instruction_pattern": f"FF {blob[pos+1]:02X}",
+                            })
+
+            # Collapse repeated byte-pattern hits but preserve distinct call sites.
+            code_xrefs = list({
+                (x["from_rva"], x["to_rva"], x["instruction_pattern"]): x
+                for x in code_xrefs
+            }.values())
+            code_xrefs.sort(key=lambda x: (int(x["to_rva"], 16), int(x["from_rva"], 16)))
+            (out_dir / "native-rtti-code-xrefs.json").write_text(
+                json.dumps({
+                    "method": "x64 RIP-relative operand pattern scan over executable sections",
+                    "note": "Candidate references only; confirm each address by Ghidra disassembly.",
+                    "target_count": len(ref_targets),
+                    "reference_count": len(code_xrefs),
+                    "references": code_xrefs,
+                }, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+            with (out_dir / "native-rtti-code-xrefs.tsv").open("w", encoding="utf-8") as xout:
+                xout.write("from_rva\tto_rva\treference_kind\ttarget_name\tinstruction_pattern\n")
+                for x in code_xrefs:
+                    xout.write(
+                        f'{x["from_rva"]}\t{x["to_rva"]}\t{x["reference_kind"]}\t'
+                        f'{x["target_name"]}\t{x["instruction_pattern"]}\n'
+                    )
+
             json_path = out_dir / "native-rtti-vtables.json"
             json_path.write_text(json.dumps({
                 "type_descriptor_count": len(type_descs),
