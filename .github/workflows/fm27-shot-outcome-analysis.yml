@@ -1,0 +1,113 @@
+name: FM27 shot outcome and ball-kick mechanics
+on:
+  push:
+    paths:
+      - ".github/workflows/fm27-shot-outcome-analysis.yml"
+      - "scripts/ghidra/TraceShotOutcomeMechanics.java"
+      - "scripts/engine_analysis/scan_native_target_callers.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: fm27-shot-outcome-analysis
+  cancel-in-progress: true
+jobs:
+  shot-outcome:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and verify FM27 native package
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://github.com/eslaulau/FM27-Exporter/releases/download/fm27-saves/FM27_Engine_Analysis_Package_20261125_v2.zip" \
+            --output FM27_Engine_Analysis_Package_20261125_v2.zip
+          echo "99f5207337e1f9cad84a4771ec08df6c9c9e34bea7c33ace7668124ca6bbb8d6  FM27_Engine_Analysis_Package_20261125_v2.zip" | sha256sum --check
+          mkdir -p game
+          python - <<'PY'
+          import pathlib,zipfile
+          root=pathlib.Path("game").resolve()
+          with zipfile.ZipFile("FM27_Engine_Analysis_Package_20261125_v2.zip") as z:
+              for item in z.infolist():
+                  name=item.filename.replace(chr(92),"/")
+                  target=(root/name).resolve()
+                  if target!=root and root not in target.parents:
+                      raise SystemExit(f"unsafe path: {item.filename}")
+                  if item.is_dir() or name.endswith("/"):
+                      target.mkdir(parents=True,exist_ok=True)
+                  else:
+                      target.parent.mkdir(parents=True,exist_ok=True)
+                      with z.open(item) as src,target.open("wb") as dst:
+                          while chunk:=src.read(1024*1024): dst.write(chunk)
+          PY
+          test -s game/fm_Data/Plugins/x86_64/game_plugin.dll
+      - name: Scan shot, kick-sample and set-piece callers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check capstone==5.0.6
+          python scripts/engine_analysis/scan_native_target_callers.py \
+            --binary game/fm_Data/Plugins/x86_64/game_plugin.dll \
+            --out analysis/shot-outcome \
+            --target 0x4C01760:XG_SHOT_DATA_EVENT_RECORD_WRITER \
+            --target 0x498D400:XG_SHOT_EVENT_VALUE_PROVIDER_UNRESOLVED \
+            --target 0x4D1F0:XG_SHOT_EVENT_CONTEXT_BUILDER \
+            --target 0x1691C0:XG_SHOT_EVENT_PAYLOAD_FINALIZER \
+            --target 0x164680:SHOT_TARGET_REGION_CLASSIFIER \
+            --target 0x166400:TEAM_STAT_QUEUE_WRITER \
+            --target 0x42D2440:BALL_KICK_SAMPLE_EVENT_HANDLER \
+            --target 0x3E4E0:BALL_KICK_SAMPLE_CREATOR_A \
+            --target 0x19EDD0:BALL_KICK_SAMPLE_CREATOR_B \
+            --target 0x5DBD0:MATCH_BALL_KICK_SAMPLE_CREATOR_C \
+            --target 0x42DDC80:SET_PIECE_ATTEMPT_EVENT \
+            --target 0x28D6E30:SET_PIECE_OUTCOME_EVENT \
+            --target 0x1B6490:XG_SHOT_DATA_SLOT_A \
+            --target 0x28D6F60:XG_SHOT_DATA_SLOT_B \
+            --target 0x28D6FB0:XG_SHOT_DATA_SLOT_C \
+            --target 0x481A6A0:ADVANCED_SHOT_ZONE_SPATIAL_PROCESSOR \
+            --target 0x47E44C0:DIRECTION_SPATIAL_CALCULATOR \
+            --target 0x48A6E20:OPPONENT_PREDICTED_POSITION_HELPER \
+            --target 0x47F1E70:PLAYER_TIME_POSITION_SAMPLE_HELPER \
+            --target 0x47C5350:MATCH_STATE_MACHINE_DISPATCHER
+          cat analysis/shot-outcome/native-target-call-summary.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Download Ghidra 12.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.2_build/ghidra_12.2_PUBLIC_20261016.zip" \
+            --output ghidra.zip
+          mkdir ghidra
+          unzip -q ghidra.zip -d ghidra
+      - name: Decompile shot outcome and kick-sample paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p analysis/shot-outcome ghidra-project-shot-outcome
+          GHIDRA_SCRIPT_PATH=$(find ghidra -type f -name analyzeHeadless -print -quit)
+          test -n "$GHIDRA_SCRIPT_PATH"
+          GHIDRA_DIR=$(dirname "$GHIDRA_SCRIPT_PATH")
+          chmod +x "$GHIDRA_DIR/analyzeHeadless"
+          "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-shot-outcome" FM27ShotOutcome \
+            -import "game/fm_Data/Plugins/x86_64/game_plugin.dll" \
+            -overwrite -noanalysis \
+            -scriptPath scripts/ghidra \
+            -postScript TraceShotOutcomeMechanics.java "$PWD/analysis/shot-outcome" \
+            > analysis/shot-outcome/ghidra-console.log 2>&1
+          test -s analysis/shot-outcome/shot-outcome-summary.txt
+          test -s analysis/shot-outcome/shot-outcome-decompilations.txt
+          cat analysis/shot-outcome/shot-outcome-summary.txt
+      - name: Upload shot outcome trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FM27-Shot-Outcome-Trace
+          path: analysis/shot-outcome/
+          if-no-files-found: warn
+          retention-days: 14
