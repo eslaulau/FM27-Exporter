@@ -214,6 +214,7 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         // Strings / indirection tables exposed by the already decompiled scoring parsers.
         long[] dataRvas={0x512e1e5L,0x512e1f2L,0x4c745dbL,0x4c745e4L,
                          0x588e408L,0x5079dc8L,0x52ceaa8L};
+        Set<Long> indirectDataTargets=new LinkedHashSet<>();
         for(long rva:dataRvas) {
             Address a=currentProgram.getImageBase().add(rva);
             MemoryBlock block=currentProgram.getMemory().getBlock(a);
@@ -227,11 +228,26 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
                 StringBuilder hex=new StringBuilder();
                 for(int i=0;i<n;i++) hex.append(String.format("%02X",raw[i]&0xff));
                 refs.println("BYTES\tRVA=0x"+Long.toHexString(rva)+"\t"+hex);
+                if (rva==0x52ceaa8L && n>=8) {
+                    long pointer=currentProgram.getMemory().getLong(a);
+                    refs.println("INDIRECT_POINTER\tDATA_RVA=0x52ceaa8\tPOINTER=0x"+
+                        Long.toHexString(pointer));
+                    if (pointer>0) {
+                        Address pointerAddress=currentProgram.getAddressFactory()
+                            .getDefaultAddressSpace().getAddress(pointer);
+                        long pointerRva=pointerAddress.subtract(currentProgram.getImageBase());
+                        refs.println("INDIRECT_POINTER_RVA=0x"+Long.toHexString(pointerRva));
+                        if (pointerRva>=0) indirectDataTargets.add(pointerRva);
+                    }
+                }
             } catch(Exception ex) { refs.println("READ_ERROR\t"+ex); }
         }
 
         DecompInterface decomp=new DecompInterface();
         decomp.openProgram(currentProgram);
+        for(long targetRva:indirectDataTargets) {
+            seeds.putIfAbsent(targetRva,"IOOP_SCORE_INDIRECT_DATA_TARGET_"+Long.toHexString(targetRva));
+        }
         Set<Long> callees=new LinkedHashSet<>();
         Set<Function> callers=new LinkedHashSet<>();
         int count=0;
