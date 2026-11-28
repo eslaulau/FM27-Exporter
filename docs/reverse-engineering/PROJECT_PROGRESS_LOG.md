@@ -732,3 +732,18 @@ action/output buffer
 - 扩展 post-handoff record consumers：`8ebca595907802c1430ef5710eed617caeaa639f`。
 - Movement Commit workflow 增加 position-writer target，shell continuation 修正：`2c233c436e8c0ff13515cb046966478857cfaad5`、`8cbf5ba49b5fc3b74d567d9b38f1883752706bb3`、`9ce61d276bbc9976da6bb3ebeaaad5228e1b464a`。前两次工作流分别因并发取消/错误续行未产生有效扫描结果；当前以 Run #10 结果为准。
 
+
+
+### Run #10 caller 扫描：Position writer 候选存在两个真实直接调用者
+
+- Workflow：[Movement Commit Run #10](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136817103)，success；Artifact `15260112078`，996,063 bytes。
+- Scanner 统计：27 个目标；144,876 runtime functions；6,158 个候选函数解码；确认 19,789 个 CALL/JMP/Jcc；28 个静态函数指针命中。
+- 新确认 `0x42D3910` 在 CALL site `0x42D4C4C` 调用 `0x2AFB290`。
+- 新确认 `0x42D58E0` 在 CALL site `0x42D5BEB` 调用 `0x2AFB290`。
+- `.xcode` 区域还有 module-relative 32-bit 静态引用指向 `0x2AFB290`。
+- 这纠正了单独 Ghidra 引用表的 `CALLERS=0`：全模块 Capstone 直接扫描找到了两个真实调用点。现阶段仍待反编译这两个 caller 以及它们的上游 caller，才能确认是否接入 match tick 主链。
+- 同轮还确认 `0x3FEF0 → 0x51820`（site `0x4002E`），`0x3FEF0 → 0x83A490`（site `0x3FFE6`）；`0x83A490` 另有 `0x7DACE0` 与 `0x83BBC0` 两组直接调用者。
+
+修复 Ghidra caller 优先级筛选器，将 `MATCH_PLAYER_MOVEMENT_RECORD_AND_POSITION_WRITER`、`MATCH_UPDATE_POST_HANDOFF_STAGE` 和 `MATCH_UPDATE_PRE_HANDOFF_STAGE` 加入最高优先级，Commit `d07e7bbec8dc9f02b063762b024c2f8049881684`。Movement Commit Run #11：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46137041278)，专门反编译以上 caller。
+
+Position writer 专项报告已同步更新，Commit 见报告末尾。
