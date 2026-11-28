@@ -112,9 +112,13 @@ def main():
                 scanned_bytes+=size
                 code=mm[raw:raw+size]
                 for ins in md.disasm(code,image_base+begin):
+                    # Capstone SKIPDATA pseudo-instructions (id 0) have no
+                    # operand detail; reading .operands raises CsError.
+                    if ins.id == 0:
+                        continue
                     try:
                         operands=ins.operands
-                    except (AttributeError, RuntimeError):
+                    except Exception:
                         continue
                     found=[]
                     for op in operands:
