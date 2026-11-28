@@ -89,6 +89,15 @@ public class TraceNativeHotspots extends GhidraScript {
         seeds.put(0x49A20L, "DIRECTION_INPUT_A_SECONDARY_HELPER");
         seeds.put(0x49ED0L, "DIRECTION_INPUT_B_DERIVATION_HELPER");
         seeds.put(0x49B40L, "DIRECTION_INPUT_A_CONSTRAINT_HELPER");
+        // Upstream accessors used by the direction-distribution field initializers.
+        seeds.put(0x4704100L, "MATCH_PLAYER_TACTICAL_PARAMETER_ACCESSOR");
+        seeds.put(0x4815250L, "DIRECTION_BASE_INITIALIZER_CONTEXT_HELPER_A");
+        seeds.put(0x4822D50L, "DIRECTION_BASE_INITIALIZER_CONTEXT_HELPER_B");
+        seeds.put(0x4984DD0L, "DIRECTION_PROBABILITY_WRITER_CONTEXT_HELPER");
+        seeds.put(0x4844060L, "DIRECTION_PROBABILITY_WRITER_NUMERIC_HELPER");
+        seeds.put(0x47F1E70L, "DIRECTION_SECONDARY_GATE_POST_PROCESSOR");
+        seeds.put(0x42D23A0L, "DIRECTION_SECONDARY_GATE_STATE_HELPER");
+        seeds.put(0x47B9510L, "DIRECTION_SECONDARY_GATE_VALUE_HELPER");
         // Advanced shot-zone high-frequency direct callees.
         seeds.put(0x47BA710L, "SHOT_ZONE_SAMPLE_ITERATOR_CORE");
         seeds.put(0x4C35210L, "SHOT_ZONE_DYNAMIC_SCORE_DISPATCH_A");
