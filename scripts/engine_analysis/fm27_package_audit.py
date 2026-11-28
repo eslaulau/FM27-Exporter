@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only inventory and targeted string/metadata audit for an FM27 engine package."""
 from __future__ import annotations
-import argparse, hashlib, json, mmap, re, struct
+import argparse, bisect, hashlib, json, mmap, re, struct
 from pathlib import Path
 
 EXPECTED = {
