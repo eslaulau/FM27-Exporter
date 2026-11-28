@@ -682,3 +682,15 @@ action/output buffer
 对 `0x4911C10` 特定状态分支再次逐指令核对：函数先调用 `0x4986090` 家族 helper 取得内部表索引，从表项 `+0xA0` 读取 64-bit 二维偏移，再分别与 `MATCH_PLAYER+0x140/+0x144` 当前 XY 相加，写入调用者 `param_8[4]/[5]`；同一分支将 `MATCH_PLAYER+0x148/+0x14C` 写入 `param_8[6]/[7]` 并继续经过状态/速度门控。
 
 这使 `param_8[4]/[5]` 可以在该分支下被确认是“当前球员 XY + 内部偏移表二维向量”的候选目标坐标，而不是实际当前 XY 写回。内部索引/表的 UI 语义和输出记录最终消费者仍未破解。技术报告已补充该细节。
+
+
+### Handoff 修复后 Run #7 已完成：tick 上游 caller 得到反编译
+
+- Workflow：[Movement Handoff Run #7](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136282842)，Run ID `46136282842`，success。
+- Artifact：`15260420090`，200,845 bytes，SHA-256 `e2c907f0e21a81ca51091ab48f2bc9eb4dc384b251fbd68f96838cf5067a9766`。
+- 本轮新增 seed `0x3FEF0`，函数体 1,824 bytes；`TraceMovementHandoff.java` caller 稳定快照修复生效，Ghidra 控制台无 `ConcurrentModificationException`。
+- 反编译 `0x3FEF0` 显示它先执行常规 match update 与状态/时间检查，在处理相关 player/record 上下文后，依次调用 `0x83A490`、`0x5DBD0`、`0x51820`。机器 xref 直接确认 `0x3FEF0 → 0x5DBD0`（site `0x40001`）。
+- `0x5DBD0` 内两处调用 `0x61660`（sites `0x5E050`、`0x5FC1C`），本轮再次核实。
+- 本工作流仍未传入 dynamic movement-record TSV（摘要为 `MOVEMENT_FIELD_TSV_MISSING`），所以只用于校验 handoff / tick 调用者，坐标 writer 搜索由 Record Run #6 承担。
+
+**下一项坐标 writer 扫描状态：**Movement Record Run #6 [Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136282836) 已完成新增字段扫描步骤，当前 Ghidra 在反编译候选 reader/writer，Artifact 尚未生成。
