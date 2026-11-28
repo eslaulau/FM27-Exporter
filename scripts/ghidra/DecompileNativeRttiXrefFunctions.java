@@ -37,6 +37,13 @@ public class DecompileNativeRttiXrefFunctions extends GhidraScript {
 
     private int priority(String name) {
         String s=name.toUpperCase();
+        if (s.contains("PI_BEHAVIOR_CANDIDATE_AGGREGATOR") ||
+            s.contains("ROLE_PI_COMMON_VALIDATOR") ||
+            s.contains("HALF_BACK_DROPPING_DM_GATE") ||
+            s.contains("TAKE_FEWER_RISKS_STOPPER_GATE") ||
+            s.contains("CROSSING_PI_SPATIAL_GATE") ||
+            s.contains("ROLE_DUTY_PI_POSITION_GATE") ||
+            s.contains("PI_TRIGGER_PHASE_TARGET_GATE")) return 0;
 
         // First inspect the compact role/duty identifiers used directly by
         // decision predicates; these are more specific than raw config records.
