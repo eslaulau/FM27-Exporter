@@ -46,6 +46,17 @@ jobs:
           PY
           test -s game/fm_Data/Plugins/x86_64/game_plugin.dll
 
+      - name: Scan native direction-generator input-field readers and writers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check capstone==5.0.6
+          python scripts/engine_analysis/scan_direction_generator_fields.py \
+            --binary game/fm_Data/Plugins/x86_64/game_plugin.dll \
+            --out analysis/native-hotspots/direction-generator-fields \
+            > analysis/native-hotspots/direction-generator-fields-console.log 2>&1
+          cat analysis/native-hotspots/direction-generator-fields-console.log
+
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:

@@ -56,6 +56,18 @@ public class TraceNativeHotspots extends GhidraScript {
         seeds.put(0x4BFAE10L, "OOP_ATTRIBUTE_SCORER_CONFIG_MEMBER");
         seeds.put(0x4BFA570L, "PITCH_PROXIMITY_SCORER_CONFIG_MEMBER");
         seeds.put(0x4C2DA40L, "MATCH_OOP_SCORING_PROVIDER_VTABLE_SLOT");
+        // XG_SHOT_DATA event path: trace payload helpers and event/state writers.
+        seeds.put(0x4D1F0L, "XG_SHOT_EVENT_CONTEXT_BUILDER");
+        seeds.put(0x1691C0L, "XG_SHOT_EVENT_PAYLOAD_FINALIZER");
+        seeds.put(0x164680L, "XG_SHOT_GOALKEEPER_OR_TARGET_CONTEXT");
+        seeds.put(0x166400L, "XG_SHOT_EVENT_TEAM_STAT_UPDATE");
+        seeds.put(0x498D400L, "XG_SHOT_MATCH_EVENT_VALUE_PROVIDER");
+        seeds.put(0x4C01AC0L, "XG_SHOT_EVENT_PLAYER_LINK_RESOLVER");
+        seeds.put(0x3592400L, "XG_SHOT_SECONDARY_EVENT_STATE_WRITER");
+        // Fields that feed the seeded direction-parameter distributions.
+        seeds.put(0x2170L, "DIRECTION_INPUT_BASE_FIELD_WRITER_SEED_A");
+        seeds.put(0x21F0L, "DIRECTION_INPUT_BASE_FIELD_WRITER_SEED_B");
+        seeds.put(0x21F8L, "DIRECTION_INPUT_BASE_FIELD_WRITER_SEED_C");
         // MATCH_PLAYER direction-input derivation helpers.
         seeds.put(0x48362D0L, "DIRECTION_INPUT_A_DERIVATION_HELPER");
         seeds.put(0x49A20L, "DIRECTION_INPUT_A_SECONDARY_HELPER");
