@@ -123,6 +123,11 @@ jobs:
             --target 0x4996D50:PRESSING_MANAGER_IMPL_B \
             --target 0x4997910:PRESSING_MANAGER_IMPL_C \
             --target 0x2B05590:COPY_PLAYER_TACTICAL_CANDIDATE_STATE \
+            --target 0x4BF9BA0:OOP_SCORING_PROVIDER_INITIALIZER \
+            --target 0x4BFAE10:OOP_ATTRIBUTE_SCORER_CONFIG_MEMBER \
+            --target 0x4BFA570:PITCH_PROXIMITY_SCORER_CONFIG_MEMBER \
+            --target 0x4C2DA40:IOOP_SCORING_PROVIDER_POSITION_METHOD \
+            --target 0x4C2DAA0:IOOP_SCORING_PROVIDER_METHOD \
             > analysis/native-target-callers-console.log 2>&1
           test -s analysis/native-target-callers/native-target-call-xrefs.tsv
           cat analysis/native-target-callers-console.log
