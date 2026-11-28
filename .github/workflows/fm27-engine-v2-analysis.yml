@@ -104,6 +104,8 @@ jobs:
             --target 0xA8F70:PI_BEHAVIOR_CANDIDATE_AGGREGATOR \
             --target 0x4813B90:ROLE_PI_COMMON_VALIDATOR \
             --target 0x36BE0:HALF_BACK_DROPPING_DM_GATE \
+            --target 0xA7280:TRACKING_CENTRE_FORWARD_CANDIDATE_BUILDER \
+            --target 0xA77D0:PI_STATE_FILTER_AND_GATE \
             --target 0xA79A0:TAKE_FEWER_RISKS_STOPPER_GATE \
             --target 0xA7D20:CROSSING_PI_SPATIAL_GATE \
             --target 0xA82F0:ROLE_DUTY_PI_POSITION_GATE \
