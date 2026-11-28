@@ -47,11 +47,21 @@ jobs:
       - name: Decode metadata and enumerate native IL2CPP methods
         shell: bash
         run: |
-          set -euo pipefail
+          set +e
           META="$PWD/game/fm_Data/il2cpp_data/Metadata/global-metadata.dat"
           BIN="$PWD/game/GameAssembly.dll"
-          rea inspect-il2cpp-metadata "$META" --detail summary --evidence_output "$PWD/analysis/metadata-evidence.json" --json > "$PWD/analysis/metadata-summary.json"
-          rea inspect-il2cpp-metadata "$META" --binary "$BIN" --detail summary --evidence_output "$PWD/analysis/metadata-linked-evidence.json" --json > "$PWD/analysis/metadata-linked-summary.json"
+          rea inspect-il2cpp-metadata "$META" --detail summary --evidence_output "$PWD/analysis/metadata-evidence.json" --json > "$PWD/analysis/metadata-summary.json" 2> "$PWD/analysis/metadata-stderr.txt"
+          echo $? > "$PWD/analysis/metadata-exit-code.txt"
+          rea inspect-il2cpp-metadata "$META" --binary "$BIN" --detail summary --evidence_output "$PWD/analysis/metadata-linked-evidence.json" --json > "$PWD/analysis/metadata-linked-summary.json" 2> "$PWD/analysis/metadata-linked-stderr.txt"
+          echo $? > "$PWD/analysis/metadata-linked-exit-code.txt"
+          echo "=== metadata summary ==="
+          cat "$PWD/analysis/metadata-summary.json" || true
+          echo "=== metadata stderr ==="
+          cat "$PWD/analysis/metadata-stderr.txt" || true
+          echo "=== linked summary ==="
+          cat "$PWD/analysis/metadata-linked-summary.json" || true
+          echo "=== linked stderr ==="
+          cat "$PWD/analysis/metadata-linked-stderr.txt" || true
       - name: Capture PE layout and imports for native game plugin
         shell: bash
         run: |
