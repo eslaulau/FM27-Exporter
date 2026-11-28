@@ -565,3 +565,98 @@ Run #3 曾反编译的 `0x7F20E0`、`0x707A30` 与 handoff 无关，相关解释
 `0x61660) 将候选记录写入 MATCH_PLAYER → `0x4915090) 读取/解包和验收 → `0x4911C10) 生成四 float 候选/动作输出和结果标志。
 
 **最终球员 Transform 或实际速度/运动状态写回仍未定位**，因此目前还不能说已证明真实移动执行。下一步继续找四分量输出的消费者，之后再把角色、职责、PI/TI 与移动执行联系起来。
+
+
+## 2026-11-28：Movement Action Chain 补齐（Unified Run #56 + 专项 Commit #8 / Handoff #6 / Record #5）
+
+本节以已下载的四份 Actions Artifact 逐项核对，不把不同工作流各自的 Run number 混为一套编号。
+
+### 工作流与产物
+
+- Unified Engine Run #56：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46115767659)，Run ID `46115767659`，success；16 个主要步骤均完成。
+  - Artifact `15251543526`，29,859,099 bytes，SHA-256 `4ccf48200a85b8834cabc8e61b910476d39f7005d35fb76bd25f4793bc7f2eae`。
+  - Commit：`050e90d1ad96850c5daad77f4b4ff68d7f99c6ad`。
+- Movement Commit Run #8：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46133501677)，Run ID `46133501677`，success。
+  - Artifact `15258718019`，995,508 bytes，SHA-256 `8671b85490b6a539695ea1243f436ea0f6264c67b8dd7c1962c39de46325df79`。
+  - Commit：`aa0b984c9262cdf04aa6261037208b102e4d1b3f`。
+- Movement Handoff Run #6：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46133487111)，Job success，但 Ghidra 控制台尾部有 `ConcurrentModificationException`，且本轮没有传入 movement-record field TSV；只采纳生成成功的显式 seed 反编译和可核实 xref，不将其描述为完整 consumer pass。
+  - Artifact `15257969048`，160,227 bytes，SHA-256 `6186a067a59de43d4579b13ea3c0ceae9ad6eb18c39770832c5f6f7700e4bb71`。
+  - Commit：`d434cd7ea11f1c4131296c1c23e9f0c96a115fff`。
+- Movement Record Run #5：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46133487021)，success。
+  - Artifact `15258786644`，653,830 bytes，SHA-256 `ef3faead65523306d49d860f66f649a6ac7975432cf46dd56a2696a75fb98225`。
+  - Commit：`d434cd7ea11f1c4131296c1c23e9f0c96a115fff`。
+
+详细分析报告：[MovementActionChain Run #56 / Commit #8 / Handoff #6 / Record #5](https://github.com/eslaulau/FM27-Exporter/blob/main/docs/reverse-engineering/FM27_27.1.1_MovementActionChain_Run56_20261128.md)，Commit：`3d7b0b8ffe101a3a072bc937f5b6a6886dcb458d`。
+
+### 新确认：Match tick 调用候选 handoff
+
+Movement Commit Run #8 的机器 CALL xref：
+- `0x3FEF0 → 0x5DBD0`，site `0x40001`；
+- `0x5DBD0 → 0x61660`，sites `0x5E050`、`0x5FC1C`。
+
+这确认 `0x61660` 的候选状态 handoff 由 match-candidate tick dispatcher `0x5DBD0` 在 tick 流程中调用。它和此前确认的 `0x61660 → MATCH_PLAYER+0x1BB0` 写入链相连。
+
+### 新确认：movement record → action output dispatcher
+
+机器 CALL xref 确认：
+- `0x4862CB0 → 0x4863C40`（两处）；
+- `0x4862CB0 → 0x4915090`；
+- `0x4863C40 → 0x4911C10`；
+- `0x4863C40 → 0x4915090`（两处）；
+- `0x4911C10 → 0x4915090`；
+- `0x4915090 → 0x4863C40`（一处直接 CALL；尚不把它解释为普通递归，需继续解码具体分支）。
+
+Handoff Run #6 中 `0x4863C40` 的反编译显示：它根据输入 flag 在 `0x4911C10` 动作候选构建和 `0x4915090` movement-record 判定之间分派；部分分支再次执行记录验收，并输出坐标/向量、阈值和状态标签等缓冲区字段。它读取当前球员位置相关字段 `MATCH_PLAYER+0x140/+0x144` 用于空间比较，但该函数内未见写入这两个字段。
+
+`0x4911C10` 构造四 float 分量的候选/动作输出与元数据；`0x4915090` 读取 `MATCH_PLAYER+0x1BB0` 记录，结合 tick、阶段、PI/OOP、边界、历史样本及关联球员冲突进行验收并向调用者输出候选信息。
+
+**严格结论：**已从“候选记录被写入 MATCH_PLAYER”推进到“match tick 驱动 handoff，并有候选记录 reader / action builder / dispatcher 形成下游输出缓冲区”的中间链。仍未证明当前坐标、速度/加速度或 Unity/native Transform 的最终写回。
+
+### 新确认：Movement Director 的空间映射层
+
+Run #56 对 `MATCH_MOVEMENT_DIRECTOR` vtable 15 槽进行分析。slot 7（`0x4993230`）是 FNV-1a 风格 32-bit key 的 hash/map 查找；命中项的类型 byte 位于 `entry+0x14`，类型不是 10 时调用 `0x492D060`，未命中/类型 10 则复制 fallback coordinate record。
+
+`0x492D060` 按类型 0–9 选择 Director 内部几何/锚点数据，使用 side 分组记录生成坐标，计算并归一化空间方向后做投影；在较新版本分支中，还扫描对方 11 个位置槽寻找最近对手，并使用对手朝向 `+0xA0/+0xA4` 调整目标点，最终调用 `0x492D840` 后处理。
+
+这确认存在“键映射 → 类型选择 → 几何投影/对手近邻修正”的空间变换层。类型 0–9 尚无 UI/战术语义映射，不得直接把它们命名为角色或跑位指令。
+
+### Movement Record Run #5 扫描覆盖
+
+- PE runtime functions：144,876；
+- 候选函数 572，扫描 566；
+- 原始命中 2,445；代码扫描量 5,870,779 bytes；
+- movement-record 字段引用 2,091，唯一消费者函数 295；
+- 选出 32 个动态 Ghidra seeds（候选集合 244 个）。
+
+新增候选消费者覆盖 `0x489DEA0`、`0x48ECA60`、`0x481A6A0`、`0x48A8440`、`0x4878680`、`0x4829050`、`0x496F840`、`0x4856010`、`0x4917C20` 等。此扫描扩大了记录消费者样本，但不构成最终 Transform 写入证据。
+
+### 主线现状与下一轮（修正）
+
+当前已确认中间链：
+
+```text
+0x3FEF0 → 0x5DBD0 (match-candidate tick)
+                 ↓
+              0x61660
+                 ↓
+MATCH_PLAYER+0x1BB0 / +0x1C64 state
+                 ↓
+0x4915090 (record decision/reader)
+                 ↓
+0x4911C10 (4-float action candidate builder)
+                 ↓
+0x4863C40 (movement decision/action output dispatcher)
+                 ↓
+action/output buffer
+```
+
+独立的 Movement Director 空间链：
+``0x4993230`` hash lookup → type 0–9 → `0x492D060` spatial projection → `0x492D840` post-transform。两条链是否在实际运动写回点汇合，尚未证明。
+
+下一轮不再重复全量扫描，锁定：
+1. 在字段扫描器加入 `MATCH_PLAYER+0x140/+0x144` 当前 XY 候选偏移；筛选同一函数中同时访问 movement-record 字段与当前 XY 写入字段的函数，并另行检查两坐标均为写访问的候选。
+2. 修复 `TraceMovementHandoff.java` 的 caller 集合迭代并发修改问题：在遍历 callers 前复制稳定快照；恢复完整动态 consumer pass。
+3. 对坐标写入候选反查 caller，确认是否来自 `0x4863C40`、`0x4911C10`、`0x4915090` 或 match tick/update 路径；仅有 +0x140/+0x144 偏移不能证明对象身份。
+4. 并行保留战术参数数据源问题：继续追 `MATCH_PLAYER+0x480..+0x4C4` 参数向量及 TEAM `+0x149E4..+0x14A00` 系数区的真实初始化/复制路径。
+5. 移动执行链闭合后，转向传球、射门质量和比分事件写入机制，再用真实赛季数据反向设计四后卫战术。
+
