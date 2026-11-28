@@ -6,6 +6,7 @@ on:
       - "scripts/engine_analysis/fm27_package_audit.py"
       - "scripts/ghidra/ExportMatchEngineFast.java"
       - "scripts/ghidra/ExportMatchEnginePressingCore.java"
+      - "scripts/ghidra/ExportNativeRttiTargets.java"
       - "scripts/ghidra/AnnotateIl2CppMethods.java"
       - "scripts/engine_analysis/extract_il2cpp_match_methods.py"
   workflow_dispatch:
@@ -144,6 +145,31 @@ jobs:
             > analysis/gameassembly/ghidra-console.log 2>&1
           echo $? > analysis/gameassembly/ghidra-exit-code.txt
           tail -n 180 analysis/gameassembly/ghidra-console.log || true
+          set -e
+
+      - name: Analyze RTTI-discovered native match and tactics classes
+        shell: bash
+        run: |
+          set +e
+          mkdir -p analysis/native-rtti ghidra-project-native-rtti
+          RTTI_TSV="analysis/package-audit/native-rtti/native-rtti-vtables.tsv"
+          if [ ! -s "$RTTI_TSV" ]; then
+            echo "No native RTTI vtable output; skipping class-target analysis." \
+              > analysis/native-rtti/analysis-skipped.txt
+            exit 0
+          fi
+          GHIDRA_DIR=$(find ghidra -type f -name analyzeHeadless -printf '%h\n' | head -n1)
+          chmod +x "$GHIDRA_DIR/analyzeHeadless"
+          "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-native-rtti" FM27NativeRttiTargets \
+            -import "game/fm_Data/Plugins/x86_64/game_plugin.dll" \
+            -overwrite -noanalysis \
+            -scriptPath scripts/ghidra \
+            -postScript ExportNativeRttiTargets.java \
+              "$PWD/$RTTI_TSV" \
+              "$PWD/analysis/native-rtti" \
+            > analysis/native-rtti/ghidra-console.log 2>&1
+          echo $? > analysis/native-rtti/ghidra-exit-code.txt
+          tail -n 220 analysis/native-rtti/ghidra-console.log || true
           set -e
 
       - name: Analyze native match-engine entry points without global timeout
