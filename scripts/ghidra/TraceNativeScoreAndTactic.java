@@ -61,6 +61,13 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         seeds.put(0x4bf9a50L, "MATCH_WEIGHTS_PROVIDER_INITIALIZER");
         seeds.put(0x4bf9c70L, "OOP_ATTRIBUTE_SCORER_INITIALIZER");
         seeds.put(0x4bf9d30L, "PITCH_PROXIMITY_SCORER_INITIALIZER");
+        seeds.put(0x104760L, "PLAYER_TACTIC_FLAGS_PRIMARY_STATE_DECODER");
+        seeds.put(0x1043b0L, "PLAYER_TACTIC_FLAGS_SECONDARY_STATE_DECODER");
+        seeds.put(0x492ed70L, "OOP_SLOT_RECORD_DERIVED_BYTE");
+        seeds.put(0x484edb0L, "OOP_PRIMARY_EXTENDED_RECORD_COMBINER");
+        seeds.put(0x0c5580L, "MATCH_PLAYER_POST_TACTIC_REFRESH");
+        seeds.put(0x104fa0L, "MATCH_PLAYER_EXTENDED_SLOT_VALUE_DERIVER");
+        seeds.put(0x2b57ba0L, "TEAM_TACTIC_COLLECTION_APPLIER");
         seeds.put(0x2bbf350L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_1");
         seeds.put(0x2bbf420L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_2");
         seeds.put(0x2bbf580L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_4");
