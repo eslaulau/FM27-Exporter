@@ -64,10 +64,15 @@ public class DecompileNativeRttiXrefFunctions extends GhidraScript {
             s.contains("MATCH_PLAYER_FIELD_1C98") ||
             s.contains("MATCH_PLAYER_FIELD_1FBC")) return 4;
 
+        if (s.contains("MATCH_PLAYER_FIELD_23EF")) return 0;
+
         if (s.contains("MATCH_PLAYER_FIELD_23CD") ||
             s.contains("MATCH_PLAYER_FIELD_23CF") ||
             s.contains("MATCH_PLAYER_FIELD_23A0") ||
             s.contains("MATCH_PLAYER_FIELD_23C7") ||
+            s.contains("MATCH_PLAYER_FIELD_23D0") ||
+            s.contains("MATCH_PLAYER_FIELD_23D1") ||
+            s.contains("MATCH_PLAYER_FIELD_23E0") ||
             s.contains("MATCH_PLAYER_FIELD_1925") ||
             s.contains("MATCH_PLAYER_FIELD_16E0")) return 5;
 
