@@ -177,7 +177,9 @@ public class DecompileMovementXrefFunctions extends GhidraScript {
         if(f.getBody().getNumAddresses()>MAX_BODY_BYTES) {
             dec.println("// SKIPPED_OVERSIZE");
         } else {
-            DecompileResults result=decomp.decompileFunction(f,12,monitor);
+            long bytes=f.getBody().getNumAddresses();
+            int timeout=bytes>0x7000?60:(bytes>0x2500?35:20);
+            DecompileResults result=decomp.decompileFunction(f,timeout,monitor);
             if(result!=null&&result.decompileCompleted()&&result.getDecompiledFunction()!=null)
                 dec.println(result.getDecompiledFunction().getC());
             else dec.println("// DECOMPILE_FAILED "+(result==null?"no result":result.getErrorMessage()));
