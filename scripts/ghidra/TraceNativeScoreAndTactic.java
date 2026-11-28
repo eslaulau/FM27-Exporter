@@ -92,8 +92,21 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         seeds.put(0x4c2da40L, "MATCH_OOP_SCORING_PROVIDER_VTABLE_SLOT");
         seeds.put(0x4c2a2f0L, "MATCH_WEIGHTS_PROVIDER_VTABLE_SLOT");
 
-        seeds.put(0x1bc240L, "MATCH_MOVEMENT_DIRECTOR_VTABLE_SLOT_0");
-        seeds.put(0x4993230L, "MATCH_MOVEMENT_DIRECTOR_LOOKUP_SLOT");
+        seeds.put(0x1bc240L, "MATCH_MOVEMENT_DIRECTOR_DESTRUCTOR_SLOT_0");
+        seeds.put(0x4c2fd10L, "MATCH_MOVEMENT_DIRECTOR_SLOT_1");
+        seeds.put(0x42d64e0L, "MATCH_MOVEMENT_DIRECTOR_SLOT_2");
+        seeds.put(0x42d64f0L, "MATCH_MOVEMENT_DIRECTOR_SLOT_3");
+        seeds.put(0x42d6500L, "MATCH_MOVEMENT_DIRECTOR_SLOT_4");
+        seeds.put(0x42d6510L, "MATCH_MOVEMENT_DIRECTOR_SLOT_5");
+        seeds.put(0x42d6520L, "MATCH_MOVEMENT_DIRECTOR_SLOT_6");
+        seeds.put(0x4993230L, "MATCH_MOVEMENT_DIRECTOR_SLOT_7");
+        seeds.put(0x42d6530L, "MATCH_MOVEMENT_DIRECTOR_SLOT_8");
+        seeds.put(0x42d6540L, "MATCH_MOVEMENT_DIRECTOR_SLOT_9");
+        seeds.put(0x42d6550L, "MATCH_MOVEMENT_DIRECTOR_SLOT_10");
+        seeds.put(0x42d6560L, "MATCH_MOVEMENT_DIRECTOR_SLOT_11");
+        seeds.put(0x42d6570L, "MATCH_MOVEMENT_DIRECTOR_SLOT_12");
+        seeds.put(0x42d6580L, "MATCH_MOVEMENT_DIRECTOR_SLOT_13");
+        seeds.put(0x42d6590L, "MATCH_MOVEMENT_DIRECTOR_SLOT_14");
         seeds.put(0x2f5bba0L, "TACTICS_MANAGER_CORE");
         seeds.put(0x2f5ba70L, "TACTICS_MANAGER_SECONDARY");
         seeds.put(0xe9ac40L, "TACTIC_LOADER_CORE");
@@ -341,7 +354,11 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         }
         // Decompile a bounded set of direct callers of the PI/role aggregators.
         Map<Address, Function> prioritizedCallers = new LinkedHashMap<>();
-        long[] callerTargets={0x0a8f70L,0x4813b90L,0x036be0L,0x0a79a0L,0x0a7d20L,0x0a82f0L};
+        long[] callerTargets={0x0a8f70L,0x4813b90L,0x036be0L,0x0a79a0L,0x0a7d20L,0x0a82f0L,
+            0x11fa50L,0x11e260L,0x4c351e0L,0x4c2da40L,0x4c2dab0L,
+            0x4c2fd10L,0x42d64e0L,0x42d64f0L,0x42d6500L,0x42d6510L,
+            0x42d6520L,0x4993230L,0x42d6530L,0x42d6540L,0x42d6550L,
+            0x42d6560L,0x42d6570L,0x42d6580L,0x42d6590L};
         for(long targetRva:callerTargets) {
             Address target=currentProgram.getImageBase().add(targetRva);
             Function targetFunction=currentProgram.getFunctionManager().getFunctionAt(target);
