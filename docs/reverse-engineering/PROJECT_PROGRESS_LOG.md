@@ -161,3 +161,81 @@ Run #8 不重复全量 IL2CPP/字段扫描；复用当前 .pdata 范围、字段
 - 详细报告更新 Commit：`778ce5b4ed50c48b643fe7d74750395dc2c9eb3f`。
 
 下一阶段要把创建时的初始化（`0xF8050`）与初始化之后的参数刷新（`0x3C720/0x3BDB0/0x48334D0`）分开追踪。Run #8 已将 `0x4815250` 等 helper 加入反编译目标，用于验证这条链。
+
+
+## 2026-11-28：Run #8 完成，转向追踪参数源数据（Run #12 进行中）
+
+### Run #8 已确认成功
+
+- Workflow：[Run #8](https://github.com/eslaulau/FM27-Exporter/actions/runs/46126771752)，Run ID `46126771752`，success
+- Commit：`c6afa51c23f3a73ee007ea3c8d06ee8c79d446cb`
+- Artifact：`15256007922`，1,282,754 bytes
+- SHA-256：`7440afdec86a144395120bc1a212c0b8302815fb339a820a22595ae6f3b1cb6b`
+- 输出目录：`native-hotspot-summary.txt`、`native-hotspot-decompilations.txt`、`native-hotspot-xrefs.txt`、`direction-generator-fields/`
+- 本轮函数体：`0x4704100` 2,354 bytes；`0x4815250` 1,422 bytes；`0x4822D50` 2,185 bytes；`0x4984DD0` 132 bytes；`0x47F1E70` 679 bytes。
+
+**修正此前对 accessor 的理解：**`0x4704100` 不是“读取战术枚举”的简单 getter，而是参数值计算器。它读取 `MATCH_PLAYER+0x480+(signed char)ID` 的参数字节；当 ID ≤ `0x0E` 时先乘以 5，其余 ID 保留原尺度。当前已看到的调用 ID 达到 `0x44`。因此不能把这些 ID 直接对应到 TeamInstruction / PlayerInstruction。
+
+### Run #8 核心公式已解码
+
+第三参数是组合 flags，控制以下修正项：
+- 球员时间/阶段字段 `+0x1228) 与球队系数 `+0x149FC`；
+- 球员 `+0x21F8/+0x21FC/+0x21F0/+0x22A8/+0x2214/+0x2234` 分别与球队系数 `+0x149F0/+0x149E8/+0x149EC/+0x149E4/+0x14A00/+0x149F8` 组合；
+- 有效 OOP 槽位、当前阶段 PI 记录及 `+0x21CC` 门控；
+- 部分 flags 附加常数、按 ID 类别变换值；
+- `param_3 & 0x3FF) 最低置位 bit 选择 `VA 0x18507A440` 的 10 组非线性归一化曲线之一（每组 12 bytes）；
+- 特定 flags 下通过 team `+0x34ED` 关联索引递归计算另一球员的同一参数，再按其 `+0x11C8` 权重与本球员值混合。
+
+由此得到的正确数据链是：
+
+```text
+MATCH_PLAYER +0x480..+0x4C4 参数字节向量
+                   +
+TEAM +0x149E4..+0x14A00 系数候选区
+                   +
+球员时间/阶段/PI/槽位/球队状态
+                   ↓
+0x4704100 动态参数值计算器（flags + 参数类别 + 曲线 + 关联球员混合）
+                   ↓
+0x3C720 / 0x48334D0 等初始化或刷新函数
+                   ↓
+MATCH_PLAYER 的 +0x2170/+0x21F0/+0x21F8/+0x22A0 等派生字段
+                   ↓
+0x45AC0 / 0x496F840 / 0x492D060 / 0x494F820
+                   ↓
+候选方向、空间投影和候选时空验证
+```
+
+**未确认：**`+0x480..+0x4C4` 字节向量的真正语义（是否包含球员属性、角色参数、配置参数或组合数据）；team 系数块各字段写入来源；10 个曲线表项具体常量；任何 UI 指令的一一映射。
+
+### 同轮 helper 的准确边界
+
+- `0x4815250` 组合两侧团队统计子对象、活动球员槽位、球员 `+0x22F8` 权重、双方时间/阶段字段和多个 team 数值，产出 0–100 的相对指标；目前不能擅自命名为控球率、压迫或实力值。
+- `0x4822D50` 仅在 team `+0x1556E == 1` 时生成扩展模式状态 bitmask；由时间、阶段、对手和比赛状态共同决定。
+- `0x4984DD0` 是双方时间/阶段先后比较器。
+- `0x47F1E70` 是状态/历史记录容器更新，不等于最终球员移动指令。
+
+### 相关仓库提交
+
+- 主分析报告新增 Section 11：`0408e14e0f93006c798a757c64717ad10a684de1`
+- Ghidra 参数向量/队伍系数写入者自动 seeds 与归一化曲线导出：`7adc3e15545a850aaa46fe6827f8b9d9265a5cec`
+- 扩展字段扫描器：`f93364af559445415d063df7260b985d9d232333)
+- 修正包装脚本换行：`2af97d1bd8ac179fe998830bf16a60d69c064c7f`
+- 工作流调用扩展扫描器：`1276d6572dd3f7c24263f17532fbac291a188bc4`
+- 将 accessor 函数名改为中性、符合证据的 `MATCH_PLAYER_PARAMETER_VECTOR_VALUE_EVALUATOR`：`84d94c7b2b129cf1d9526e86d216097ffebd8a13`
+- 工作流监听 scanner 的源文件变化：`3d41e89eacf353667426a02d3afd162bd7e90392`
+
+### 失败/取消工作流如实记录
+
+- Run #9（`46127545533`）被更新工作流时的 `concurrency.cancel-in-progress` 取消；不产生有效分析结论。
+- Run #10（`46127579330`）在扫描器导入时失败：包装文件生成了字面量 `\\n`，导致 Python `SyntaxError`，不是扫描结果或引擎错误。
+- Run #11（`46127754952`）再次被 Run #12 的新工作流运行取消。
+- Run #12（[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46127758872)）使用修复后的脚本和最新工作流；最近一次查询为 in progress，正在执行参数向量/系数区扫描，尚无有效结果。
+
+### Run #12 预期交付 / 下一步
+
+1. 直接找出 `+0x480..+0x4C4` 参数向量固定偏移的写入函数与批量拷贝函数。
+2. 找出 `+0x149E4..+0x14A00` 8 个系数候选字段的生产者/初始化器。
+3. 从 `parameter-constant-tables.txt` 读取 `VA 0x18507A440` 的 10 行常量，确认曲线公式参数。
+4. 检查新自动 seeds 的函数体与 caller/callee，建立数据从初始化/托管结构传到 MATCH_PLAYER 的路径。
+5. 在数据源确立后，再尝试对应到托管层的角色/职责/PI/TI；不得先猜 UI 语义。
