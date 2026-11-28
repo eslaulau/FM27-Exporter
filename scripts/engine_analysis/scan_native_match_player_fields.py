@@ -41,10 +41,10 @@ FIELD_LABELS = {
     0x15575: "TEAM_OOP_EXTENDED_MODE_SELECTOR",
     0x154EC: "TEAM_OOP_PLAYER_EXTENSION_MODE",
     0x15340: "TEAM_PLAYER_REVERSE_LOOKUP",
-    // These belong to the OOP candidate-arbitration context (base is not
-    // proven to be MATCH_PLAYER); keep provenance neutral until writers are mapped.
-    0x1E40: "CANDIDATE_ARBITRATION_CONTEXT_VALUE_A",
-    0x1E54: "CANDIDATE_ARBITRATION_CONTEXT_VALUE_B",
+    // MATCH_PLAYER fields used by the OOP direction-search step selector.
+    // Their semantic source is still unknown; trace readers and writers.
+    0x1E40: "MATCH_PLAYER_DIRECTION_SEARCH_INPUT_A",
+    0x1E54: "MATCH_PLAYER_DIRECTION_SEARCH_INPUT_B",
 }
 
 def parse_pe(mm):
