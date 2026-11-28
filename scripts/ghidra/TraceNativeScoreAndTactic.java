@@ -107,6 +107,16 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         seeds.put(0x42d6570L, "MATCH_MOVEMENT_DIRECTOR_SLOT_12");
         seeds.put(0x42d6580L, "MATCH_MOVEMENT_DIRECTOR_SLOT_13");
         seeds.put(0x42d6590L, "MATCH_MOVEMENT_DIRECTOR_SLOT_14");
+        // Candidate decision chain and movement-director spatial lookup.
+        seeds.put(0x496f840L, "OOP_CANDIDATE_ARBITRATION_ORCHESTRATOR");
+        seeds.put(0x4856010L, "MATCH_PLAYER_CANDIDATE_STATE_PRODUCER");
+        seeds.put(0x485ca40L, "TRACKING_CF_CANDIDATE_UPSTREAM");
+        seeds.put(0x4862cb0L, "TRACKING_CF_CANDIDATE_PIPELINE");
+        seeds.put(0x4865900L, "MATCH_PLAYER_CANDIDATE_STATE_BUILDER");
+        seeds.put(0x4873400L, "OOP_CANDIDATE_FILTER_GATE");
+        seeds.put(0x4874ac0L, "PHASE_CANDIDATE_STATE_PROCESSOR");
+        seeds.put(0x492d060L, "MOVEMENT_DIRECTOR_SPATIAL_ENTRY_TRANSFORM");
+        seeds.put(0x148310L, "CANDIDATE_STATE_UPDATE_CALLER");
         seeds.put(0x2f5bba0L, "TACTICS_MANAGER_CORE");
         seeds.put(0x2f5ba70L, "TACTICS_MANAGER_SECONDARY");
         seeds.put(0xe9ac40L, "TACTIC_LOADER_CORE");
@@ -236,6 +246,13 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
             if (caller!=null) callers.add(caller);
         }
     }
+    private int decompileTimeout(Function f) {
+        long n=f.getBody().getNumAddresses();
+        if (n>0x8000L) return 50;
+        if (n>0x3000L) return 35;
+        return 15;
+    }
+
     private void decompile(Function f, DecompInterface decomp, PrintWriter out, String label) {
         out.println("\n// ===== "+f.getEntryPoint()+" "+label+
             " BODY_BYTES="+f.getBody().getNumAddresses()+" =====");
@@ -243,7 +260,7 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
             out.println("// SKIPPED_OVERSIZE");
             return;
         }
-        DecompileResults r=decomp.decompileFunction(f,12,monitor);
+        DecompileResults r=decomp.decompileFunction(f,decompileTimeout(f),monitor);
         if (r!=null&&r.decompileCompleted()&&r.getDecompiledFunction()!=null)
             out.println(r.getDecompiledFunction().getC());
         else out.println("// DECOMPILE_FAILED "+(r==null?"no result":r.getErrorMessage()));
@@ -354,7 +371,10 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         }
         // Decompile a bounded set of direct callers of the PI/role aggregators.
         Map<Address, Function> prioritizedCallers = new LinkedHashMap<>();
-        long[] callerTargets={0x0a8f70L,0x4813b90L,0x036be0L,0x0a79a0L,0x0a7d20L,0x0a82f0L,
+        long[] callerTargets={
+            0x496f840L,0x4856010L,0x485ca40L,0x4862cb0L,0x4865900L,
+            0x4873400L,0x4874ac0L,0x492d060L,0x148310L,
+            0x0a8f70L,0x4813b90L,0x036be0L,0x0a79a0L,0x0a7d20L,0x0a82f0L,
             0x11fa50L,0x11e260L,0x4c351e0L,0x4c2da40L,0x4c2dab0L,
             0x4c2fd10L,0x42d64e0L,0x42d64f0L,0x42d6500L,0x42d6510L,
             0x42d6520L,0x4993230L,0x42d6530L,0x42d6540L,0x42d6550L,
@@ -378,14 +398,14 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         }
         int callerCount=0;
         for(Map.Entry<Address,Function> entry:prioritizedCallers.entrySet()) {
-            if(monitor.isCancelled() || callerCount>=32) break;
+            if(monitor.isCancelled() || callerCount>=48) break;
             Function caller=entry.getValue();
             summary.println("PRIORITIZED_INCOMING_CALLER\t"+caller.getEntryPoint()+
                 "\t"+caller.getName()+"\tbytes="+caller.getBody().getNumAddresses());
             dec.println("\n// ===== PRIORITIZED_INCOMING_CALLER "+caller.getEntryPoint()+
                 " "+caller.getName()+" =====");
             if(caller.getBody().getNumAddresses()<=MAX_DECOMPILE) {
-                DecompileResults result=decomp.decompileFunction(caller,12,monitor);
+                DecompileResults result=decomp.decompileFunction(caller,decompileTimeout(caller),monitor);
                 if(result!=null && result.decompileCompleted() && result.getDecompiledFunction()!=null)
                     dec.println(result.getDecompiledFunction().getC());
                 else dec.println("// DECOMPILE_FAILED "+(result==null?"no result":result.getErrorMessage()));
