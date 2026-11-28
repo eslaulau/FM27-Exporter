@@ -7,6 +7,7 @@ on:
       - "scripts/ghidra/ExportMatchEngineFast.java"
       - "scripts/ghidra/ExportMatchEnginePressingCore.java"
       - "scripts/ghidra/ExportNativeRttiTargets.java"
+      - "scripts/engine_analysis/fm27_package_audit.py"
       - "scripts/ghidra/AnnotateIl2CppMethods.java"
       - "scripts/engine_analysis/extract_il2cpp_match_methods.py"
   workflow_dispatch:
@@ -147,64 +148,37 @@ jobs:
           tail -n 180 analysis/gameassembly/ghidra-console.log || true
           set -e
 
-      - name: Analyze RTTI-discovered native match and tactics classes
+      - name: Unified native engine analysis (seed map, pressing flow, RTTI classes)
         shell: bash
         run: |
           set +e
-          mkdir -p analysis/native-rtti ghidra-project-native-rtti
+          mkdir -p analysis/ghidra analysis/ghidra-pressing analysis/native-rtti ghidra-project-native
+          GHIDRA_DIR=$(find ghidra -type f -name analyzeHeadless -printf '%h\n' | head -n1)
+          chmod +x "$GHIDRA_DIR/analyzeHeadless"
+          ARGS=(
+            -import "game/fm_Data/Plugins/x86_64/game_plugin.dll"
+            -overwrite
+            -noanalysis
+            -scriptPath scripts/ghidra
+            -postScript ExportMatchEngineFast.java "$PWD/analysis/ghidra"
+            -postScript ExportMatchEnginePressingCore.java "$PWD/analysis/ghidra-pressing"
+          )
           RTTI_TSV="analysis/package-audit/native-rtti/native-rtti-vtables.tsv"
-          if [ ! -s "$RTTI_TSV" ]; then
-            echo "No native RTTI vtable output; skipping class-target analysis." \
+          if [ -s "$RTTI_TSV" ]; then
+            ARGS+=(
+              -postScript ExportNativeRttiTargets.java
+              "$PWD/$RTTI_TSV"
+              "$PWD/analysis/native-rtti"
+            )
+          else
+            echo "No native RTTI vtable output; class-target pass skipped." \
               > analysis/native-rtti/analysis-skipped.txt
-            exit 0
           fi
-          GHIDRA_DIR=$(find ghidra -type f -name analyzeHeadless -printf '%h\n' | head -n1)
-          chmod +x "$GHIDRA_DIR/analyzeHeadless"
-          "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-native-rtti" FM27NativeRttiTargets \
-            -import "game/fm_Data/Plugins/x86_64/game_plugin.dll" \
-            -overwrite -noanalysis \
-            -scriptPath scripts/ghidra \
-            -postScript ExportNativeRttiTargets.java \
-              "$PWD/$RTTI_TSV" \
-              "$PWD/analysis/native-rtti" \
-            > analysis/native-rtti/ghidra-console.log 2>&1
-          echo $? > analysis/native-rtti/ghidra-exit-code.txt
-          tail -n 220 analysis/native-rtti/ghidra-console.log || true
-          set -e
-
-      - name: Analyze native match-engine entry points without global timeout
-        shell: bash
-        run: |
-          set +e
-          mkdir -p analysis/ghidra ghidra-project
-          GHIDRA_DIR=$(find ghidra -type f -name analyzeHeadless -printf '%h\n' | head -n1)
-          chmod +x "$GHIDRA_DIR/analyzeHeadless"
-          "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project" FM27NativeFast \
-            -import "game/fm_Data/Plugins/x86_64/game_plugin.dll" \
-            -overwrite -noanalysis \
-            -scriptPath scripts/ghidra \
-            -postScript ExportMatchEngineFast.java "$PWD/analysis/ghidra" \
-            > analysis/ghidra/ghidra-console.log 2>&1
-          echo $? > analysis/ghidra/ghidra-exit-code.txt
-          tail -n 250 analysis/ghidra/ghidra-console.log || true
-          set -e
-
-
-      - name: Bounded flow disassembly of pressing managers and direct callees
-        shell: bash
-        run: |
-          set +e
-          mkdir -p analysis/ghidra-pressing ghidra-project-pressing
-          GHIDRA_DIR=$(find ghidra -type f -name analyzeHeadless -printf '%h\n' | head -n1)
-          chmod +x "$GHIDRA_DIR/analyzeHeadless"
-          "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-pressing" FM27PressingCore \
-            -import "game/fm_Data/Plugins/x86_64/game_plugin.dll" \
-            -overwrite -noanalysis \
-            -scriptPath scripts/ghidra \
-            -postScript ExportMatchEnginePressingCore.java "$PWD/analysis/ghidra-pressing" \
-            > analysis/ghidra-pressing/ghidra-console.log 2>&1
-          echo $? > analysis/ghidra-pressing/ghidra-exit-code.txt
-          tail -n 250 analysis/ghidra-pressing/ghidra-console.log || true
+          "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-native" FM27NativeUnified \
+            "${ARGS[@]}" \
+            > analysis/native-engine-unified-console.log 2>&1
+          echo $? > analysis/native-engine-unified-exit-code.txt
+          tail -n 300 analysis/native-engine-unified-console.log || true
           set -e
 
       - name: Upload package audit, IL2CPP maps and Ghidra output
