@@ -73,9 +73,9 @@ jobs:
             --target 0x61660:CANDIDATE_TO_PLAYER_STATE_HANDOFF  \
             --target 0x47F2120:CANDIDATE_SPATIAL_PHASE_POSTPROCESSOR  \
             --target 0x4707AA0:CANDIDATE_HISTORY_SPATIAL_VALIDATOR \\
-            --target 0x2AFB290:MATCH_PLAYER_MOVEMENT_RECORD_AND_POSITION_WRITER \\
-            --target 0x51820:MATCH_UPDATE_POST_HANDOFF_STAGE \\
-            --target 0x83A490:MATCH_UPDATE_PRE_HANDOFF_STAGE \\ 
+            --target 0x2AFB290:MATCH_PLAYER_MOVEMENT_RECORD_AND_POSITION_WRITER\
+            --target 0x51820:MATCH_UPDATE_POST_HANDOFF_STAGE\
+            --target 0x83A490:MATCH_UPDATE_PRE_HANDOFF_STAGE
           cat analysis/movement-commit/native-target-call-summary.json
       - uses: actions/setup-java@v4
         with:
