@@ -84,9 +84,22 @@ public class TraceNativeHotspots extends GhidraScript {
     private Function ensureFunction(long rva, String name, PrintWriter summary) throws Exception {
         Address entry = currentProgram.getImageBase().add(rva);
         Function existing = currentProgram.getFunctionManager().getFunctionAt(entry);
-        if (existing != null && existing.getBody().getNumAddresses() > 1) {
+        if (existing != null) {
+            // The PE loader or an earlier script may already have created the
+            // exact entry. Reuse it rather than colliding with its namespace.
             functions.put(rva,existing);
+            summary.println("REUSE_ENTRY_FUNCTION\\t"+name+"\\tRVA=0x"+
+                Long.toHexString(rva)+"\\tBYTES="+existing.getBody().getNumAddresses()+
+                "\\tNAME="+existing.getName());
             return existing;
+        }
+        Function containing = currentProgram.getFunctionManager().getFunctionContaining(entry);
+        if (containing != null) {
+            functions.put(rva,containing);
+            summary.println("REUSE_CONTAINING_FUNCTION\\t"+name+"\\tRVA=0x"+
+                Long.toHexString(rva)+"\\tENTRY="+containing.getEntryPoint()+
+                "\\tBYTES="+containing.getBody().getNumAddresses());
+            return containing;
         }
         long[] range = exactRange(rva);
         if (range == null) {
@@ -113,10 +126,29 @@ public class TraceNativeHotspots extends GhidraScript {
                 Long.toHexString(rva)+"\tstatus="+cmd.getStatusMsg());
             return null;
         }
-        Function f = currentProgram.getFunctionManager().createFunction(
-            safe(name),entry,body,SourceType.ANALYSIS);
-        if (f == null) {
+        // Remove only functions whose bodies overlap this exact pdata range.
+        // This resolves Ghidra namespace collisions from loader-created stubs.
+        java.util.Iterator<Function> overlaps =
+            currentProgram.getFunctionManager().getFunctionsOverlapping(body);
+        List<Function> remove = new ArrayList<>();
+        while (overlaps.hasNext()) {
+            Function oldFunction = overlaps.next();
+            if (!oldFunction.getEntryPoint().equals(entry)) remove.add(oldFunction);
+        }
+        for (Function oldFunction : remove) {
+            summary.println("REMOVE_OVERLAPPING_FUNCTION\\t"+oldFunction.getEntryPoint()+
+                "\\t"+oldFunction.getName());
+            currentProgram.getFunctionManager().removeFunction(oldFunction.getEntryPoint());
+        }
+        Function f;
+        try {
+            f = currentProgram.getFunctionManager().createFunction(
+                safe(name),entry,body,SourceType.ANALYSIS);
+        } catch (Exception ex) {
+            summary.println("CREATE_FUNCTION_FAILED\\t"+name+"\\tRVA=0x"+
+                Long.toHexString(rva)+"\\t"+ex);
             f = currentProgram.getFunctionManager().getFunctionAt(entry);
+            if (f == null) f=currentProgram.getFunctionManager().getFunctionContaining(entry);
         }
         if (f != null) functions.put(rva,f);
         return f;
@@ -185,7 +217,14 @@ public class TraceNativeHotspots extends GhidraScript {
 
             for(Map.Entry<Long,String> e:seeds.entrySet()) {
                 if(monitor.isCancelled()) break;
-                Function f=ensureFunction(e.getKey(),e.getValue(),summary);
+                Function f;
+                try {
+                    f=ensureFunction(e.getKey(),e.getValue(),summary);
+                } catch (Exception ex) {
+                    summary.println("SEED_ERROR\\t"+e.getValue()+"\\tRVA=0x"+
+                        Long.toHexString(e.getKey())+"\\t"+ex);
+                    continue;
+                }
                 if(f==null) continue;
                 long[] range=exactRange(e.getKey());
                 summary.println("SEED\t"+e.getValue()+"\tRVA=0x"+
