@@ -51,6 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check capstone==5.0.6
+          mkdir -p analysis/native-hotspots/direction-generator-fields
           python scripts/engine_analysis/scan_direction_generator_fields.py \
             --binary game/fm_Data/Plugins/x86_64/game_plugin.dll \
             --out analysis/native-hotspots/direction-generator-fields \
