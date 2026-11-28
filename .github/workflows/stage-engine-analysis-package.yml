@@ -26,7 +26,7 @@ jobs:
           root = pathlib.Path("game").resolve()
           with zipfile.ZipFile("FM27_Engine_Analysis_Package_20261125.zip") as archive:
               for item in archive.infolist():
-                  name = item.filename.replace("\\\\", "/")
+                  name = item.filename.replace(chr(92), "/")
                   target = (root / name).resolve()
                   if target != root and root not in target.parents:
                       raise SystemExit(f"Unsafe ZIP path: {item.filename!r}")
