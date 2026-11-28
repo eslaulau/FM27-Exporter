@@ -92,6 +92,158 @@ def targeted_strings(path: Path, limit: int = 2500) -> list[str]:
         finally: mm.close()
     return sorted(found,key=str.casefold)
 
+
+def native_rtti_scan(path: Path, pe: dict, out_dir: Path) -> dict:
+    """Recover MSVC x64 type descriptors, complete-object locators and vtable slots."""
+    if not pe.get("is_pe") or not pe.get("pe32_plus"):
+        return {"supported": False, "reason": "not a PE32+ image"}
+    image_base = int(pe["image_base"], 16)
+    image_size = int(pe["size_of_image"], 16)
+    sections = pe.get("sections", [])
+    data_sections = [s for s in sections if not s.get("executable") and s["raw_size"] >= 64]
+    exec_ranges = [(s["va"], s["va"] + max(s["virtual_size"], s["raw_size"])) for s in sections if s.get("executable")]
+
+    def raw_to_rva(off: int):
+        for s in sections:
+            if s["raw_ptr"] <= off < s["raw_ptr"] + s["raw_size"]:
+                return s["va"] + off - s["raw_ptr"]
+        return None
+
+    def is_exec(rva: int):
+        return any(a <= rva < b for a, b in exec_ranges)
+
+    def demangle(name: str):
+        name = name.strip("\0")
+        if name.startswith(".?AV") or name.startswith(".?AU") or name.startswith(".?AT"):
+            name = name[4:]
+        if name.endswith("@@"):
+            name = name[:-2]
+        parts = [p for p in name.split("@") if p]
+        return "::".join(reversed(parts)) if parts else name
+
+    type_descs = {}
+    decorated_re = re.compile(rb"\.\?[AVUT][A-Za-z0-9_?$@.,<> -]{2,220}?@@")
+    with path.open("rb") as f:
+        mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+        try:
+            for sec in data_sections:
+                lo = sec["raw_ptr"]
+                hi = min(lo + sec["raw_size"], len(mm))
+                for match in decorated_re.finditer(mm, lo, hi):
+                    name_start = match.start()
+                    td_off = name_start - 16
+                    if td_off < lo:
+                        continue
+                    td_rva = raw_to_rva(td_off)
+                    if td_rva is not None:
+                        type_descs[td_rva] = match.group(0).decode("ascii", "replace")
+
+            # MSVC x64 CompleteObjectLocator: six 32-bit fields; pSelf is
+            # the RVA of the locator itself and pTypeDescriptor is an RVA.
+            locators = {}
+            for sec in data_sections:
+                lo = (sec["raw_ptr"] + 3) & ~3
+                hi = min(sec["raw_ptr"] + sec["raw_size"] - 24, len(mm) - 24)
+                for off in range(lo, hi, 4):
+                    sig, obj_off, cd_off, td_rva, chd_rva, self_rva = struct.unpack_from("<6I", mm, off)
+                    if sig != 1 or self_rva >= image_size or td_rva not in type_descs:
+                        continue
+                    if raw_to_rva(off) != self_rva:
+                        continue
+                    locators[self_rva] = {
+                        "type_descriptor_rva": td_rva,
+                        "class_hierarchy_rva": chd_rva,
+                        "object_offset": obj_off,
+                        "cd_offset": cd_off,
+                        "decorated_name": type_descs[td_rva],
+                        "type_name": demangle(type_descs[td_rva]),
+                    }
+
+            # Find vftable[-1] pointers to each COL, then collect executable slots.
+            col_by_va = {image_base + rva: rva for rva in locators}
+            tables = []
+            for sec in data_sections:
+                lo = (sec["raw_ptr"] + 7) & ~7
+                hi = min(sec["raw_ptr"] + sec["raw_size"] - 8, len(mm) - 8)
+                for off in range(lo, hi, 8):
+                    ptr = struct.unpack_from("<Q", mm, off)[0]
+                    col_rva = col_by_va.get(ptr)
+                    if col_rva is None:
+                        continue
+                    vft_off = off + 8
+                    vft_rva = raw_to_rva(vft_off)
+                    slots = []
+                    for i in range(64):
+                        slot_off = vft_off + i * 8
+                        if slot_off + 8 > len(mm):
+                            break
+                        target = struct.unpack_from("<Q", mm, slot_off)[0]
+                        if target < image_base or target >= image_base + image_size:
+                            break
+                        target_rva = target - image_base
+                        if not is_exec(target_rva):
+                            break
+                        slots.append(target_rva)
+                    if slots:
+                        info = dict(locators[col_rva])
+                        info.update({
+                            "col_rva": col_rva,
+                            "vftable_rva": vft_rva,
+                            "slot_count": len(slots),
+                            "slot_rvas": [f"0x{x:X}" for x in slots],
+                        })
+                        tables.append(info)
+
+            important = re.compile(
+                r"(MATCH|TACTIC|PRESS|SCOR|WEIGHT|MOVEMENT|PLAYER|BALL|DECISION|POSITION|"
+                r"ROLE|OOP|IN.?POSSESSION|OUT.?OF.?POSSESSION|SIMATCH)",
+                re.IGNORECASE,
+            )
+            relevant_types = [
+                {
+                    "type_descriptor_rva": f"0x{rva:X}",
+                    "decorated_name": name,
+                    "type_name": demangle(name),
+                }
+                for rva, name in type_descs.items()
+                if important.search(name)
+            ]
+            relevant_tables = [t for t in tables if important.search(t["decorated_name"])]
+            relevant_tables.sort(key=lambda x: (x["type_name"], x["vftable_rva"]))
+
+            out_dir.mkdir(parents=True, exist_ok=True)
+            json_path = out_dir / "native-rtti-vtables.json"
+            json_path.write_text(json.dumps({
+                "type_descriptor_count": len(type_descs),
+                "complete_object_locator_count": len(locators),
+                "vtable_count": len(tables),
+                "relevant_type_descriptor_count": len(relevant_types),
+                "relevant_vtable_count": len(relevant_tables),
+                "relevant_types": sorted(relevant_types, key=lambda x: x["type_name"]),
+                "relevant_vtables": relevant_tables,
+            }, ensure_ascii=False, indent=2), encoding="utf-8")
+            tsv_path = out_dir / "native-rtti-vtables.tsv"
+            with tsv_path.open("w", encoding="utf-8") as out:
+                out.write("type_name\ttype_descriptor_rva\tcol_rva\tvftable_rva\tslot_count\tslot_rvas\n")
+                for t in relevant_tables:
+                    out.write(
+                        f'{t["type_name"]}\t0x{t["type_descriptor_rva"]:X}\t'
+                        f'0x{t["col_rva"]:X}\t0x{t["vftable_rva"]:X}\t'
+                        f'{t["slot_count"]}\t{",".join(t["slot_rvas"])}\n'
+                    )
+            return {
+                "supported": True,
+                "type_descriptor_count": len(type_descs),
+                "complete_object_locator_count": len(locators),
+                "vtable_count": len(tables),
+                "relevant_type_descriptor_count": len(relevant_types),
+                "relevant_vtable_count": len(relevant_tables),
+                "json": str(json_path),
+                "tsv": str(tsv_path),
+            }
+        finally:
+            mm.close()
+
 def metadata_strings(path: Path) -> dict:
     data=path.read_bytes()
     if len(data)<32: return {"valid_magic":False,"size":len(data)}
@@ -139,6 +291,8 @@ def main():
         item={"name":name,"path":str(p.relative_to(root)),"size":p.stat().st_size,"sha256":sha256(p)}
         if p.suffix.lower() in (".dll",".exe"):
             item["pe"]=pe_summary(p); item["targeted_strings"]=targeted_strings(p)
+            if name=="game_plugin.dll":
+                item["native_rtti"] = native_rtti_scan(p, item["pe"], out/"native-rtti")
         if name=="global-metadata.dat": item["metadata"]=metadata_strings(p)
         if name.endswith(".fmf"):
             with p.open("rb") as f: item["header_hex"]=f.read(64).hex()
