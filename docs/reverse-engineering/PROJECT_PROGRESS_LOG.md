@@ -815,3 +815,15 @@ Run #11（Workflow `46137041278`，Artifact `15260182294`）扫描成功，确�
 - Run #14：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46137515853)，由优先级修复触发；后续以包含两项更新的最新运行产物为准。
 
 下一轮只追 `0x42D3910` 的直接 caller / 函数指针 / vtable scheduler，并确认是否进入 `0x3FEF0`、`0x5DBD0` 或其他 match tick 调度路径。
+
+
+### Run #14 修正记录：Shell 续行符统一修复，Run #15 重新执行
+
+- Run #14：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46137515853)，失败发生在 Capstone 扫描启动参数解析阶段，日志明确报 unrecognized arguments: backslash。
+- 不是二进制、函数地址或 Capstone 解码失败；原因是 target 列表末尾出现双反斜杠，Shell 把一个字面量反斜杠传给 Python。
+- 已将整个 target block 统一规范为：每个中间 --target 行末恰好一个反斜杠，最后一个 --target 0x3FEF0 行不加反斜杠。
+- 修正 Commit：ca03622b30fcf619895032b5cd30fbbaf78239d3。
+- Run #15：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46137627515)，当前 queued；本轮将以修正后的 target block 为准。
+- Run #13（46137512772）被 Run #14 的新提交取消，无有效 Artifact。
+
+下一轮目标保持不变：直接/静态查找 0x42D3910、0x42D58E0、0x3FEF0 的上游调用者和调度指针，确认 match-level movement updater 的顶层入口；不再重复字段扫描或全量 IL2CPP。
