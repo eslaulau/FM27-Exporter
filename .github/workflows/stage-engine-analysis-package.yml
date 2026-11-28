@@ -18,10 +18,26 @@ jobs:
             "https://github.com/eslaulau/FM27-Exporter/releases/download/fm27-saves/FM27_Engine_Analysis_Package_20261125.zip" \
             --output FM27_Engine_Analysis_Package_20261125.zip
           echo "a9dfd61bb2f9d6110ff92997a86790168d04cfc9c621cf8c2564c616f0fbc10f  FM27_Engine_Analysis_Package_20261125.zip" | sha256sum --check
-      - name: Extract package
+      - name: Extract package (normalize Windows ZIP paths)
         run: |
           mkdir -p game analysis
-          unzip -q FM27_Engine_Analysis_Package_20261125.zip -d game
+          python - <<'PY'
+          import pathlib, zipfile
+          root = pathlib.Path("game").resolve()
+          with zipfile.ZipFile("FM27_Engine_Analysis_Package_20261125.zip") as archive:
+              for item in archive.infolist():
+                  name = item.filename.replace("\\\\", "/")
+                  target = (root / name).resolve()
+                  if target != root and root not in target.parents:
+                      raise SystemExit(f"Unsafe ZIP path: {item.filename!r}")
+                  if item.is_dir():
+                      target.mkdir(parents=True, exist_ok=True)
+                  else:
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      with archive.open(item) as source, target.open("wb") as destination:
+                          while chunk := source.read(1024 * 1024):
+                              destination.write(chunk)
+          PY
       - name: Set up Node for IL2CPP metadata reader
         uses: actions/setup-node@v4
         with:
