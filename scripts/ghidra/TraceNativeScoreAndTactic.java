@@ -26,7 +26,7 @@ import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 
 public class TraceNativeScoreAndTactic extends GhidraScript {
-    private static final int MAX_CALLEES = 120;
+    private static final int MAX_CALLEES = 64;
     private static final int MAX_INCOMING = 200;
     private static final long WINDOW = 0x5000L;
     private static final long MAX_DECOMPILE = 0x20000L;
@@ -170,7 +170,7 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
             out.println("// SKIPPED_OVERSIZE");
             return;
         }
-        DecompileResults r=decomp.decompileFunction(f,25,monitor);
+        DecompileResults r=decomp.decompileFunction(f,12,monitor);
         if (r!=null&&r.decompileCompleted()&&r.getDecompiledFunction()!=null)
             out.println(r.getDecompiledFunction().getC());
         else out.println("// DECOMPILE_FAILED "+(r==null?"no result":r.getErrorMessage()));
