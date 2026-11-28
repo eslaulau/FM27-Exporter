@@ -259,3 +259,80 @@ MATCH_PLAYER 的 +0x2170/+0x21F0/+0x21F8/+0x22A0 等派生字段
 - Ghidra 12.2 下载：success
 - Ghidra 热点反编译：in progress
 - Artifact：尚未生成；本轮没有新增数据源结论。
+
+
+## 2026-11-28：Run #12 完成；候选位置机制更清楚；参数源扫描已开始纠正栈帧误报
+
+### Run #12 实际结果
+
+- Workflow：[Run #12](https://github.com/eslaulau/FM27-Exporter/actions/runs/46127758872)，success
+- Artifact：`15256413119`，3,399,576 bytes
+- SHA-256：`9c51c6ece6e594f511767e66c42c26d1bcdd96ceadd2c0a4cbbdca68545cb742`
+- 主报告新增 Section 13，Commit：`758c2f50401274a8ab6ba70d1d21d36208005021`
+
+### 实质结论 A：10 组非线性归一化曲线常量已解出
+
+曲线表在 RVA `0x507A440`，每项 12 bytes。字段位置现已按反编译指令确认：
+- +0 divisor
+- +1 slope
+- +2 intercept
+- +3 denominator
+- +4 bias
+- +8 int32 threshold
+
+10 组数值已经全部写入主报告 Section 13.1。这里纠正了最初导出脚本的标签错误：+3 是 denominator，不是 bias。曲线计算为：
+
+```text
+q = min(value, value * value / divisor)
+value = bias + (q * slope + intercept) / denominator
+if value >= threshold:
+    value = threshold + 2 * (value - threshold)
+```
+
+低 10-bit 曲线 selector 为 0 时走独立的 `(value + 3) / 5` 路径。
+
+### 实质结论 B：TEAM 系数块读多写零，写入源尚未找到
+
+本轮固定偏移字段扫描：
+- `TEAM+0x149E4`：R×1，W×0
+- `+0x149E8`：R×3，W×0
+- `+0x149EC`：R×3，W×0
+- `+0x149F0`：R×5，W×0
+- `+0x149F4`：R×3，W×0
+- `+0x149F8`：R×3，W×0
+- `+0x149FC`：R×3，W×0
+- `+0x14A00`：R×3，W×0
+
+发现三处读取同一系数块的参数计算器：
+- `0x4704100`；
+- `0x474F370`；
+- `0x475D640`。
+
+已把后三处的反编译种子加入专项 Ghidra 脚本。TEAM 系数槽位可能通过更大对象复制、配置解包或外部初始化写入，但目前没有直接写者证据。
+
+### 重要质量修正：Run #12 动态写入者列表存在 RBP 栈帧误报
+
+Run #12 自动选出的最高命中函数 `0x46A8C40` 有大量表面上的 `+0x480) 写入，但指令基址是 RBP，函数序言将 RBP 设为 RSP，即这些是栈局部变量。字段 scanner 只知道位移，不知道对象类型，因此不能把这些函数当成 MATCH_PLAYER 参数源。
+
+已修正 `TraceParameterSources.java`：
+- 排除 RSP 栈引用；
+- 仅当函数前 12 条指令证实 RBP 被设为 RSP 栈帧时，才排除 RBP 命中；
+- 没有栈帧证据的 RBP 引用保留，避免误删真实对象基址寄存器；
+- 增加 evaluator seeds `0x4704100`、`0x474F370`、`0x475D640`；
+- 修复摘要中 CALLEE 数量受 CALLER 循环变量覆盖的计数错误。
+
+代码 Commit：`dbec035a901c54a35e8a76541a261daede92d5d7`
+
+### 参数源专项 Run #2
+
+- Workflow：[Focused Parameter Source Run #2](https://github.com/eslaulau/FM27-Exporter/actions/runs/46129258995)
+- 当前状态：字段扫描仍在执行；尚无 Ghidra Artifact。
+- 目标：只保留结构基址可信的参数向量/TEAM 系数写入候选，然后反编译写入者和三个参数计算器变体。
+- Run #1 已成功，但未使用栈帧过滤；其动态写入者候选不作为有效结论。
+
+### 球员行为链下一目标保持不变
+
+当前已确认：
+`0x45AC0 → 0x496F840 候选位置/方向记录 → 0x494F820 历史样本与时空验证 → 0x4865900/0x4873400 阶段/OOP 候选筛选 → 0x4874AC0 候选状态/PI gate`。
+
+仍未确认的是**被接受的候选位置被谁提交为球员移动目标/运动状态**。下一轮要把调用者/间接调用/对象记录消费者连起来；与此同时，只继续追参数源，不扩展到无关模块。
