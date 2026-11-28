@@ -67,10 +67,22 @@ public class TraceParameterSources extends GhidraScript {
         return f;
     }
     private boolean hasStackFrameRbp(long functionRva) {
+        // Prefer the Windows x64 UNWIND_INFO frame-register declaration.
+        // UNWIND_INFO byte 3: low nibble = frame register (RBP is register id 5).
+        long[] range=ranges.get(functionRva);
+        if(range!=null && range.length>1 && range[1]!=0) {
+            try {
+                Address unwind=currentProgram.getImageBase().add(range[1]);
+                int frameRegister=currentProgram.getMemory().getByte(unwind.add(3)) & 0x0f;
+                if(frameRegister==5) return true;
+            } catch(Exception ignored) {}
+        }
+
+        // Fallback for functions with no declared frame register.
         Address entry=currentProgram.getImageBase().add(functionRva);
         InstructionIterator it=currentProgram.getListing().getInstructions(entry,true);
         int checked=0;
-        while(it.hasNext() && checked<12) {
+        while(it.hasNext() && checked<32) {
             Instruction ins=it.next();
             checked++;
             String mnemonic=ins.getMnemonicString().toLowerCase(Locale.ROOT);
