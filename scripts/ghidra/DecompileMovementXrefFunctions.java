@@ -38,13 +38,16 @@ public class DecompileMovementXrefFunctions extends GhidraScript {
 
     private int priority(String name) {
         String s=name.toUpperCase();
+        // These specific callers are the bottleneck for proving whether the
+        // current-position writer belongs to the match tick/update path.
+        // Rank them above generic memcpy/candidate-record callsites.
+        if (s.contains("MATCH_PLAYER_MOVEMENT_RECORD_AND_POSITION_WRITER")) return -10;
+        if (s.contains("MATCH_UPDATE_POST_HANDOFF_STAGE") ||
+            s.contains("MATCH_UPDATE_PRE_HANDOFF_STAGE")) return -9;
         if (s.contains("CANDIDATE_STATE_UPDATE") ||
             s.contains("CANDIDATE_PHASE_STATUS") ||
             s.contains("CANDIDATE_POSITION") ||
-            s.contains("MOVEMENT_DIRECTOR") ||
-            s.contains("MATCH_PLAYER_MOVEMENT_RECORD_AND_POSITION_WRITER") ||
-            s.contains("MATCH_UPDATE_POST_HANDOFF_STAGE") ||
-            s.contains("MATCH_UPDATE_PRE_HANDOFF_STAGE")) return 0;
+            s.contains("MOVEMENT_DIRECTOR")) return 0;
         if (s.contains("PI_BEHAVIOR_CANDIDATE_AGGREGATOR") ||
             s.contains("ROLE_PI_COMMON_VALIDATOR") ||
             s.contains("HALF_BACK_DROPPING_DM_GATE") ||
