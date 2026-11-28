@@ -967,3 +967,36 @@ vtable 的引用出现在 `0x3E4E0)、`0x19EDD0)、`0x5DBD0)；这三处才是�
 - 新 Shot Outcome Run #2 由提交自动触发，以新 Artifact 验证 `0x498D400) 的数值来源。
 
 **结果计算边界：**当前尚未找到真实 xG 概率公式、球飞行物理、门将拦截/扑救和球门越线结果公式。0x4C01760 仍是射门事件/统计记账路径；必须先解出 0x498D400 和 ball/goalkeeper outcome 计算。
+
+
+### Run #16 新突破：已找到调用 match state machine 的目标 tick 推进循环
+
+- Movement Commit Run #16：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46138521235)，success；Artifact `15259919842`，1,092,104 bytes；SHA-256 `47f011f2d502b0cdaed0b4ff7d254e9ad4fd1de468faaa3e602212018d8a1fbf`。
+- 新 caller `0x28C1020` 在 call site `0x28C1060` 调用 `0x47C5350`。
+
+**0x28C1020 的执行逻辑：**
+- 从 match context 取得 match object，读取当前 tick `+0x154EC)；
+- 若目标 tick 参数 `param_2) 已小于/等于当前 tick 则返回；
+- 否则循环调用 `0x47C5350(match, 0, -1)`，每轮检查 stop/error flag `+0x15500 & 4)，并根据状态调用 `0x47C33F0)；
+- 循环直到目标 tick 被推进或 stop/error flag 置位；
+- 随后处理 match event/task queue `+0x14EA0) 和对外 time fields。
+
+这是一个按目标 tick 驱动比赛状态机的循环入口，而非仅更新 UI 时间。
+
+**0x47C5350 状态机：**
+- `MATCH+0x1556C) 当前状态，`+0x1556B) 下一状态；
+- 状态切换时先执行旧状态退出 helper，再执行新状态进入 helper；
+- state 1 调用 `0x47C58C0)；
+- **state 2 调用 `0x42D3910)**；
+- state 3 调用 `0x53380)；
+- state 4 调用 `0x7EB10)；
+- state 5 推进 tick/time 并滚动 match update buffer。
+
+至此位置更新链已连到目标 tick 推进：
+`0x28C1020 → 0x47C5350 → state 2 → 0x42D3910 → 0x2AFB290)。
+
+详细报告：[MatchTickPositionUpdater Run #12, Section 6](https://github.com/eslaulau/FM27-Exporter/blob/main/docs/reverse-engineering/FM27_27.1.1_MatchTickPositionUpdater_Run12_20261128.md)。
+
+**下一轮只追两个点：**
+1. `0x28C1020) 的真实上游 simulation scheduler/caller。
+2. 在 `0x5DBD0) 中按 player pointer、tick/sample index 对照 `0x61660)、`0x19EDD0)、`0x3E4E0) 的实际数据流，证明候选记录与轨迹样本何处汇合。
