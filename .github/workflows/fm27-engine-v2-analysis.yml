@@ -86,7 +86,7 @@ jobs:
             game/fm_Data/il2cpp_data/Metadata/global-metadata.dat \
             -o analysis/il2cpp \
             --fast --threads 4 \
-            --scripts ghidra_with_struct_py3,il2cpp_header_to_ghidra \
+            --scripts ghidra,il2cpp_header_to_ghidra \
             --no-pause \
             > analysis/il2cpp/il2cpp-dumper.log 2>&1
           echo $? > analysis/il2cpp/il2cpp-dumper-exit-code.txt
