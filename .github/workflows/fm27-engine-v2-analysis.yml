@@ -5,6 +5,7 @@ on:
       - ".github/workflows/fm27-engine-v2-analysis.yml"
       - "scripts/engine_analysis/fm27_package_audit.py"
       - "scripts/ghidra/ExportMatchEngineFast.java"
+      - "scripts/ghidra/ExportMatchEnginePressingCore.java"
   workflow_dispatch:
 permissions:
   contents: read
@@ -126,6 +127,24 @@ jobs:
             > analysis/ghidra/ghidra-console.log 2>&1
           echo $? > analysis/ghidra/ghidra-exit-code.txt
           tail -n 250 analysis/ghidra/ghidra-console.log || true
+          set -e
+
+
+      - name: Bounded flow disassembly of pressing managers and direct callees
+        shell: bash
+        run: |
+          set +e
+          mkdir -p analysis/ghidra-pressing ghidra-project-pressing
+          GHIDRA_DIR=$(find ghidra -type f -name analyzeHeadless -printf '%h\n' | head -n1)
+          chmod +x "$GHIDRA_DIR/analyzeHeadless"
+          "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-pressing" FM27PressingCore \
+            -import "game/fm_Data/Plugins/x86_64/game_plugin.dll" \
+            -overwrite -noanalysis \
+            -scriptPath scripts/ghidra \
+            -postScript ExportMatchEnginePressingCore.java "$PWD/analysis/ghidra-pressing" \
+            > analysis/ghidra-pressing/ghidra-console.log 2>&1
+          echo $? > analysis/ghidra-pressing/ghidra-exit-code.txt
+          tail -n 250 analysis/ghidra-pressing/ghidra-console.log || true
           set -e
 
       - name: Upload package audit, IL2CPP maps and Ghidra output
