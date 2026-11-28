@@ -130,7 +130,12 @@ jobs:
             --target 0x4C2DAA0:IOOP_SCORING_PROVIDER_METHOD \
             --target 0x4C351E0:IOOP_SCORE_VIRTUAL_EVALUATION_THUNK \
             --target 0x4C15850:UDYNAMIC_SCORES_VTABLE_INITIALIZER \
-            --target 0x4C157F0:UDYNAMIC_POSITION_SCORES_VTABLE_INITIALIZER
+            --target 0x4C157F0:UDYNAMIC_POSITION_SCORES_VTABLE_INITIALIZER \
+            --target 0x4C01760:XG_SHOT_DATA_CONSUMER_OR_BUILDER \
+            --target 0x481A6A0:ADVANCED_SHOT_ZONE_DATA_CONSUMER \
+            --target 0x268B330:SHOT_ZONE_DATA_CONSUMER \
+            --target 0x335C40:SHOT_ZONE_DATA_PROCESSOR_A \
+            --target 0x62682B0:SHOT_ZONE_DATA_PROCESSOR_B
             > analysis/native-target-callers-console.log 2>&1
           test -s analysis/native-target-callers/native-target-call-xrefs.tsv
           cat analysis/native-target-callers-console.log
