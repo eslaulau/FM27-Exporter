@@ -98,6 +98,11 @@ public class TraceNativeHotspots extends GhidraScript {
         seeds.put(0x47F1E70L, "DIRECTION_SECONDARY_GATE_POST_PROCESSOR");
         seeds.put(0x42D23A0L, "DIRECTION_SECONDARY_GATE_STATE_HELPER");
         seeds.put(0x47B9510L, "DIRECTION_SECONDARY_GATE_VALUE_HELPER");
+        // Runtime tactical-state propagation and MATCH_PLAYER parameter-vector sources.
+        seeds.put(0x185090L, "MATCH_PLAYER_PARAMETER_REFRESH_BULK_COPY");
+        seeds.put(0x103A10L, "MATCH_PLAYER_TACTICAL_SNAPSHOT_COPIER");
+        seeds.put(0x72B20L, "MATCH_PLAYER_SLOT_AND_TACTIC_REFRESH");
+        seeds.put(0x2B05590L, "MATCH_PLAYER_TACTICAL_STATE_CLONER");
         // Advanced shot-zone high-frequency direct callees.
         seeds.put(0x47BA710L, "SHOT_ZONE_SAMPLE_ITERATOR_CORE");
         seeds.put(0x4C35210L, "SHOT_ZONE_DYNAMIC_SCORE_DISPATCH_A");
@@ -246,6 +251,77 @@ public class TraceNativeHotspots extends GhidraScript {
         else out.println("// DECOMPILE_FAILED "+(r==null?"no result":r.getErrorMessage()));
     }
 
+
+    private void addParameterFieldWriterSeeds(File outDir, PrintWriter summary) throws Exception {
+        File tsv = new File(new File(outDir, "direction-generator-fields"), "match-player-field-xrefs.tsv");
+        if (!tsv.isFile()) {
+            summary.println("PARAMETER_FIELD_SCAN_TSV_MISSING=" + tsv.getAbsolutePath());
+            return;
+        }
+        Map<Long,Integer> scores = new HashMap<>();
+        Map<Long,Set<String>> labels = new HashMap<>();
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(tsv))) {
+            String line;
+            boolean header = true;
+            while ((line = reader.readLine()) != null) {
+                if (header) { header = false; continue; }
+                String[] c = line.split("\\t", -1);
+                if (c.length < 8) continue;
+                long offset, start;
+                try {
+                    offset = Long.parseLong(c[0].replace("0x",""),16);
+                    start = Long.parseLong(c[5].replace("0x",""),16);
+                } catch (Exception ex) { continue; }
+                boolean vectorByte = offset >= 0x480 && offset <= 0x4C4;
+                boolean teamCoefficient = offset >= 0x149E4 && offset <= 0x14A00 &&
+                    ((offset - 0x149E4) % 4 == 0);
+                if (!vectorByte && !teamCoefficient) continue;
+                String access = c[2];
+                if (!access.contains("W")) continue;
+                scores.put(start, scores.getOrDefault(start,0) + (vectorByte ? 10 : 20));
+                labels.computeIfAbsent(start,k->new LinkedHashSet<>()).add(c[1]);
+            }
+        }
+        List<Long> ordered = new ArrayList<>(scores.keySet());
+        ordered.sort((a,b)->Integer.compare(scores.get(b),scores.get(a)));
+        int added = 0;
+        for (long rva : ordered) {
+            if (functions.containsKey(rva) || seeds.containsKey(rva)) continue;
+            Set<String> f = labels.get(rva);
+            String name = "PARAMETER_VECTOR_OR_TEAM_COEFFICIENT_WRITER_" + Long.toHexString(rva);
+            seeds.put(rva,name);
+            summary.println("DYNAMIC_FIELD_WRITER_SEED\\t" + name + "\\tRVA=0x" +
+                Long.toHexString(rva) + "\\tSCORE=" + scores.get(rva) +
+                "\\tFIELDS=" + String.join(",",f));
+            added++;
+            if (added >= 48) break;
+        }
+        summary.println("DYNAMIC_PARAMETER_FIELD_WRITER_SEEDS_ADDED=" + added);
+    }
+
+    private void dumpParameterCurveTable(PrintWriter out) throws Exception {
+        long rva = 0x507A440L;
+        Address base = currentProgram.getImageBase().add(rva);
+        out.println("TABLE=PARAMETER_VALUE_NORMALIZATION_CURVES RVA=0x" +
+            Long.toHexString(rva) + " VA=" + base + " RECORDS=10 STRIDE=12");
+        for (int i=0; i<10; i++) {
+            Address row = base.add(i*12L);
+            int divisor = currentProgram.getMemory().getByte(row);
+            int slope = currentProgram.getMemory().getByte(row.add(1));
+            int intercept = currentProgram.getMemory().getByte(row.add(2));
+            int bias = currentProgram.getMemory().getByte(row.add(3));
+            int threshold = currentProgram.getMemory().getInt(row.add(8));
+            StringBuilder raw = new StringBuilder();
+            for (int j=0;j<12;j++) {
+                if (j>0) raw.append(' ');
+                raw.append(String.format("%02X", currentProgram.getMemory().getByte(row.add(j)) & 0xff));
+            }
+            out.println("CURVE[" + i + "] divisor=" + divisor + " slope=" + slope +
+                " intercept=" + intercept + " bias=" + bias + " threshold=" + threshold +
+                " raw=" + raw);
+        }
+    }
+
     private void collectRefs(Function f, PrintWriter refs) {
         InstructionIterator it=currentProgram.getListing().getInstructions(f.getBody(),true);
         while(it.hasNext()) {
@@ -293,6 +369,11 @@ public class TraceNativeHotspots extends GhidraScript {
                 " EXCEPTION_SIZE=0x"+Long.toHexString(EXCEPTION_SIZE));
             loadRuntimeFunctionRanges();
             summary.println("RUNTIME_FUNCTION_RANGES="+ranges.size());
+            addParameterFieldWriterSeeds(outDir,summary);
+            try (PrintWriter tableOut = new PrintWriter(new File(outDir,"parameter-constant-tables.txt"),"UTF-8")) {
+                try { dumpParameterCurveTable(tableOut); }
+                catch (Exception ex) { tableOut.println("CURVE_TABLE_DUMP_FAILED=" + ex); }
+            }
             DecompInterface decomp=new DecompInterface();
             decomp.openProgram(currentProgram);
 
