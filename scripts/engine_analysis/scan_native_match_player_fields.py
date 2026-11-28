@@ -41,6 +41,10 @@ FIELD_LABELS = {
     0x15575: "TEAM_OOP_EXTENDED_MODE_SELECTOR",
     0x154EC: "TEAM_OOP_PLAYER_EXTENSION_MODE",
     0x15340: "TEAM_PLAYER_REVERSE_LOOKUP",
+    // These belong to the OOP candidate-arbitration context (base is not
+    // proven to be MATCH_PLAYER); keep provenance neutral until writers are mapped.
+    0x1E40: "CANDIDATE_ARBITRATION_CONTEXT_VALUE_A",
+    0x1E54: "CANDIDATE_ARBITRATION_CONTEXT_VALUE_B",
 }
 
 def parse_pe(mm):
@@ -231,7 +235,7 @@ def main():
             with (args.out/"match-player-field-xrefs-ghidra.tsv").open("w",encoding="utf-8") as out:
                 out.write("from_rva\tto_rva\treference_kind\ttarget_name\tinstruction_pattern\tcaller_function_rva\tcaller_function_end_rva\tunwind_info_rva\n")
                 for x in hits:
-                    label="MATCH_PLAYER_FIELD_"+x["field_offset"].replace("0x","")
+                    label=FIELD_LABELS[int(x["field_offset"],16)]
                     out.write(
                         f'{x["from_rva"]}\t{x["field_offset"]}\t{x["access"]}_FIELD_ACCESS\t{label}\t'
                         f'{x["instruction"]}\t{x["function_start_rva"]}\t'
