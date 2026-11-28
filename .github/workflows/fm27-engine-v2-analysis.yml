@@ -9,6 +9,7 @@ on:
       - "scripts/ghidra/ExportNativeRttiTargets.java"
       - "scripts/ghidra/TraceNativeScoreAndTactic.java"
       - "scripts/ghidra/DecompileNativeRttiXrefFunctions.java"
+      - "scripts/engine_analysis/scan_native_match_player_fields.py"
       - "scripts/engine_analysis/fm27_package_audit.py"
       - "scripts/ghidra/AnnotateIl2CppMethods.java"
       - "scripts/engine_analysis/extract_il2cpp_match_methods.py"
@@ -75,6 +76,18 @@ jobs:
           test -s "$XREF_TSV"
           awk -F '\t' 'NR > 1 && $6 != "" { found=1 } END { exit !found }' "$XREF_TSV"
           cat analysis/package-audit-console.log
+
+      - name: Scan native MATCH_PLAYER and OOP tactical field consumers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check capstone==5.0.6
+          python scripts/engine_analysis/scan_native_match_player_fields.py \
+            --binary game/fm_Data/Plugins/x86_64/game_plugin.dll \
+            --out analysis/match-player-fields \
+            > analysis/match-player-fields-console.log 2>&1
+          test -s analysis/match-player-fields/match-player-field-xrefs-ghidra.tsv
+          cat analysis/match-player-fields-console.log
 
       - name: Set up .NET 10 for IL2CPP metadata decoding
         uses: actions/setup-dotnet@v4
@@ -199,6 +212,17 @@ jobs:
           ARGS+=(
             -postScript TraceNativeScoreAndTactic.java "$PWD/analysis/native-score-trace"
           )
+          FIELD_XREF_TSV="analysis/match-player-fields/match-player-field-xrefs-ghidra.tsv"
+          if [ -s "$FIELD_XREF_TSV" ]; then
+            ARGS+=(
+              -postScript DecompileNativeRttiXrefFunctions.java
+              "$PWD/$FIELD_XREF_TSV"
+              "$PWD/analysis/match-player-field-consumers"
+            )
+          else
+            echo "MATCH_PLAYER field consumer map missing." \
+              > analysis/match-player-field-consumers-skipped.txt
+          fi
           XREF_TSV="analysis/package-audit/native-rtti/native-rtti-code-xrefs.tsv"
           if [ -s "$XREF_TSV" ]; then
             ARGS+=(
