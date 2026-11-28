@@ -168,6 +168,15 @@ def main():
                     out.write(f"0x{start:X}\t0x{end:X}\t{len(fields)}\t"+
                               ",".join(f"0x{x:X}" for x in sorted(fields))+"\t"+
                               ",".join(FIELD_LABELS[x] for x in sorted(fields))+"\n")
+            with (args.out/"match-player-field-xrefs-ghidra.tsv").open("w",encoding="utf-8") as out:
+                out.write("from_rva\tto_rva\treference_kind\ttarget_name\tinstruction_pattern\tcaller_function_rva\tcaller_function_end_rva\tunwind_info_rva\n")
+                for x in hits:
+                    label="MATCH_PLAYER_FIELD_"+x["field_offset"].replace("0x","")
+                    out.write(
+                        f'{x["from_rva"]}\t{x["field_offset"]}\tFIELD_ACCESS\t{label}\t'
+                        f'{x["instruction"]}\t{x["function_start_rva"]}\t'
+                        f'{x["function_end_rva"]}\t{x["unwind_info_rva"]}\n'
+                    )
             print(json.dumps(summary,indent=2))
             if not hits:
                 raise SystemExit("no MATCH_PLAYER/OOP field references found")
