@@ -519,3 +519,49 @@ Run #3 曾反编译的 `0x7F20E0`、`0x707A30` 与 handoff 无关，相关解释
 1. 检查 Handoff Run #4（修正 0x47F2120/0x4707AA0）新 Artifact，确认真实 helper 逻辑。
 2. 检查 Movement Record consumer Run #3，对 `+0x1BB0) 记录读取函数进行 Ghidra 反编译，找到 state `0x72) 的消费者和最终 movement/transform update。
 3. 将确认的字段消费链补进主报告；若只看到记录复制/队列管理，不把它当作运动执行。
+
+
+## 2026-11-28：Movement Record Run #3 完成，候选记录消费者已生成四分量下游输出
+
+### Run #3 与 Artifact
+
+- Workflow：[Per-player movement record consumer Run #3](https://github.com/eslaulau/FM27-Exporter/actions/runs/46132062768)，success
+- Artifact：`15258218044`，601,709 bytes
+- SHA-256：`76eb398464d8c1910696481a49d195bacb6db8a1c15db69fb8f555b5cf75d168`
+- Ghidra 脚本使用已经确认的 MATCH_PLAYER movement-record 字段清单，自动筛选多字段消费者并反编译。
+- 主技术报告 Section 17 Commit：`e4671c31c4a6e8c8c9b4607888cc6334a00afc50`
+
+### 新确认的两个关键消费者
+
+**1. `0x4915090)：读取并解包 MATCH_PLAYER movement record**
+- 读取 player `+0x1BB0/+0x1BB8) 候选 XY，`+0x1C3C) 辅助距离，`+0x1C40/+0x1C44) 时间/候选索引，`+0x1C64) 状态；
+- 同时检查当前 tick、阶段 PI、OOP slot、球场边界、与关联球员候选时间/空间冲突和历史样本；
+- 接受时将记录解包到调用者的 param_7：候选 XY、距离、候选 index、映射后的状态标签和侧向标记；
+- 函数本身没有写 player 当前 XY +0x140/+0x144。
+
+**2. `0x4911C10)：验收结果位 + 四分量输出记录**
+- 在入口调用 `0x4915090)，把其结果更新到调用者 flag 结构 `param_5+0x10) 的 bit 0x200；
+- 对已接受候选执行更多阶段、时间、空间、球场边界、历史轨迹和其它球员冲突检查；
+- 满足条件时写入输出结构 `param_8)：多分支生成四个 float 分量 `param_8[4..7])，写入阈值 `+0x24)、状态标签 byte `+0x2D) 和距离/向量/时间辅助字段 `+0x1C/+0x1D/+0x21)；
+- 输出的四分量是候选/动作输出记录，不是已证明的 Transform 写回。
+
+**调用关系边界：**
+- 机器 xref 已确认 `0x4911C10 → 0x4915090)，call site RVA `0x4911C8D)；
+- `0x4911C10) 暂未发现直接 CALL caller；可能通过间接指针/vtable/回调，但需要 Run #5 静态指针结果验证；
+- `0x489DEA0)（36,736 bytes）是 `0x4865900) 调用的另一条大型 per-player 更新函数，不是 `0x4911C10) 的直接 caller；
+- `0x489DEA0) 处理候选缓冲区/时间/空间状态，但没有凭偏移足够证据将它判为最终 Transform 写入器。
+
+### Run #5 正在追实际调用者/输出消费者
+
+- Workflow：[Movement Commit Run #5](https://github.com/eslaulau/FM27-Exporter/actions/runs/46132797258)
+- 新目标包括 `0x4915090)、`0x4911C10)、`0x489DEA0)、`0x61660)、`0x47F2120)、`0x4707AA0)；
+- 扫描直接 CALL/JMP/Jcc 和非执行区静态绝对 VA / RVA 函数指针；
+- 当前字段扫描/调用扫描步骤仍在执行，尚无有效 Artifact。
+- 目标：找出谁调用 `0x4911C10)、谁接收 `param_8[4..7])、是否把它传到 Movement Director/physics 或最终 Transform 更新。
+
+### 本轮严格结论
+
+现在已形成更完整的中间链：
+`0x61660) 将候选记录写入 MATCH_PLAYER → `0x4915090) 读取/解包和验收 → `0x4911C10) 生成四 float 候选/动作输出和结果标志。
+
+**最终球员 Transform 或实际速度/运动状态写回仍未定位**，因此目前还不能说已证明真实移动执行。下一步继续找四分量输出的消费者，之后再把角色、职责、PI/TI 与移动执行联系起来。
