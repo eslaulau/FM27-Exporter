@@ -69,6 +69,12 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         seeds.put(0x104fa0L, "MATCH_PLAYER_EXTENDED_SLOT_VALUE_DERIVER");
         seeds.put(0x2b57ba0L, "TEAM_TACTIC_COLLECTION_APPLIER");
         seeds.put(0x4813b90L, "ROLE_PI_CANDIDATE_COMMON_VALIDATOR");
+        seeds.put(0x0a8f70L, "ROLE_PI_BEHAVIOR_CANDIDATE_AGGREGATOR");
+        seeds.put(0x036be0L, "HALF_BACK_AND_DROPPING_DM_PHASE_GATE");
+        seeds.put(0x0a79a0L, "TAKE_FEWER_RISKS_STOPPER_DUTY_GATE");
+        seeds.put(0x0a7d20L, "CROSSING_PI_SPATIAL_GATE");
+        seeds.put(0x0a82f0L, "ROLE_DUTY_PI_POSITION_GATE");
+        seeds.put(0x0a8080L, "PI_TRIGGER_PHASE_AND_TARGET_GATE");
         seeds.put(0x2bbf350L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_1");
         seeds.put(0x2bbf420L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_2");
         seeds.put(0x2bbf580L, "APPLY_TWEAK_TACTIC_CHANGE_SLOT_4");
@@ -113,6 +119,16 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
             return null;
         }
         Function existing = currentProgram.getFunctionManager().getFunctionAt(entry);
+        if (existing == null) {
+            Function containing = currentProgram.getFunctionManager().getFunctionContaining(entry);
+            if (containing != null) {
+                functions.put(rva, containing);
+                summary.println("REUSE_CONTAINING_FUNCTION\\t" + name +
+                    "\\tentry=" + entry + "\\tfunction=" + containing.getEntryPoint() +
+                    "\\tname=" + containing.getName());
+                return containing;
+            }
+        }
         if (existing != null && existing.getBody().getNumAddresses() > 1) {
             functions.put(rva, existing);
             return existing;
@@ -321,6 +337,44 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
             while(it.hasNext()&&n<1000){Instruction ins=it.next();asm.println(ins.getAddress()+"\t"+ins);n++;}
             decompile(f,decomp,dec,f.getName());
         }
+        // Decompile a bounded set of direct callers of the PI/role aggregators.
+        Map<Address, Function> prioritizedCallers = new LinkedHashMap<>();
+        long[] callerTargets={0x0a8f70L,0x4813b90L,0x036be0L,0x0a79a0L,0x0a7d20L,0x0a82f0L};
+        for(long targetRva:callerTargets) {
+            Address target=currentProgram.getImageBase().add(targetRva);
+            Function targetFunction=currentProgram.getFunctionManager().getFunctionAt(target);
+            if(targetFunction==null) targetFunction=currentProgram.getFunctionManager().getFunctionContaining(target);
+            if(targetFunction==null) continue;
+            ReferenceIterator incoming=currentProgram.getReferenceManager().getReferencesTo(targetFunction.getEntryPoint());
+            int found=0;
+            while(incoming.hasNext() && found<16) {
+                Reference ref=incoming.next();
+                if(!ref.getReferenceType().isCall()) continue;
+                Function caller=currentProgram.getFunctionManager().getFunctionContaining(ref.getFromAddress());
+                if(caller!=null && !caller.getEntryPoint().equals(targetFunction.getEntryPoint())) {
+                    prioritizedCallers.put(caller.getEntryPoint(),caller);
+                    found++;
+                }
+            }
+        }
+        int callerCount=0;
+        for(Map.Entry<Address,Function> entry:prioritizedCallers.entrySet()) {
+            if(monitor.isCancelled() || callerCount>=32) break;
+            Function caller=entry.getValue();
+            summary.println("PRIORITIZED_INCOMING_CALLER\t"+caller.getEntryPoint()+
+                "\t"+caller.getName()+"\tbytes="+caller.getBody().getNumAddresses());
+            dec.println("\n// ===== PRIORITIZED_INCOMING_CALLER "+caller.getEntryPoint()+
+                " "+caller.getName()+" =====");
+            if(caller.getBody().getNumAddresses()<=MAX_DECOMPILE) {
+                DecompileResults result=decomp.decompileFunction(caller,12,monitor);
+                if(result!=null && result.decompileCompleted() && result.getDecompiledFunction()!=null)
+                    dec.println(result.getDecompiledFunction().getC());
+                else dec.println("// DECOMPILE_FAILED "+(result==null?"no result":result.getErrorMessage()));
+            } else dec.println("// SKIPPED_OVERSIZE");
+            callerCount++;
+        }
+        summary.println("PRIORITIZED_INCOMING_CALLERS_ANALYZED="+callerCount);
+        dec.println("\n// PRIORITIZED_INCOMING_CALLERS_ANALYZED="+callerCount);
         summary.println("SEED_FUNCTIONS_ANALYZED="+count);
         summary.println("UNIQUE_DIRECT_CALLS_FOUND="+callees.size());
         summary.println("DIRECT_CALLEES_ANALYZED="+emitted);
