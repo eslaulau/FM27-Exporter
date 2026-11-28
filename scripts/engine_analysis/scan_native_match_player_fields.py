@@ -112,10 +112,12 @@ def main():
                 scanned_bytes+=size
                 code=mm[raw:raw+size]
                 for ins in md.disasm(code,image_base+begin):
-                    if not ins.detail:
+                    try:
+                        operands=ins.operands
+                    except (AttributeError, RuntimeError):
                         continue
                     found=[]
-                    for op in ins.operands:
+                    for op in operands:
                         if op.type==CS_OP_MEM and op.mem.disp in FIELD_LABELS:
                             found.append(op.mem.disp)
                     if not found:
