@@ -274,6 +274,21 @@ jobs:
           echo $? > analysis/native-engine-unified-exit-code.txt
           tail -n 300 analysis/native-engine-unified-console.log || true
           set -e
+          test -s analysis/ghidra/seed-decompilations.txt
+          test -s analysis/ghidra-pressing/pressing-core-summary.txt
+          test -s analysis/native-score-trace/native-score-tactic-summary.txt
+          test -s analysis/native-rtti/native-rtti-target-summary.txt
+          if [ -s "$TARGET_CALL_XREFS" ]; then
+            test -s analysis/native-target-callers-decompiled/native-rtti-caller-summary.txt
+            grep -Eq 'ANALYZED_CALLER_FUNCTIONS=[1-9][0-9]*' \
+              analysis/native-target-callers-decompiled/native-rtti-caller-summary.txt
+          fi
+          if [ -s "$FIELD_XREF_TSV" ]; then
+            test -s analysis/match-player-field-consumers/native-rtti-caller-summary.txt
+          fi
+          if [ -s "$XREF_TSV" ]; then
+            test -s analysis/native-rtti-callers/native-rtti-caller-summary.txt
+          fi
 
       - name: Generate verified IP/OOP role and duty compact-ID map
         shell: bash
