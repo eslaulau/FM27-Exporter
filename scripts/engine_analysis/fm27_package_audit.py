@@ -199,6 +199,12 @@ def native_rtti_scan(path: Path, pe: dict, out_dir: Path) -> dict:
                 r"ROLE|OOP|IN.?POSSESSION|OUT.?OF.?POSSESSION|SIMATCH)",
                 re.IGNORECASE,
             )
+            native_namespace = re.compile(r"^simatch(shared)?::", re.IGNORECASE)
+            engine_terms = re.compile(
+                r"(MATCH|TACTIC|ROLE|PRESS|MOVEMENT|POSITION|BALL|PLAYER_INSTRUCTION|"
+                r"SCOR|WEIGHT|DECISION|INPUT|SHOT_ZONE|XG|TEAM_SELECTOR|PLAYING_DATA)",
+                re.IGNORECASE,
+            )
             relevant_types = [
                 {
                     "type_descriptor_rva": f"0x{rva:X}",
@@ -216,10 +222,13 @@ def native_rtti_scan(path: Path, pe: dict, out_dir: Path) -> dict:
             # and vftables. This is a bounded byte-pattern index, not a full disassembly.
             ref_targets = {}
             for rva, decorated in type_descs.items():
-                if important.search(decorated):
-                    ref_targets[rva] = ("TYPE_DESCRIPTOR", demangle(decorated))
+                name = demangle(decorated)
+                if native_namespace.search(name) and engine_terms.search(name):
+                    ref_targets[rva] = ("TYPE_DESCRIPTOR", name)
             for table in tables:
-                ref_targets[table["vftable_rva"]] = ("VFTABLE", table["type_name"])
+                name = table["type_name"]
+                if native_namespace.search(name) and engine_terms.search(name):
+                    ref_targets[table["vftable_rva"]] = ("VFTABLE", name)
 
             code_xrefs = []
             # REX.W/R + common RIP-relative memory operands: LEA/MOV/CMP/TEST/etc.
@@ -252,6 +261,10 @@ def native_rtti_scan(path: Path, pe: dict, out_dir: Path) -> dict:
                                 })
                     elif first in plain_ops and pos + 6 <= length:
                         modrm = blob[pos + 1]
+                        # The previous iteration already handled REX+opcode+ModRM.
+                        # Skip this opcode-only view of the same instruction.
+                        if pos > 0 and 0x40 <= blob[pos - 1] <= 0x4F and (modrm & 0xC7) == 0x05:
+                            continue
                         if (modrm & 0xC7) == 0x05:
                             disp = struct.unpack_from("<i", blob, pos + 2)[0]
                             target_rva = sec["va"] + pos + 6 + disp
