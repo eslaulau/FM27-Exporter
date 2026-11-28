@@ -1,0 +1,27 @@
+name: Stage FM27 engine analysis package
+on:
+  push:
+    paths:
+      - ".github/workflows/stage-engine-analysis-package.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and verify Release asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://github.com/eslaulau/FM27-Exporter/releases/download/fm27-saves/FM27_Engine_Analysis_Package_20261125.zip" \
+            --output FM27_Engine_Analysis_Package_20261125.zip
+          echo "a9dfd61bb2f9d6110ff92997a86790168d04cfc9c621cf8c2564c616f0fbc10f  FM27_Engine_Analysis_Package_20261125.zip" | sha256sum --check
+      - name: Upload temporary Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FM27-Engine-Analysis-Package-Relay
+          path: FM27_Engine_Analysis_Package_20261125.zip
+          if-no-files-found: error
+          retention-days: 1
