@@ -1,0 +1,95 @@
+name: FM27 per-player movement record consumer trace
+on:
+  push:
+    paths:
+      - ".github/workflows/fm27-movement-record-analysis.yml"
+      - "scripts/ghidra/TraceMovementHandoff.java"
+      - "scripts/engine_analysis/scan_movement_record_fields.py"
+      - "scripts/engine_analysis/scan_native_match_player_fields.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: fm27-movement-record-analysis
+  cancel-in-progress: true
+jobs:
+  movement-record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and verify FM27 native package
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://github.com/eslaulau/FM27-Exporter/releases/download/fm27-saves/FM27_Engine_Analysis_Package_20261125_v2.zip" \
+            --output FM27_Engine_Analysis_Package_20261125_v2.zip
+          echo "99f5207337e1f9cad84a4771ec08df6c9c9e34bea7c33ace7668124ca6bbb8d6  FM27_Engine_Analysis_Package_20261125_v2.zip" | sha256sum --check
+          mkdir -p game
+          python - <<'PY'
+          import pathlib,zipfile
+          root=pathlib.Path("game").resolve()
+          with zipfile.ZipFile("FM27_Engine_Analysis_Package_20261125_v2.zip") as z:
+              for item in z.infolist():
+                  name=item.filename.replace(chr(92),"/")
+                  target=(root/name).resolve()
+                  if target!=root and root not in target.parents: raise SystemExit(f"unsafe path: {item.filename}")
+                  if item.is_dir() or name.endswith("/"): target.mkdir(parents=True,exist_ok=True)
+                  else:
+                      target.parent.mkdir(parents=True,exist_ok=True)
+                      with z.open(item) as src,target.open("wb") as dst:
+                          while chunk:=src.read(1024*1024): dst.write(chunk)
+          PY
+          test -s game/fm_Data/Plugins/x86_64/game_plugin.dll
+      - name: Scan MATCH_PLAYER accepted movement-record fields
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check capstone==5.0.6
+          mkdir -p analysis/movement-record/field-xrefs
+          python scripts/engine_analysis/scan_movement_record_fields.py \
+            --binary game/fm_Data/Plugins/x86_64/game_plugin.dll \
+            --out analysis/movement-record/field-xrefs \
+            > analysis/movement-record/field-scan-console.log 2>&1
+          cat analysis/movement-record/field-scan-console.log
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Download Ghidra 12.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.2_build/ghidra_12.2_PUBLIC_20261016.zip" \
+            --output ghidra.zip
+          mkdir ghidra
+          unzip -q ghidra.zip -d ghidra
+      - name: Decompile accepted movement-record readers and writers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p analysis/movement-record ghidra-project-movement-record
+          GHIDRA_SCRIPT_PATH=$(find ghidra -type f -name analyzeHeadless -print -quit)
+          test -n "$GHIDRA_SCRIPT_PATH"
+          GHIDRA_DIR=$(dirname "$GHIDRA_SCRIPT_PATH")
+          chmod +x "$GHIDRA_DIR/analyzeHeadless"
+          "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-movement-record" FM27MovementRecord \
+            -import "game/fm_Data/Plugins/x86_64/game_plugin.dll" \
+            -overwrite -noanalysis \
+            -scriptPath scripts/ghidra \
+            -postScript TraceMovementHandoff.java "$PWD/analysis/movement-record" \
+              "$PWD/analysis/movement-record/field-xrefs/match-player-field-xrefs.tsv" \
+            > analysis/movement-record/ghidra-console.log 2>&1
+          test -s analysis/movement-record/movement-handoff-summary.txt
+          test -s analysis/movement-record/movement-handoff-decompilations.txt
+          cat analysis/movement-record/movement-handoff-summary.txt
+      - name: Upload movement-record consumer trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FM27-Movement-Record-Consumers
+          path: analysis/movement-record/
+          if-no-files-found: warn
+          retention-days: 14
