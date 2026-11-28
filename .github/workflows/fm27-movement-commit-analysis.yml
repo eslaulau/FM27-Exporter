@@ -1,0 +1,103 @@
+name: FM27 candidate-to-movement commit trace
+on:
+  push:
+    paths:
+      - ".github/workflows/fm27-movement-commit-analysis.yml"
+      - "scripts/ghidra/DecompileMovementXrefFunctions.java"
+      - "scripts/engine_analysis/scan_native_target_callers.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: fm27-movement-commit-analysis
+  cancel-in-progress: true
+jobs:
+  movement-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and verify FM27 native package
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://github.com/eslaulau/FM27-Exporter/releases/download/fm27-saves/FM27_Engine_Analysis_Package_20261125_v2.zip" \
+            --output FM27_Engine_Analysis_Package_20261125_v2.zip
+          echo "99f5207337e1f9cad84a4771ec08df6c9c9e34bea7c33ace7668124ca6bbb8d6  FM27_Engine_Analysis_Package_20261125_v2.zip" | sha256sum --check
+          mkdir -p game
+          python - <<'PY'
+          import pathlib,zipfile
+          root=pathlib.Path("game").resolve()
+          with zipfile.ZipFile("FM27_Engine_Analysis_Package_20261125_v2.zip") as z:
+              for item in z.infolist():
+                  name=item.filename.replace(chr(92),"/")
+                  target=(root/name).resolve()
+                  if target!=root and root not in target.parents: raise SystemExit(f"unsafe path: {item.filename}")
+                  if item.is_dir() or name.endswith("/"): target.mkdir(parents=True,exist_ok=True)
+                  else:
+                      target.parent.mkdir(parents=True,exist_ok=True)
+                      with z.open(item) as src,target.open("wb") as dst:
+                          while chunk:=src.read(1024*1024): dst.write(chunk)
+          PY
+          test -s game/fm_Data/Plugins/x86_64/game_plugin.dll
+      - name: Scan direct call/jump and static pointer references to movement candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check capstone==5.0.6
+          python scripts/engine_analysis/scan_native_target_callers.py \
+            --binary game/fm_Data/Plugins/x86_64/game_plugin.dll \
+            --out analysis/movement-commit \
+            --target 0x148310:CANDIDATE_STATE_UPDATE_LOOP \
+            --target 0x48EA3A0:CANDIDATE_PHASE_STATUS_READER \
+            --target 0x4865900:CANDIDATE_POSITION_STATE_BUILDER \
+            --target 0x485CA40:ALTERNATE_CANDIDATE_STATE_BUILDER \
+            --target 0x4873400:OOP_CANDIDATE_FILTER \
+            --target 0x4874AC0:PHASE_CANDIDATE_STATE_PROCESSOR \
+            --target 0x496F840:CANDIDATE_POSITION_OUTPUT             --target 0x494F820:CANDIDATE_POSITION_TIME_VALIDATOR \
+            --target 0x492D060:MOVEMENT_DIRECTOR_SPATIAL_PROJECTOR \
+            --target 0x492D840:MOVEMENT_DIRECTOR_POST_TRANSFORM \
+            --target 0x4993230:MOVEMENT_DIRECTOR_ENTRY_LOOKUP \
+            --target 0x4709800:MOVEMENT_HISTORY_SAMPLE_UPDATER
+          cat analysis/movement-commit/native-target-call-summary.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Download Ghidra 12.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.2_build/ghidra_12.2_PUBLIC_20261016.zip" \
+            --output ghidra.zip
+          mkdir ghidra
+          unzip -q ghidra.zip -d ghidra
+      - name: Decompile movement candidate callers and one-hop call graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ghidra-project-movement-commit analysis/movement-commit
+          GHIDRA_SCRIPT_PATH=$(find ghidra -type f -name analyzeHeadless -print -quit)
+          test -n "$GHIDRA_SCRIPT_PATH"
+          GHIDRA_DIR=$(dirname "$GHIDRA_SCRIPT_PATH")
+          chmod +x "$GHIDRA_DIR/analyzeHeadless"
+          "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-movement-commit" FM27MovementCommit \
+            -import "game/fm_Data/Plugins/x86_64/game_plugin.dll" \
+            -overwrite -noanalysis \
+            -scriptPath scripts/ghidra \
+            -postScript DecompileMovementXrefFunctions.java \
+              "$PWD/analysis/movement-commit/native-target-call-xrefs.tsv" \
+              "$PWD/analysis/movement-commit" \
+            > analysis/movement-commit/ghidra-console.log 2>&1
+          test -s analysis/movement-commit/native-rtti-caller-summary.txt
+          cat analysis/movement-commit/native-rtti-caller-summary.txt
+      - name: Upload movement commit trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FM27-Movement-Commit-Trace
+          path: analysis/movement-commit/
+          if-no-files-found: warn
+          retention-days: 14
