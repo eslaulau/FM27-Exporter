@@ -777,3 +777,41 @@ Run #11（Workflow `46137041278`，Artifact `15260182294`）扫描成功，确�
 - `0x42D58E0 → 0x2AFB290`（site `0x42D5BEB`）。
 
 但 Ghidra xref-decompile 的 160 函数上限被大量泛化 `CANDIDATE_POSITION_RECORD_COPY_OR_TRANSFORM` 调用点占满，两个关键 caller 未进入伪代码输出。已把 `MATCH_PLAYER_MOVEMENT_RECORD_AND_POSITION_WRITER` 精确标签升级为优先级 -10（高于普通候选/复制引用），Commit `9e07bcc71b7e8ce6fa50a1d30734bbe2a740fc54`。Movement Commit Run #12：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46137296905)，将重新专门反编译这两个 caller。
+
+
+### Run #12：0x2AFB290 已连接到 match-level tick/update routine
+
+- Workflow：[Movement Commit Run #12](https://github.com/eslaulau/FM27-Exporter/actions/runs/46137296905)，success。
+- Artifact：`15260501406`，1,022,188 bytes；SHA-256 `c03ae634ba1ac7a2dbf7dafe97f2851c07aa6cfda5dac0acc37f205534d4c44f`。
+- 精确升级 position writer caller 的 Ghidra 优先级后，成功反编译 `0x42D3910` 和 `0x42D58E0`。
+
+**新确认的调用关系：**
+- `0x42D3910` 在 site `0x42D4C4C` 直接调用 `0x2AFB290`。
+- `0x42D3910` 在 site `0x42D45FF` 调用 `0x42D58E0`。
+- `0x42D58E0` 在 site `0x42D5BEB` 再调用 `0x2AFB290`。
+
+**0x42D3910 的功能证据：**
+- 读取 match 当前 tick `+0x154EC)、双方 team 对象 `+0x15380/+0x15388) 和 player arrays（team `+0x138`、count `+0x72E`）。
+- 遍历球员槽、读取 player 状态（包括 `+0x23C6`）并调用 per-player/team update helpers。
+- 操作 match update/event queue（`+0x12EE0..+0x12F30`、`+0x13E40)），按时间窗口、双方活动/待更新计数分支，写入事件 type `0x11/0x12) 等。
+- 在更新分支直接调用 `0x2AFB290`，也会调用 `0x42D58E0` 子阶段。
+
+**0x42D58E0 的功能证据：**
+- 读取 match tick 与当前 team/player 上下文，处理事件 type `0x13) 及下一更新窗口；
+- 在对应更新分支再次调用 `0x2AFB290)；
+- 后续对 `+0x23C6 == 1` 的 player 调用历史/时间样本 helper `0x19E0)。
+
+这使 `0x2AFB290` 从字段写入候选升级为**已确认被 match-level update routine 及其子阶段调用的每球员运动记录/缓存位置更新器**。它按 player state 与时间条件维护方向缓存、movement record，并在特定分支将缓存位置 `+0x150..+0x15F` 应用到活动位置区 `+0x140..+0x14F)。
+
+详细报告：[MatchTickPositionUpdater Run #12](https://github.com/eslaulau/FM27-Exporter/blob/main/docs/reverse-engineering/FM27_27.1.1_MatchTickPositionUpdater_Run12_20261128.md)，Commit `dc3aae23d192d250ebc6635067e046c4438fd00a`。
+
+**关键未闭合点仍保留：**`0x61660` 将候选记录写入 `+0x1BB0)，`0x51820` 读取该记录并调用 `0x47E44C0)；`0x42D3910 → 0x2AFB290` 是 match-level updater 的另一条已证实调用链。尚无直接证据说明 `0x61660` 写入的记录由 `0x2AFB290` 哪个分支读取并提交。两段链可能在共享 player state/时间队列中汇合，但不能提前画成直接边。
+
+### Run #13 / #14：追踪 match-level updater 的上游调度入口
+
+为定位 `0x42D3910` 的 caller，已在 `fm27-movement-commit-analysis.yml` 添加目标 `0x42D3910`、`0x42D58E0)、`0x3FEF0`，并将其 caller 伪代码优先级提升到 generic record-copy references 之前。
+
+- Run #13：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46137512772)，由 workflow target 更新触发；
+- Run #14：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46137515853)，由优先级修复触发；后续以包含两项更新的最新运行产物为准。
+
+下一轮只追 `0x42D3910` 的直接 caller / 函数指针 / vtable scheduler，并确认是否进入 `0x3FEF0`、`0x5DBD0` 或其他 match tick 调度路径。
