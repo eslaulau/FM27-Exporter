@@ -660,3 +660,18 @@ action/output buffer
 4. 并行保留战术参数数据源问题：继续追 `MATCH_PLAYER+0x480..+0x4C4` 参数向量及 TEAM `+0x149E4..+0x14A00` 系数区的真实初始化/复制路径。
 5. 移动执行链闭合后，转向传球、射门质量和比分事件写入机制，再用真实赛季数据反向设计四后卫战术。
 
+
+
+### 当前续接任务：实际坐标写入点专项扫描（已提交，Actions 运行中）
+
+为解决本日志前文反复标记的“最终 Transform/速度写回未定位”，本轮已把下一步转成字段级定位，而不是再重复全量引擎扫描：
+
+- 修改 `scripts/engine_analysis/scan_movement_record_fields.py`，加入 `0x140`、`0x144` 两个当前坐标候选偏移；字段名明确标为 candidate，避免仅凭偏移就假定对象身份。
+  - Commit：`7c775dfad3425d56ec254a3ba427ffd9c9ed6d79`。
+- 修改 `scripts/ghidra/TraceMovementHandoff.java`：把函数按“记录字段 + 当前 XY 写入”“同一基址寄存器共现”“X/Y 两字段同时写入”评分；优先反编译候选坐标 writer；新增 match tick 上游 caller seed `0x3FEF0`。
+  - 同时修复 caller 集合遍历中的并发修改：遍历前复制 `callers` 快照，防止 `collect()` 在遍历中继续向原集合加入 caller。
+  - Commit：`19a4e4a0355e010f767722d8b54f78880ba930d2`。
+- Movement Record consumer Run：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136282836)，Run ID `46136282836`，当前 `in_progress`，正在执行新增字段扫描。
+- Movement Handoff Run：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136282842)，Run ID `46136282842`，当前 `in_progress`，正在执行修复后的 Ghidra handoff 反编译。
+
+本轮筛选只是定位候选，不会将全模块任意 `+0x140/+0x144` 访问自动归因给 MATCH_PLAYER。最终结论必须结合相同对象基址、函数调用关系和输出缓冲区来源判断。待 Artifact 生成后，优先检视写访问（W）候选以及它们是否由 `0x4863C40 / 0x4911C10 / 0x4915090` 或 tick/update 链调用。
