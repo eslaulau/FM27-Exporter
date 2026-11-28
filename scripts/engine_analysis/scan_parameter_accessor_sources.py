@@ -7,7 +7,7 @@ context modifiers read a compact coefficient block at TEAM+0x149E4..0x14A00.
 """
 from __future__ import annotations
 
-import scan_native_match_player_fields as scanner
+import scan_direction_generator_fields as direction_scan\n\nscanner = direction_scan.scanner
 
 # Parameter IDs passed to 0x4704100 are byte indices into this contiguous array.
 # Add every byte displacement because some initializers/copies use fixed offsets,
