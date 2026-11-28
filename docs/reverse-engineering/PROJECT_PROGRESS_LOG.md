@@ -476,3 +476,22 @@ TEAM `+0x149E4..+0x14A00` 系数区仍为读多写零。
 2. 对参数向量只做带对象身份的指针追踪，从 MATCH_PLAYER 初始化/复制路径找到真正填充 `+0x480..+0x4C4) 的来源；TEAM 系数块以整体初始化/复制方式继续追。
 
 在闭合这两条之后，继续进入传球/射门结果和比分事件写入机制。
+
+
+### 下一轮实现已提交：MATCH_PLAYER movement record 专项扫描
+
+为追踪 `MATCH_PLAYER+0x1BB0) 的 0xD0-byte 候选记录，已提交三项专项文件：
+- 字段扫描器：`scripts/engine_analysis/scan_movement_record_fields.py`，Commit `2fe4ab92d3baa6da61002ff953b33c769ebd445f`；
+- Ghidra 消费者/写入者追踪脚本：`scripts/ghidra/TraceMovementHandoff.java)，Commit `8bfc500db527da3690357273383f4d5990a71be9`；
+- 专项工作流：`FM27 per-player movement record consumer trace)，Commit `68b8e080a2bbfc8aa11f2b56c21dec352c06c521`。
+
+目标字段包括：
+`+0x1BB0) 记录起始、`+0x1C34/+0x1C3C) 距离/辅助值、`+0x1C44) 候选时间索引、`+0x1C60) 方向索引、`+0x1C64) 状态码，以及记录尾部状态成员。
+
+Run #1 曾尝试按显式函数反编译，但没有读取 movement record 的 field-xref 清单；新增 Run #2 已把字段 scanner 输出作为输入，自动挑选读写这些候选记录成员的函数并进行 Ghidra 反编译。
+
+- 专项 Run #2：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46131546936)，当前 in progress；
+- 同一工作流之前的 Run #1：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46130992721)，success，但仅包含显式 handoff seeds；
+- Run #2 成功后优先检查谁读取 `+0x1C64 == 0x72)，以及是否把 `+0x1BB0) 内的坐标/方向数据转换为运动目标、速度/加速度或 Transform。
+
+**边界：**当前只证明候选状态记录被写入 MATCH_PLAYER；最终运动提交尚未确认。不得把它说成 Transform 已更新。
