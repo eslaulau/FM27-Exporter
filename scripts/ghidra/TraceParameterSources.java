@@ -66,10 +66,28 @@ public class TraceParameterSources extends GhidraScript {
         if(f!=null) functions.put(rva,f);
         return f;
     }
+    private boolean hasStackFrameRbp(long functionRva) {
+        Address entry=currentProgram.getImageBase().add(functionRva);
+        InstructionIterator it=currentProgram.getListing().getInstructions(entry,true);
+        int checked=0;
+        while(it.hasNext() && checked<12) {
+            Instruction ins=it.next();
+            checked++;
+            String mnemonic=ins.getMnemonicString().toLowerCase(Locale.ROOT);
+            String op0=ins.getDefaultOperandRepresentation(0).toLowerCase(Locale.ROOT).replace(" ","");
+            String op1=ins.getDefaultOperandRepresentation(1).toLowerCase(Locale.ROOT).replace(" ","");
+            if(mnemonic.equals("mov") && op0.equals("rbp") && op1.equals("rsp")) return true;
+            if(mnemonic.equals("lea") && op0.equals("rbp") && op1.startsWith("[rsp")) return true;
+        }
+        return false;
+    }
+
     private void loadDynamicSeeds(File outDir,PrintWriter summary) throws Exception {
         File tsv=new File(new File(outDir,"direction-generator-fields"),"match-player-field-xrefs.tsv");
         if(!tsv.isFile()) { summary.println("MISSING_FIELD_TSV="+tsv); return; }
         Map<Long,Map<String,Integer>> vector=new HashMap<>(),coeff=new HashMap<>();
+        Map<Long,Boolean> rbpStackCache=new HashMap<>();
+        int skippedRsp=0, skippedRbpStack=0, keptRbp=0;
         try(BufferedReader br=new BufferedReader(new FileReader(tsv))) {
             String line; boolean header=true;
             while((line=br.readLine())!=null) {
@@ -80,11 +98,21 @@ public class TraceParameterSources extends GhidraScript {
                 boolean isVector=off>=0x480 && off<=0x4C4;
                 boolean isCoeff=off>=0x149E4 && off<=0x14A00 && ((off-0x149E4)%4==0);
                 if(!isVector && !isCoeff) continue;
+                String base=c[3].trim().toLowerCase(Locale.ROOT);
+                if(base.equals("rsp")) { skippedRsp++; continue; }
+                if(base.equals("rbp")) {
+                    boolean stack=rbpStackCache.computeIfAbsent(start,k->hasStackFrameRbp(k));
+                    if(stack) { skippedRbpStack++; continue; }
+                    keptRbp++;
+                }
                 Map<Long,Map<String,Integer>> group=isVector?vector:coeff;
                 Map<String,Integer> fields=group.computeIfAbsent(start,k->new HashMap<>());
                 fields.put(c[1],fields.getOrDefault(c[1],0)+1);
             }
         }
+        summary.println("DYNAMIC_SCAN_SKIPPED_RSP_STACK_REFS="+skippedRsp);
+        summary.println("DYNAMIC_SCAN_SKIPPED_RBP_FRAME_REFS="+skippedRbpStack);
+        summary.println("DYNAMIC_SCAN_KEPT_RBP_NONFRAME_REFS="+keptRbp);
         addGroup(vector,"PARAM_VECTOR_WRITER_",summary);
         addGroup(coeff,"TEAM_COEFFICIENT_WRITER_",summary);
     }
@@ -150,6 +178,9 @@ public class TraceParameterSources extends GhidraScript {
             seeds.put(0x72B20L,"MATCH_PLAYER_SLOT_AND_TACTIC_REFRESH");
             seeds.put(0x2B05590L,"MATCH_PLAYER_TACTICAL_STATE_CLONER");
             seeds.put(0x48334D0L,"MATCH_PLAYER_PARAMETER_GATE_REFRESH");
+            seeds.put(0x4704100L,"MATCH_PLAYER_PARAMETER_VECTOR_VALUE_EVALUATOR");
+            seeds.put(0x474F370L,"TEAM_COEFFICIENT_PARAMETER_EVALUATOR_VARIANT_A");
+            seeds.put(0x475D640L,"TEAM_COEFFICIENT_PARAMETER_EVALUATOR_VARIANT_B");
             loadDynamicSeeds(outDir,summary);
             DecompInterface d=new DecompInterface(); d.openProgram(currentProgram);
             for(Map.Entry<Long,String> e:seeds.entrySet()) {
@@ -160,22 +191,22 @@ public class TraceParameterSources extends GhidraScript {
                     "\tBYTES="+f.getBody().getNumAddresses()+"\tEND=0x"+(rg==null?0:rg[0]));
                 collect(f,xrefs); decompile(f,d,dec,e.getValue());
             }
-            int n=0;
+            int calleeCount=0;
             for(long rva:callees) {
-                if(n>=MAX_CALLEES || monitor.isCancelled()) break;
+                if(calleeCount>=MAX_CALLEES || monitor.isCancelled()) break;
                 if(functions.containsKey(rva)) continue;
                 Function f=ensure(rva,"PARAM_SOURCE_CALLEE_"+Long.toHexString(rva),summary); if(f==null) continue;
-                summary.println("CALLEE\t0x"+Long.toHexString(rva)+"\tBYTES="+f.getBody().getNumAddresses());
-                decompile(f,d,dec,f.getName()); n++;
+                summary.println("CALLEE	0x"+Long.toHexString(rva)+"	BYTES="+f.getBody().getNumAddresses());
+                decompile(f,d,dec,f.getName()); calleeCount++;
             }
-            n=0;
+            int callerCount=0;
             for(Map.Entry<Long,Function> e:callers.entrySet()) {
-                if(n>=MAX_CALLERS || monitor.isCancelled()) break;
+                if(callerCount>=MAX_CALLERS || monitor.isCancelled()) break;
                 Function f=e.getValue();
-                summary.println("CALLER\t0x"+Long.toHexString(e.getKey())+"\tBYTES="+f.getBody().getNumAddresses());
-                decompile(f,d,dec,f.getName()); n++;
+                summary.println("CALLER	0x"+Long.toHexString(e.getKey())+"	BYTES="+f.getBody().getNumAddresses());
+                decompile(f,d,dec,f.getName()); callerCount++;
             }
-            summary.println("SEEDS="+seeds.size()+"\nCALLEES="+n+"\nCALLERS="+callers.size());
+            summary.println("SEEDS="+seeds.size()+"\nCALLEES="+calleeCount+"\nCALLERS="+callerCount);
             d.dispose();
         }
     }
