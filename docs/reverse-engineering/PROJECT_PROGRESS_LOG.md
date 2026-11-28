@@ -675,3 +675,10 @@ action/output buffer
 - Movement Handoff Run：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46136282842)，Run ID `46136282842`，当前 `in_progress`，正在执行修复后的 Ghidra handoff 反编译。
 
 本轮筛选只是定位候选，不会将全模块任意 `+0x140/+0x144` 访问自动归因给 MATCH_PLAYER。最终结论必须结合相同对象基址、函数调用关系和输出缓冲区来源判断。待 Artifact 生成后，优先检视写访问（W）候选以及它们是否由 `0x4863C40 / 0x4911C10 / 0x4915090` 或 tick/update 链调用。
+
+
+### 动作输出缓冲区的 XY 计算细节（反编译复核）
+
+对 `0x4911C10` 特定状态分支再次逐指令核对：函数先调用 `0x4986090` 家族 helper 取得内部表索引，从表项 `+0xA0` 读取 64-bit 二维偏移，再分别与 `MATCH_PLAYER+0x140/+0x144` 当前 XY 相加，写入调用者 `param_8[4]/[5]`；同一分支将 `MATCH_PLAYER+0x148/+0x14C` 写入 `param_8[6]/[7]` 并继续经过状态/速度门控。
+
+这使 `param_8[4]/[5]` 可以在该分支下被确认是“当前球员 XY + 内部偏移表二维向量”的候选目标坐标，而不是实际当前 XY 写回。内部索引/表的 UI 语义和输出记录最终消费者仍未破解。技术报告已补充该细节。
