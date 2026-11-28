@@ -84,8 +84,16 @@ public class TraceMovementHandoff extends GhidraScript {
     }
     private void loadMovementRecordConsumers(File tsv,PrintWriter summary) throws Exception {
         if(!tsv.isFile()) { summary.println("MOVEMENT_FIELD_TSV_MISSING="+tsv); return; }
-        Map<Long,Map<Long,Integer>> counts=new HashMap<>();
-        Map<Long,Set<String>> bases=new HashMap<>();
+        Set<Long> recordOffsets=new HashSet<>(Arrays.asList(
+            0x1BB0L,0x1BB8L,0x1BC0L,0x1C34L,0x1C3CL,0x1C44L,
+            0x1C60L,0x1C64L,0x1C68L,0x1C6CL,0x1C70L,0x1C74L,
+            0x1C78L,0x1C7CL));
+        Set<Long> positionOffsets=new HashSet<>(Arrays.asList(0x140L,0x144L));
+        Map<Long,Set<Long>> recordFieldsByFunction=new HashMap<>();
+        Map<Long,Set<String>> recordBasesByFunction=new HashMap<>();
+        Map<Long,Set<Long>> positionFieldsByFunction=new HashMap<>();
+        Map<Long,Set<Long>> positionWritesByFunction=new HashMap<>();
+        Map<Long,Set<String>> positionWriteBasesByFunction=new HashMap<>();
         try(BufferedReader br=new BufferedReader(new FileReader(tsv))) {
             String line; boolean header=true;
             while((line=br.readLine())!=null) {
@@ -93,42 +101,102 @@ public class TraceMovementHandoff extends GhidraScript {
                 String[] c=line.split("\\t",-1);
                 if(c.length<9) continue;
                 long off,start;
-                try { off=Long.parseLong(c[0].replace("0x",""),16); start=Long.parseLong(c[5].replace("0x",""),16); }
-                catch(Exception ex) { continue; }
-                if(c[3].equalsIgnoreCase("rsp")) continue;
-                if(c[3].equalsIgnoreCase("rbp") && isRbpFrame(start)) continue;
-                int weight=(off==0x1C64?8:(off==0x1C44?6:(off==0x1BB0?6:
-                    ((off==0x1C34 || off==0x1C3C || off==0x1C60)?4:2))));
-                if(c[2].contains("R")) weight+=2;
-                if(c[2].contains("W")) weight+=2;
-                Map<Long,Integer> fields=counts.computeIfAbsent(start,k->new HashMap<>());
-                fields.put(off,fields.getOrDefault(off,0)+weight);
-                bases.computeIfAbsent(start,k->new LinkedHashSet<>()).add(c[3]);
+                try {
+                    off=Long.parseLong(c[0].replace("0x",""),16);
+                    start=Long.parseLong(c[5].replace("0x",""),16);
+                } catch(Exception ex) { continue; }
+                String base=c[3].toLowerCase(Locale.ROOT);
+                String access=c[2].toUpperCase(Locale.ROOT);
+                if(base.equals("rsp")) continue;
+                if(base.equals("rbp") && isRbpFrame(start)) continue;
+
+                if(recordOffsets.contains(off)) {
+                    recordFieldsByFunction.computeIfAbsent(start,k->new LinkedHashSet<>()).add(off);
+                    recordBasesByFunction.computeIfAbsent(start,k->new LinkedHashSet<>()).add(base);
+                }
+                if(positionOffsets.contains(off)) {
+                    positionFieldsByFunction.computeIfAbsent(start,k->new LinkedHashSet<>()).add(off);
+                    if(access.contains("W")) {
+                        positionWritesByFunction.computeIfAbsent(start,k->new LinkedHashSet<>()).add(off);
+                        positionWriteBasesByFunction.computeIfAbsent(start,k->new LinkedHashSet<>()).add(base);
+                    }
+                }
             }
         }
-        List<Long> ranked=new ArrayList<>();
-        for(Map.Entry<Long,Map<Long,Integer>> e:counts.entrySet()) {
-            Set<Long> fields=e.getValue().keySet();
-            if(fields.size()>=2 || fields.contains(0x1C64L)) ranked.add(e.getKey());
+
+        Map<Long,Integer> scores=new HashMap<>();
+        Map<Long,String> reasons=new HashMap<>();
+        Set<Long> all=new LinkedHashSet<>();
+        all.addAll(recordFieldsByFunction.keySet());
+        all.addAll(positionWritesByFunction.keySet());
+        for(long rva:all) {
+            Set<Long> record=recordFieldsByFunction.getOrDefault(rva,Collections.emptySet());
+            Set<Long> writes=positionWritesByFunction.getOrDefault(rva,Collections.emptySet());
+            Set<Long> pos=positionFieldsByFunction.getOrDefault(rva,Collections.emptySet());
+            Set<String> rb=recordBasesByFunction.getOrDefault(rva,Collections.emptySet());
+            Set<String> pb=positionWriteBasesByFunction.getOrDefault(rva,Collections.emptySet());
+            Set<String> shared=new HashSet<>(rb);
+            shared.retainAll(pb);
+            int score=0;
+            String reason="record-only";
+            boolean bothXYWrites=writes.contains(0x140L)&&writes.contains(0x144L);
+            if(!writes.isEmpty() && !record.isEmpty()) {
+                score=8000 + record.size()*20 + writes.size()*100;
+                reason="record+position-write";
+                if(!shared.isEmpty()) { score+=4000; reason="same-base-record+position-write"; }
+                if(bothXYWrites) { score+=3000; reason+="+both-XY-write"; }
+            } else if(bothXYWrites) {
+                score=5000;
+                reason="both-XY-write-no-record-field";
+            } else if(!record.isEmpty()) {
+                score=1000 + record.size()*20;
+            } else if(!writes.isEmpty()) {
+                score=500 + writes.size()*100;
+                reason="single-position-write-no-record-field";
+            }
+            if(score>0) { scores.put(rva,score); reasons.put(rva,reason); }
         }
+
+        List<Long> ranked=new ArrayList<>(scores.keySet());
         ranked.sort((a,b)->{
-            int wa=counts.get(a).values().stream().mapToInt(Integer::intValue).sum();
-            int wb=counts.get(b).values().stream().mapToInt(Integer::intValue).sum();
-            return Integer.compare(wb,wa);
+            int c=Integer.compare(scores.get(b),scores.get(a));
+            if(c!=0) return c;
+            int fa=recordFieldsByFunction.getOrDefault(a,Collections.emptySet()).size()
+                +positionWritesByFunction.getOrDefault(a,Collections.emptySet()).size();
+            int fb=recordFieldsByFunction.getOrDefault(b,Collections.emptySet()).size()
+                +positionWritesByFunction.getOrDefault(b,Collections.emptySet()).size();
+            if(fa!=fb) return Integer.compare(fb,fa);
+            return Long.compare(a,b);
         });
-        int added=0;
+
+        int added=0, positionWriterCandidates=0, sameBaseCandidates=0;
         for(long rva:ranked) {
-            if(added>=32) break;
+            if(added>=40) break;
             if(seeds.containsKey(rva)) continue;
-            String label="MOVEMENT_RECORD_CONSUMER_"+Long.toHexString(rva);
+            Set<Long> writes=positionWritesByFunction.getOrDefault(rva,Collections.emptySet());
+            Set<Long> record=recordFieldsByFunction.getOrDefault(rva,Collections.emptySet());
+            String label=writes.isEmpty()
+                ?"MOVEMENT_RECORD_CONSUMER_"+Long.toHexString(rva)
+                :"MOVEMENT_POSITION_WRITER_CANDIDATE_"+Long.toHexString(rva);
             seeds.put(rva,label);
-            summary.println("MOVEMENT_RECORD_DYNAMIC_SEED\\t"+label+"\\tRVA=0x"+
-                Long.toHexString(rva)+"\\tFIELDS="+counts.get(rva).keySet()+
-                "\\tBASES="+bases.get(rva));
+            Set<String> shared=new HashSet<>(recordBasesByFunction.getOrDefault(rva,Collections.emptySet()));
+            shared.retainAll(positionWriteBasesByFunction.getOrDefault(rva,Collections.emptySet()));
+            if(!writes.isEmpty()) positionWriterCandidates++;
+            if(!shared.isEmpty()) sameBaseCandidates++;
+            summary.println("MOVEMENT_FOCUS_SEED\\t"+label+"\\tRVA=0x"+
+                Long.toHexString(rva)+"\\tSCORE="+scores.get(rva)+
+                "\\tREASON="+reasons.get(rva)+
+                "\\tRECORD_FIELDS="+record+
+                "\\tPOSITION_FIELDS="+positionFieldsByFunction.getOrDefault(rva,Collections.emptySet())+
+                "\\tPOSITION_WRITES="+writes+"\\tSHARED_BASES="+shared);
             added++;
         }
-        summary.println("MOVEMENT_RECORD_DYNAMIC_SEEDS_ADDED="+added+
-            " CANDIDATE_FUNCTIONS="+ranked.size());
+        summary.println("MOVEMENT_FOCUS_SEEDS_ADDED="+added+
+            " POSITION_WRITER_CANDIDATES="+positionWriterCandidates+
+            " SAME_BASE_CANDIDATES="+sameBaseCandidates+
+            " RANKED_FUNCTIONS="+ranked.size()+
+            " RECORD_FUNCTIONS="+recordFieldsByFunction.size()+
+            " POSITION_WRITE_FUNCTIONS="+positionWritesByFunction.size());
     }
 
     private void collect(Function f,PrintWriter refs,PrintWriter summary) {
@@ -190,6 +258,7 @@ public class TraceMovementHandoff extends GhidraScript {
             seeds.put(0x644B0L,"PLAYER_CANDIDATE_ENTITY_RESOLVER");
             seeds.put(0x4863C40L,"MOVEMENT_DECISION_AND_ACTION_OUTPUT_DISPATCHER");
             seeds.put(0x4862CB0L,"TRACKING_CENTRE_FORWARD_CANDIDATE_PIPELINE");
+            seeds.put(0x3FEF0L,"MATCH_CANDIDATE_TICK_UPSTREAM_CALLER");
             seeds.put(0x5DBD0L,"MATCH_CANDIDATE_TICK_DISPATCHER");
             seeds.put(0x4865900L,"GENERAL_PLAYER_CANDIDATE_STATE_BUILDER");
             seeds.put(0x4911C10L,"MATCH_PLAYER_MOVEMENT_ACTION_OUTPUT_BUILDER");
@@ -211,7 +280,9 @@ public class TraceMovementHandoff extends GhidraScript {
                 dec(f,d,dec,e.getValue());
             }
             summary.println("UNIQUE_SEED_CALLERS="+callers.size());
-            for(Map.Entry<Long,Function> e:callers.entrySet()) {
+            // collect() may discover additional callers; iterate a stable snapshot to avoid ConcurrentModificationException.
+            List<Map.Entry<Long,Function>> callerSnapshot=new ArrayList<>(callers.entrySet());
+            for(Map.Entry<Long,Function> e:callerSnapshot) {
                 if(monitor.isCancelled()) break;
                 Function f=e.getValue();
                 summary.println("CALLER\tRVA=0x"+Long.toHexString(e.getKey())+
