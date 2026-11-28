@@ -19,6 +19,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: fm27-27-1-1-native-analysis
+  cancel-in-progress: true
 jobs:
   analyze:
     runs-on: ubuntu-latest
