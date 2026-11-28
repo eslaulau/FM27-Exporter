@@ -67,7 +67,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p analysis/native-hotspots ghidra-project-native-hotspots
-          GHIDRA_DIR=$(find ghidra -type f -name analyzeHeadless -printf '%h\\n' | head -n1)
+          GHIDRA_SCRIPT_PATH=$(find ghidra -type f -name analyzeHeadless -print -quit)
+          test -n "$GHIDRA_SCRIPT_PATH"
+          GHIDRA_DIR=$(dirname "$GHIDRA_SCRIPT_PATH")
           chmod +x "$GHIDRA_DIR/analyzeHeadless"
           "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-native-hotspots" FM27NativeHotspots \
             -import "game/fm_Data/Plugins/x86_64/game_plugin.dll" \
