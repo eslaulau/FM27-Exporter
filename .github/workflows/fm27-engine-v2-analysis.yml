@@ -111,6 +111,14 @@ jobs:
             --target 0xA82F0:ROLE_DUTY_PI_POSITION_GATE \
             --target 0xA8080:PI_TRIGGER_PHASE_TARGET_GATE \
             --target 0x72B20:MATCH_PLAYER_OOP_SLOT_REFRESH \
+            --target 0x4862CB0:TRACKING_CF_CANDIDATE_PIPELINE_CALLER \
+            --target 0x4865900:MATCH_PLAYER_CANDIDATE_STATE_PRODUCER \
+            --target 0x4873400:OOP_CANDIDATE_FILTER_GATE \
+            --target 0x4874AC0:PHASE_CANDIDATE_STATE_PROCESSOR \
+            --target 0x47FA990:PRESSING_MANAGER_IMPL_A \
+            --target 0x4996D50:PRESSING_MANAGER_IMPL_B \
+            --target 0x4997910:PRESSING_MANAGER_IMPL_C \
+            --target 0x2B05590:COPY_PLAYER_TACTICAL_CANDIDATE_STATE \
             > analysis/native-target-callers-console.log 2>&1
           test -s analysis/native-target-callers/native-target-call-xrefs.tsv
           cat analysis/native-target-callers-console.log
