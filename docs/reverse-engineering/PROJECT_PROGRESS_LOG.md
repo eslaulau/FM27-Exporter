@@ -495,3 +495,27 @@ Run #1 曾尝试按显式函数反编译，但没有读取 movement record 的 f
 - Run #2 成功后优先检查谁读取 `+0x1C64 == 0x72)，以及是否把 `+0x1BB0) 内的坐标/方向数据转换为运动目标、速度/加速度或 Transform。
 
 **边界：**当前只证明候选状态记录被写入 MATCH_PLAYER；最终运动提交尚未确认。不得把它说成 Transform 已更新。
+
+
+### 本轮代码核验更正：Handoff 后处理 CALL 目标地址漏写前缀 4
+
+重新逐条核对 Run #3 的原生 CALL xref 后，发现早先 Ghidra seeds 把 `0x61660` 的两个调用目标少写了前缀 `4`：
+- site RVA `0x61971` 实际 call target = `0x47F2120`，不是 `0x7F2120`；
+- site RVA `0x61999` 实际 call target = `0x4707AA0`，不是 `0x707AA0`。
+
+Run #3 曾反编译的 `0x7F20E0`、`0x707A30` 与 handoff 无关，相关解释全部撤回。已修正 Ghidra 脚本：
+- Commit：`a9f7ed19c873c4fd2ece745be776ab19c4a29dbc`
+- 技术报告更正 Commit：`374179a3a0ed2e8356cb2cb0f06ee899a6e2f5fd)
+
+### Movement Record consumer Run #2：脚本编译错误已修复，Run #3 重新运行
+
+- Run #2：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46131546936)，失败原因：`ranges` 声明为 `Map)，但脚本调用 `floorEntry()`；这是 Java 编译错误。
+- 修正：将类型改为 `NavigableMap<Long,long[]>`，Commit 同上 `65422b3b14e41fb1ebf6aa4b2be4f19645074c8e`（注意本地址修复后另有 Handoff 目标更正；Run #3 的 head commit 是 `65422b3b14e41fb1ebf6aa4b2be4f19645074c8e`）。
+- 当前 Movement Record consumer Run #3：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46131767534)，字段扫描已成功，Ghidra 消费者反编译进行中。
+- Handoff Run #3：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46131767568)，success，Artifact `15257951656)，但其后处理目标曾用错 RVA；因此本轮仅使用其确认的 `0x61660 → 0x644B0 / 0x48ACFD0) CALL xrefs，不采用误标的两个后处理函数。
+
+### 下一步
+
+1. 检查 Handoff Run #4（修正 0x47F2120/0x4707AA0）新 Artifact，确认真实 helper 逻辑。
+2. 检查 Movement Record consumer Run #3，对 `+0x1BB0) 记录读取函数进行 Ghidra 反编译，找到 state `0x72) 的消费者和最终 movement/transform update。
+3. 将确认的字段消费链补进主报告；若只看到记录复制/队列管理，不把它当作运动执行。
