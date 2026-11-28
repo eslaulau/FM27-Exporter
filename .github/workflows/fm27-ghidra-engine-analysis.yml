@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - ".github/workflows/fm27-ghidra-engine-analysis.yml"
+      - "scripts/ghidra/ExportMatchEngine.java"
   workflow_dispatch:
 permissions:
   contents: read
