@@ -30,9 +30,12 @@ public class ExportNativeRttiTargets extends GhidraScript {
     private static final long MAX_DECOMPILE_BYTES = 0x18000L;
 
     private static final String TARGET =
-        "(?i)(MATCH_OOP_SCORING_PROVIDER|OOP_SCORING|WEIGHTS_PROVIDER|" +
+        "(?i)(MATCH_OOP_SCORING_PROVIDER|OOP_ATTRIBUTE|PITCH_PROXIMITY_SCORE|" +
+        "DYNAMIC_POSITION_SCORES|DYNAMIC_SCORES|WEIGHTS_PROVIDER|" +
         "MOVEMENT_DIRECTOR|PRESSING_MANAGER|SCORING_PROVIDER|" +
-        "MATCH_MANAGER|MATCH_PLAYER|MATCH_BALL|TACTIC_INFO|TACTICAL_ROLE|" +
+        "GAME_MATCH|MATCH_MANAGER|MATCH_PLAYER|MATCH_BALL|" +
+        "TACTIC_INFO|TACTICAL_ROLE|PLAYER_INSTRUCTIONS_MANAGER|" +
+        "MATCH_PLAYER_RATINGS_MANAGER|SHOT_ZONE_AREA_INFO|" +
         "MATCH_MOVEMENT|PLAYER_MOVEMENT|BALL_MOVEMENT)";
 
     private static class Table {
@@ -171,7 +174,7 @@ public class ExportNativeRttiTargets extends GhidraScript {
             String line = reader.readLine(); // header
             while ((line = reader.readLine()) != null && matchedTables < MAX_TYPES) {
                 String[] p = line.split("\t", 6);
-                if (p.length < 6 || !p[0].matches(TARGET)) continue;
+                if (p.length < 6 || !java.util.regex.Pattern.compile(TARGET).matcher(p[0]).find()) continue;
                 matchedTables++;
                 String type = p[0];
                 String vtable = p[3];
