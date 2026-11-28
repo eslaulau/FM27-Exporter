@@ -1036,3 +1036,52 @@ vtable 的引用出现在 `0x3E4E0)、`0x19EDD0)、`0x5DBD0)；这三处才是�
 详见 ShotEvent_XGBoundary 技术报告 Section 10，报告更新 Commit `e8d69ac6eb5449928036c0e29d0352e08eab44e8`。
 
 **修正后的研究方向：**不再花时间反编译事件析构/复制/type getter 作为计算公式；下一轮从 ball state/ball-slice simulation、踢球速度与轨迹、射手-球接触、门将拦截/扑救、球门线穿越判定和真正 shot-zone numeric scorer 追结果。
+
+
+## 2026-11-28：Run #17 确认目标 tick 推进请求由 match 事件/订阅路由器分派
+
+### Workflow / Artifact
+
+- Movement Commit Run #17：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46138896866)，success。
+- Artifact：15260667174，1,094,290 bytes；SHA-256 7d6e1b7f44555e997e835673430bc29159c3d7a2afecd45e3e88436406fb7191。
+- 原生扫描 33 targets、144,876 runtime function rows、6,172 candidate functions decoded、19,815 confirmed CALL/JMP/Jcc sites、36 static pointer hits。
+- Ghidra 找到并反编译 0xE5C4C0，该函数以两个 call site 调用 0x28C1020。
+
+### 0xE5C4C0 的真实作用
+
+这是一个 match 事件/订阅对象路由器，而不是最顶层 match simulator：
+- 从消息结构 param_2+0x0C 读取 message type；
+- 遍历 param_1[1]..param_1[2] 已注册对象数组，按 entry 的 +0x140 对象 ID 匹配消息 param_2+0x10；
+- 匹配后管理引用计数，并根据消息类型路由到不同 handler；
+- message type 0x6D75636D 在 site 0xE5C70C 调用 0x28C1020(lVar10, *(param_2+0x20))；
+- message type 0x73637373 在 site 0xE5C79F 经 subtype bitmask 过滤后调用 0x28C1020(lVar10, iVar4)；
+- 同一函数也路由 0x28C1C20、0x28C1E60、0x28C1FB0、0x28C2100、0x28C4250 等处理函数。
+
+因此当前已确认的推进链上再多一层：
+0xE5C4C0（match 消息/订阅路由）→ 0x28C1020（按目标 tick 推进）→ 0x47C5350（状态机）→ state 2 的 0x42D3910 → 0x2AFB290（球员运动记录/缓存位置更新）。
+
+原生静态指针扫描还发现：
+- .text section RVA 0x55B5484 有 module-relative pointer → 0x28C1020；
+- .xcode section RVA 0x18249DDC 有 module-relative pointer → 0x28C1020。
+这可能属于消息表/调度结构，尚未解析，不能写成额外直接调用。
+
+详细报告：[TickEventRouter Run #17](https://github.com/eslaulau/FM27-Exporter/blob/main/docs/reverse-engineering/FM27_27.1.1_TickEventRouter_Run17_20261128.md)，Commit f9c8f90e7efe88ab7a128dd3eac789a7f022fd6c。
+
+### 新增独立的 native simulator / ball physics 定位工作流
+
+此前 simatch::MATCH::play 出现在 native DLL 的字符串审计结果中；package audit 的目标词还包含 iterate_one_slice。这提供了比 Unity FM.Match.Ball 视觉 API 更直接的 native 引擎定位线索。
+
+新增：
+- scripts/engine_analysis/scan_native_engine_string_xrefs.py：精确定位 match/ball 相关原生字符串，扫描 RIP-relative code refs 与静态 VA/RVA pointers，映射到 PE .pdata 函数边界。Commit e11fd8e0314f951dceea1bc2a5d843dcd3299f9c。
+- scripts/ghidra/DecompileMovementXrefFunctions.java：将 MATCH::PLAY、MATCH_BALL、ITERATE_ONE_SLICE 和 match tick event router caller 设为最高优先级。Commit d8da8e2cba8c5713b16c84753d0fa7041fdc54a5。
+- Workflow：[Native simulation entry and ball physics Run #1](https://github.com/eslaulau/FM27-Exporter/actions/runs/46139378029)，独立 concurrency group，当前 queued/running。
+
+本轮目标是把 simatch::MATCH::play、MATCH_BALL::iterate_one_slice、match_ball_path 和球速/球位/门将/球门线相关原生字符串引用，映射到真正的 native caller 函数，再反编译其实际公式。字符串命中本身不视为物理公式证据。
+
+### 下一轮优先顺序
+
+1. 取回 Native simulation/ball physics Run #1，核对 MATCH::play 和 iterate_one_slice 的字符串 xref 对应函数；
+2. 继续找 0xE5C4C0 的上游消息投递者/生产者，直到能确认目标 tick request 的最上层来源；
+3. 以 MATCH_BALL / ball velocity / ball position 真实读写者为锚，定位每 slice 的球状态积分、接触/碰撞、门将拦截和越线结果；
+4. 同步对照 0x5DBD0 与 0x61660/0x19EDD0/0x3E4E0 的同一 player pointer、tick 和 sample index，确认候选运动记录如何被状态机消费。
+
