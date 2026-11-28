@@ -10,6 +10,7 @@ on:
       - "scripts/ghidra/TraceNativeScoreAndTactic.java"
       - "scripts/ghidra/DecompileNativeRttiXrefFunctions.java"
       - "scripts/engine_analysis/scan_native_match_player_fields.py"
+      - "scripts/engine_analysis/scan_native_target_callers.py"
       - "scripts/engine_analysis/derive_role_duty_compact_ids.py"
       - "scripts/engine_analysis/fm27_package_audit.py"
       - "scripts/ghidra/AnnotateIl2CppMethods.java"
@@ -92,6 +93,25 @@ jobs:
             > analysis/match-player-fields-console.log 2>&1
           test -s analysis/match-player-fields/match-player-field-xrefs-ghidra.tsv
           cat analysis/match-player-fields-console.log
+
+      - name: Scan direct callers of native PI/role decision functions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/engine_analysis/scan_native_target_callers.py \
+            --binary game/fm_Data/Plugins/x86_64/game_plugin.dll \
+            --out analysis/native-target-callers \
+            --target 0xA8F70:PI_BEHAVIOR_CANDIDATE_AGGREGATOR \
+            --target 0x4813B90:ROLE_PI_COMMON_VALIDATOR \
+            --target 0x36BE0:HALF_BACK_DROPPING_DM_GATE \
+            --target 0xA79A0:TAKE_FEWER_RISKS_STOPPER_GATE \
+            --target 0xA7D20:CROSSING_PI_SPATIAL_GATE \
+            --target 0xA82F0:ROLE_DUTY_PI_POSITION_GATE \
+            --target 0xA8080:PI_TRIGGER_PHASE_TARGET_GATE \
+            --target 0x72B20:MATCH_PLAYER_OOP_SLOT_REFRESH \
+            > analysis/native-target-callers-console.log 2>&1
+          test -s analysis/native-target-callers/native-target-call-xrefs.tsv
+          cat analysis/native-target-callers-console.log
 
       - name: Set up .NET 10 for IL2CPP metadata decoding
         uses: actions/setup-dotnet@v4
@@ -216,6 +236,14 @@ jobs:
           ARGS+=(
             -postScript TraceNativeScoreAndTactic.java "$PWD/analysis/native-score-trace"
           )
+          TARGET_CALL_XREFS="analysis/native-target-callers/native-target-call-xrefs.tsv"
+          if [ -s "$TARGET_CALL_XREFS" ]; then
+            ARGS+=(
+              -postScript DecompileNativeRttiXrefFunctions.java
+              "$PWD/$TARGET_CALL_XREFS"
+              "$PWD/analysis/native-target-callers-decompiled"
+            )
+          fi
           FIELD_XREF_TSV="analysis/match-player-fields/match-player-field-xrefs-ghidra.tsv"
           if [ -s "$FIELD_XREF_TSV" ]; then
             ARGS+=(
