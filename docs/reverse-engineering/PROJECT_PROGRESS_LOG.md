@@ -884,3 +884,32 @@ Run #56 RTTI map 确认：
 3. 追踪 XG_SHOT_DATA 方法 `0x1B6490/0x28D6F60/0x28D6FB0`，确认是否只是序列化与事件分发。
 4. 追踪定位球 attempt/outcome 方法 `0x42DDC80`、`0x28D6E30`，识别真实 shot attempt/outcome 的公共计算入口。
 
+
+
+## 2026-11-28：移动状态机扫描续行符故障修复 + 射门结果专线启动
+
+### Movement Commit Run #15 的最终失败原因与修复
+
+- Run #15：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46137993578)，失败在调用 Capstone 脚本前的命令行解析阶段。
+- 日志显示 0x47C5350 与 0x47C58C0 两条新 target 行尾是双反斜杠，导致 shell 把字面量反斜杠传入 Python，报 unrecognized arguments: backslash。
+- 这不是 Ghidra、PE 包、Capstone 或 RVA 识别错误。
+- 已重新规范整个 target 参数块，每个中间参数行恰好一个 shell continuation，最后的 0x3FEF0 行无 continuation。
+- 修正 Commit：afbcf3820c23728fc23d40cecbbb02926fef9af1。
+- 新运行 Movement Commit Run #16：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46138521235)，已启动，当前以该轮为准。
+
+### Shot Outcome / Ball-Kick 独立工作流
+
+为避免射门结果分析与移动状态机扫描互相取消，新增独立工作流：
+- Workflow：FM27 shot outcome and ball-kick mechanics；
+- Workflow Run #1：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46138404863)，目前 Ghidra 反编译步骤 in progress；
+- 已完成 FM27 native package 校验、原生 CALL/JMP/静态指针扫描、Java 21 与 Ghidra 12.2 下载；
+- 新增脚本 scripts/ghidra/TraceShotOutcomeMechanics.java 与 workflow .github/workflows/fm27-shot-outcome-analysis.yml。
+
+第一批目标包括：
+- 0x498D400：XG event writer 获取的 unresolved 32-bit value 来源；
+- 0x3E4E0、0x19EDD0、0x5DBD0、0x42D2440：ball-kick sample 事件生产/消费链；
+- 0x1B6490、0x28D6F60、0x28D6FB0：XG_SHOT_DATA 虚表方法；
+- 0x42DDC80、0x28D6E30：定位球 attempt/outcome 事件；
+- 0x4C01760、0x164680、0x1691C0：射门区域与事件记账路径。
+
+这条专线必须区分事件/统计登记与实际球路、门将拦截、射门得分概率；未解出数值来源前不把它叫做 xG 公式。
