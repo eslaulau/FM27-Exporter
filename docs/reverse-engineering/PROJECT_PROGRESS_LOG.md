@@ -413,3 +413,66 @@ Run #12 自动选出的最高命中函数 `0x46A8C40` 有大量表面上的 `+0x
 2. **战术参数来源：**等 Run #5 检查 UnwindInfo 过滤后的真实对象基址候选；无可信固定偏移写入时，改从 `0xF8050`、`0x185090`、`0x3C720` 的对象初始化和数据复制源追踪参数向量。TEAM 系数块目前读多写零，继续沿整块对象复制/配置装载查找。
 
 行为链闭合后立即转向射门/传球结果实际计算与比分事件写入，不做无关系统扩展。
+
+
+## 2026-11-28：Movement Handoff Run #1 完成；找到候选记录写入 MATCH_PLAYER 的状态区
+
+### Movement Handoff Run #1
+
+- Workflow：[FM27 player movement handoff Run #1](https://github.com/eslaulau/FM27-Exporter/actions/runs/46130992721)，success
+- Artifact：`15257522846`，56,533 bytes
+- SHA-256：`f2cb26d7a9507e7544be185edb81d9ce435ca52fe76638f92e1f812c032d7fd4`
+- 代码 Commit：`19e2fcc9b15c9a3a5f67ccd1cb5acb962cdd0395`（Ghidra handoff 脚本）；Workflow Commit：`3199465d724348bad4cade6b20bf7083d3ad0a97`
+
+### 关键新证据
+
+**1. `0x644B0` 实际从两侧 11 人槽位中挑选 MATCH_PLAYER**
+
+遍历 MATCH 对象 `+0x15380/+0x15388`，每个 team record 的球员数组位于 `+0x138)，数量字段在 `+0x72E`。筛选 `MATCH_PLAYER+0x23C6)、`+0x1C64) 当前状态、球员时间/索引、阶段 PI、球队阶段和目标距离。以多个空间/时间/状态量累计代价 `fVar26)，选择最合适的 `MATCH_PLAYER*` 返回。
+
+这把候选阶段处理从“作用于某个抽象候选”变成“对双方 11 人位置槽中某一个具体 MATCH_PLAYER 选取待处理对象”。
+
+**2. `0x61660` 把通过验收的候选写入选中球员内部状态区**
+
+- 调用 `0x644B0` 取得选中 MATCH_PLAYER；
+- 检查双方团队的排期/时间窗口；
+- 调用 `0x48ACFD0` 生成候选位置；
+- 后者经 `0x48ADC70 → 0x4936080` 完成候选排名和时间/状态验收；
+- 验收成功时，对 0xD0-byte 候选记录执行后处理，再复制到 `MATCH_PLAYER+0x1BB0)；
+- 写 `MATCH_PLAYER+0x1C44 = candidate_index`；
+- 写 `MATCH_PLAYER+0x1C64 = 0x72`；
+- 更新 MATCH 级环形计数。
+
+这是首次直接看到候选生成/验收后的数据，实际落入具体 MATCH_PLAYER 内部记录，而不只是停留在局部缓冲区。
+
+**目前仍然不能说已经写入球员 Transform。**`+0x1BB0) 是一个 0xD0-byte 的候选/运动状态记录，`+0x1C64=0x72) 是当前确认的后续状态标签。下一步必须找到谁读取这个状态和记录并把它转成真实移动目标/运动量。
+
+### 主技术报告更新
+
+- 新增 Section 16（0x644B0 选择球员 → 0x61660 接纳候选 → MATCH_PLAYER+0x1BB0 记录写入）。
+- 报告 Commit：`af1d899aa65a04fddf4d4ee309dce50c97db0255`
+
+### Parameter Source Run #5 完成：过滤器有效，但真实数据源仍未证明
+
+- Workflow：[Parameter Source Run #5](https://github.com/eslaulau/FM27-Exporter/actions/runs/46130421400)，success
+- Artifact：`15257309602)，2,069,929 bytes
+- SHA-256：`f2efba892e825aaa5f8d894bd1ac5021c61183061bc137cceb5c10d197b1b2b8`
+- scanner 处理 19,082 个候选函数、47,355 条字段访问、13,146 个访问函数；
+- RSP 栈基址误报过滤 248 条；
+- UnwindInfo 确认的 RBP 栈帧误报过滤 1,293 条；
+- 非栈帧 RBP 保留 7 条。
+
+虽然识别出 9 个固定偏移写入候选（`0x41668D0)、`0x17D6260)、`0x29D8F80)、`0x4089740)、`0x19FDAE0)、`0x1C83270)、`0x1CD9400)、`0x8224B0)、`0x1519F00)），但逐个反编译后确认它们的对象身份尚未证明；至少 `0x41668D0` 是创建 0x808-byte record 的配置/记录容器路径，`0x8224B0` 是大型结构初始化器，`0x4089740` 操作另一种带 +0xA0 子对象的记录。不能因为它们也有 +0x480 等偏移就认定为 MATCH_PLAYER 参数向量写入者。
+
+TEAM `+0x149E4..+0x14A00` 系数区仍为读多写零。
+
+**因此参数源问题尚未解决。**下一轮以明确的 MATCH_PLAYER 指针传递链为锚点，追踪 `0xF8050` 的玩家对象、`0x185090` 的复制源和 `0x3C720` 同一个 player pointer，不再把同偏移其他类当作写入证据。
+
+- 主报告 Section 13.8 Commit：`2fe80cd6dc89240e434a9e63b8f839564714ca0a`
+
+### 下一轮锁定两件事
+
+1. 对 `MATCH_PLAYER+0x1BB0..+0x1C80` 的候选记录进行定向读写扫描，重点找谁读取 `+0x1C64 == 0x72)，并追它连接到移动目标、速度/加速度或 Transform 的具体路径。
+2. 对参数向量只做带对象身份的指针追踪，从 MATCH_PLAYER 初始化/复制路径找到真正填充 `+0x480..+0x4C4) 的来源；TEAM 系数块以整体初始化/复制方式继续追。
+
+在闭合这两条之后，继续进入传球/射门结果和比分事件写入机制。
