@@ -188,8 +188,8 @@ public class TraceMovementHandoff extends GhidraScript {
             seeds.put(0x48ADC70L,"CANDIDATE_ACCEPTANCE_RETRY_WRAPPER");
             seeds.put(0x4936080L,"MULTI_SAMPLE_CANDIDATE_RANKER");
             seeds.put(0x644B0L,"PLAYER_CANDIDATE_ENTITY_RESOLVER");
-            addContainingSeed(0x7F2120L,"CANDIDATE_HANDOFF_POSTPROCESSOR_A",summary);
-            addContainingSeed(0x707AA0L,"CANDIDATE_HANDOFF_VECTOR_POSTPROCESSOR_B",summary);
+            addContainingSeed(0x47F2120L,"CANDIDATE_HANDOFF_POSTPROCESSOR_A",summary);
+            addContainingSeed(0x4707AA0L,"CANDIDATE_HANDOFF_VECTOR_POSTPROCESSOR_B",summary);
             File movementFields=new File(args.length>1?args[1]:"analysis/movement-record/field-xrefs/match-player-field-xrefs.tsv");
             loadMovementRecordConsumers(movementFields,summary);
             DecompInterface d=new DecompInterface(); d.openProgram(currentProgram);
