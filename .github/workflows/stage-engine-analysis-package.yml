@@ -1,4 +1,4 @@
-name: Stage FM27 engine analysis package
+name: Stage and inspect FM27 engine analysis package
 on:
   push:
     paths:
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 jobs:
-  stage:
+  inspect:
     runs-on: ubuntu-latest
     steps:
       - name: Download and verify Release asset
@@ -18,10 +18,59 @@ jobs:
             "https://github.com/eslaulau/FM27-Exporter/releases/download/fm27-saves/FM27_Engine_Analysis_Package_20261125.zip" \
             --output FM27_Engine_Analysis_Package_20261125.zip
           echo "a9dfd61bb2f9d6110ff92997a86790168d04cfc9c621cf8c2564c616f0fbc10f  FM27_Engine_Analysis_Package_20261125.zip" | sha256sum --check
-      - name: Upload temporary Actions artifact
+      - name: Extract package
+        run: |
+          mkdir -p game analysis
+          unzip -q FM27_Engine_Analysis_Package_20261125.zip -d game
+      - name: Set up Node for IL2CPP metadata reader
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+      - name: Install static IL2CPP metadata reader
+        run: npm install --global rea-agents@6.10.1
+      - name: Decode metadata and enumerate native IL2CPP methods
+        shell: bash
+        run: |
+          set -euo pipefail
+          META="$PWD/game/fm_Data/il2cpp_data/Metadata/global-metadata.dat"
+          BIN="$PWD/game/GameAssembly.dll"
+          rea inspect-il2cpp-metadata "$META" --detail summary --evidence_output "$PWD/analysis/metadata-evidence.json" --json > "$PWD/analysis/metadata-summary.json"
+          rea inspect-il2cpp-metadata "$META" --binary "$BIN" --detail summary --evidence_output "$PWD/analysis/metadata-linked-evidence.json" --json > "$PWD/analysis/metadata-linked-summary.json"
+      - name: Capture PE layout and imports for native game plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          PLUGIN="$PWD/game/fm_Data/Plugins/x86_64/game_plugin.dll"
+          file "$PLUGIN" > analysis/plugin-file.txt
+          objdump -h "$PLUGIN" > analysis/plugin-sections.txt
+          objdump -p "$PLUGIN" > analysis/plugin-pe-tables.txt
+          objdump -h "$PWD/game/GameAssembly.dll" > analysis/gameassembly-sections.txt
+          objdump -p "$PWD/game/GameAssembly.dll" > analysis/gameassembly-pe-tables.txt
+      - name: Extract relevant native plugin strings
+        shell: bash
+        run: |
+          strings -a -n 5 "game/fm_Data/Plugins/x86_64/game_plugin.dll" |
+            grep -aiE 'tactic|formation|player|match|simulation|simatch|football|ball|goal|shot|pass|cross|press|defen|attack|position|offside|keeper|role|duty|mentality|tempo|width|dribbl|finish|header|anticipation|sprint|stamina|attribute' |
+            head -n 12000 > analysis/plugin-relevant-strings.txt || true
+      - name: Summarize metadata counts and key game-facing names
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          p='analysis/metadata-summary.json'
+          d=json.load(open(p,encoding='utf-8'))
+          keys=['artifact','magic','metadata_version','index_widths','sections','images','types','methods','fields','properties','events','parameters','string_literals','limitations']
+          s={k:d.get(k) for k in keys if k in d}
+          for k in ['images','types','methods','fields','properties','events','parameters','string_literals']:
+              if isinstance(s.get(k),list): s[k+'_count']=len(s[k]); s[k]=None
+          json.dump(s,open('analysis/metadata-summary-compact.json','w',encoding='utf-8'),ensure_ascii=False,indent=2)
+          print(json.dumps({k:s.get(k) for k in ['artifact','metadata_version','index_widths']},ensure_ascii=False))
+          print('collections', {k:s.get(k+'_count') for k in ['images','types','methods','fields','properties','events','parameters','string_literals']})
+          PY
+      - name: Upload static analysis results
         uses: actions/upload-artifact@v4
         with:
-          name: FM27-Engine-Analysis-Package-Relay
-          path: FM27_Engine_Analysis_Package_20261125.zip
+          name: FM27-Engine-Static-Analysis-20261125
+          path: analysis/
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 3
