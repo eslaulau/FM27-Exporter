@@ -134,3 +134,20 @@ MATCH_PLAYER +0x2170 / +0x21F0 / +0x21F8 / +0x228C / +0x22A0 / +0x22B0
 6. 只有完成输入映射，才继续将候选行为与最终球员坐标/动作提交点连接，继而研究传球、射门质量与赛果。
 
 Run #8 不重复全量 IL2CPP/字段扫描；复用当前 .pdata 范围、字段 scanner 与热点 Ghidra 快速工作流。
+
+
+### 本轮补充：Run #7 原生参数路径细化
+
+已将 Run #7 的函数级细节同步追加到主分析报告第 10 节：
+- 报告：[Run #56 / CandidateMovementMechanics（已追加 Run #7）](https://github.com/eslaulau/FM27-Exporter/blob/main/docs/reverse-engineering/FM27_27.1.1_Run_46115767659_CandidateMovementMechanics_20261128.md)
+- 报告更新 Commit：`6663af86f89e046d099b4559bd4e6142f93b5e26`
+- 新增内容：`0x3C720` 的 accessor ID/flags → MATCH_PLAYER 字段表；`0x48334D0` 对 `+0x21F8` 的状态依赖更新；`0x46E4740` 的 11 槽位位掩码参数调节；`0x47E44C0` 与 `0x481A6A0` 的 Shot Zone 直接调用关系。
+
+**防止误归因的关键修订：**`0x47E44C0` 的直接 caller 是 Advanced Shot Zone 主处理函数 `0x481A6A0`，所以不得把它简单标成通用跑位/战术参数加载器。后续必须区分一般球员参数初始化与 Shot Zone 专用空间处理。
+
+### Run #8 状态（本轮提交后）
+
+- Workflow：[Run #8](https://github.com/eslaulau/FM27-Exporter/actions/runs/46126771752)
+- Commit：`c6afa51c23f3a73ee007ea3c8d06ee8c79d446cb`
+- 最近一次查询仍显示 `in_progress`，卡在热点 Ghidra 反编译步骤；字段扫描、Java 21 和 Ghidra 下载均已成功，Artifact 尚未生成。
+- 目前不将它写成成功或失败。完成后必须读取 Artifact 的实际反编译和 xref，再记录结果。
