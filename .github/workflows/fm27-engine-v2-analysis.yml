@@ -6,6 +6,8 @@ on:
       - "scripts/engine_analysis/fm27_package_audit.py"
       - "scripts/ghidra/ExportMatchEngineFast.java"
       - "scripts/ghidra/ExportMatchEnginePressingCore.java"
+      - "scripts/ghidra/AnnotateIl2CppMethods.java"
+      - "scripts/engine_analysis/extract_il2cpp_match_methods.py"
   workflow_dispatch:
 permissions:
   contents: read
@@ -94,6 +96,14 @@ jobs:
           tail -n 250 analysis/il2cpp/il2cpp-dumper.log || true
           find analysis/il2cpp -maxdepth 3 -type f -printf '%p %s bytes\n' | sort \
             > analysis/il2cpp/output-manifest.txt
+          if [ -s analysis/il2cpp/script.json ]; then
+            python scripts/engine_analysis/extract_il2cpp_match_methods.py \
+              --input analysis/il2cpp/script.json \
+              --output analysis/il2cpp/match-relevant-methods.tsv \
+              > analysis/il2cpp/method-map-summary.log 2>&1
+          else
+            echo "script.json missing or empty; skipping managed method map" > analysis/il2cpp/method-map-summary.log
+          fi
           set -e
 
       - name: Set up Java 21
@@ -111,6 +121,30 @@ jobs:
             --output ghidra.zip
           mkdir ghidra
           unzip -q ghidra.zip -d ghidra
+
+      - name: Annotate GameAssembly with tactic and match IL2CPP symbols
+        shell: bash
+        run: |
+          set +e
+          mkdir -p analysis/gameassembly ghidra-project-gameassembly
+          if [ ! -s analysis/il2cpp/match-relevant-methods.tsv ]; then
+            echo "No IL2CPP method map generated; skipping GameAssembly annotation." \
+              > analysis/gameassembly/annotation-skipped.txt
+            exit 0
+          fi
+          GHIDRA_DIR=$(find ghidra -type f -name analyzeHeadless -printf '%h\n' | head -n1)
+          chmod +x "$GHIDRA_DIR/analyzeHeadless"
+          "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-gameassembly" FM27GameAssembly \
+            -import "game/GameAssembly.dll" \
+            -overwrite -noanalysis \
+            -scriptPath scripts/ghidra \
+            -postScript AnnotateIl2CppMethods.java \
+              "$PWD/analysis/il2cpp/match-relevant-methods.tsv" \
+              "$PWD/analysis/gameassembly" \
+            > analysis/gameassembly/ghidra-console.log 2>&1
+          echo $? > analysis/gameassembly/ghidra-exit-code.txt
+          tail -n 180 analysis/gameassembly/ghidra-console.log || true
+          set -e
 
       - name: Analyze native match-engine entry points without global timeout
         shell: bash
