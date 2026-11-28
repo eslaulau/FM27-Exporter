@@ -7,6 +7,7 @@ on:
       - "scripts/ghidra/ExportMatchEngineFast.java"
       - "scripts/ghidra/ExportMatchEnginePressingCore.java"
       - "scripts/ghidra/ExportNativeRttiTargets.java"
+      - "scripts/ghidra/TraceNativeScoreAndTactic.java"
       - "scripts/engine_analysis/fm27_package_audit.py"
       - "scripts/ghidra/AnnotateIl2CppMethods.java"
       - "scripts/engine_analysis/extract_il2cpp_match_methods.py"
@@ -186,6 +187,9 @@ jobs:
             echo "No native RTTI vtable output; class-target pass skipped." \
               > analysis/native-rtti/analysis-skipped.txt
           fi
+          ARGS+=(
+            -postScript TraceNativeScoreAndTactic.java "$PWD/analysis/native-score-trace"
+          )
           "$GHIDRA_DIR/analyzeHeadless" "$PWD/ghidra-project-native" FM27NativeUnified \
             "${ARGS[@]}" \
             > analysis/native-engine-unified-console.log 2>&1
