@@ -22,6 +22,7 @@ import ghidra.program.model.listing.InstructionIterator;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 
@@ -168,7 +169,9 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
 
     private void dumpIncoming(Function f, PrintWriter refs, Set<Function> callers) {
         int count=0;
-        for (Reference ref:currentProgram.getReferenceManager().getReferencesTo(f.getEntryPoint())) {
+        ReferenceIterator iterator=currentProgram.getReferenceManager().getReferencesTo(f.getEntryPoint());
+        while(iterator.hasNext()) {
+            Reference ref=iterator.next();
             if (count++>=MAX_INCOMING) break;
             if (!ref.getReferenceType().isCall()) continue;
             Function caller=currentProgram.getFunctionManager().getFunctionContaining(ref.getFromAddress());
@@ -178,7 +181,6 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
             if (caller!=null) callers.add(caller);
         }
     }
-
     private void decompile(Function f, DecompInterface decomp, PrintWriter out, String label) {
         out.println("\n// ===== "+f.getEntryPoint()+" "+label+
             " BODY_BYTES="+f.getBody().getNumAddresses()+" =====");
