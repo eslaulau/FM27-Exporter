@@ -132,6 +132,30 @@ public class TraceParameterSources extends GhidraScript {
         summary.println(prefix+"COUNT="+added);
     }
     private int total(Map<String,Integer> m) { return m.values().stream().mapToInt(Integer::intValue).sum(); }
+    private void dumpParameterCurveTable(PrintWriter out) throws Exception {
+        long rva=0x507A440L;
+        Address base=currentProgram.getImageBase().add(rva);
+        out.println("TABLE=PARAMETER_VALUE_NORMALIZATION_CURVES RVA=0x"+Long.toHexString(rva)+
+            " VA="+base+" RECORDS=10 STRIDE=12");
+        for(int i=0;i<10;i++) {
+            Address row=base.add(i*12L);
+            int divisor=currentProgram.getMemory().getByte(row);
+            int slope=currentProgram.getMemory().getByte(row.add(1));
+            int intercept=currentProgram.getMemory().getByte(row.add(2));
+            int denominator=currentProgram.getMemory().getByte(row.add(3));
+            int bias=currentProgram.getMemory().getByte(row.add(4));
+            int threshold=currentProgram.getMemory().getInt(row.add(8));
+            StringBuilder raw=new StringBuilder();
+            for(int j=0;j<12;j++) {
+                if(j>0) raw.append(' ');
+                raw.append(String.format("%02X",currentProgram.getMemory().getByte(row.add(j)) & 0xff));
+            }
+            out.println("CURVE["+i+"] divisor="+divisor+" slope="+slope+
+                " intercept="+intercept+" denominator="+denominator+" bias="+bias+
+                " threshold="+threshold+" raw="+raw);
+        }
+    }
+
     private void collect(Function f,PrintWriter xrefs) {
         InstructionIterator it=currentProgram.getListing().getInstructions(f.getBody(),true);
         while(it.hasNext()) {
@@ -168,8 +192,11 @@ public class TraceParameterSources extends GhidraScript {
         File outDir=new File(args.length>0?args[0]:"analysis/parameter-sources"); outDir.mkdirs();
         try(PrintWriter summary=new PrintWriter(new File(outDir,"parameter-source-summary.txt"),"UTF-8");
             PrintWriter xrefs=new PrintWriter(new File(outDir,"parameter-source-xrefs.txt"),"UTF-8");
-            PrintWriter dec=new PrintWriter(new File(outDir,"parameter-source-decompilations.txt"),"UTF-8")) {
+            PrintWriter dec=new PrintWriter(new File(outDir,"parameter-source-decompilations.txt"),"UTF-8");
+            PrintWriter curves=new PrintWriter(new File(outDir,"parameter-constant-tables.txt"),"UTF-8")) {
             loadRanges(); summary.println("RUNTIME_FUNCTION_RANGES="+ranges.size());
+            try { dumpParameterCurveTable(curves); }
+            catch(Exception ex) { curves.println("CURVE_TABLE_DUMP_FAILED="+ex); }
             seeds.put(0xF8050L,"MATCH_PLAYER_INSTANCE_INITIALIZATION_CANDIDATE");
             seeds.put(0x185090L,"MATCH_PLAYER_PARAMETER_REFRESH_BULK_COPY");
             seeds.put(0x3C720L,"MATCH_PLAYER_PARAMETER_VECTOR_INITIALIZER");
