@@ -239,3 +239,23 @@ MATCH_PLAYER 的 +0x2170/+0x21F0/+0x21F8/+0x22A0 等派生字段
 3. 从 `parameter-constant-tables.txt` 读取 `VA 0x18507A440` 的 10 行常量，确认曲线公式参数。
 4. 检查新自动 seeds 的函数体与 caller/callee，建立数据从初始化/托管结构传到 MATCH_PLAYER 的路径。
 5. 在数据源确立后，再尝试对应到托管层的角色/职责/PI/TI；不得先猜 UI 语义。
+
+
+### 本轮继续推进：补齐 `0x3C720` 参数索引落点表
+
+在 Run #8 的真实伪代码中，进一步逐项核对了参数 ID → evaluator flags → MATCH_PLAYER 写回字段，已将表格加入主报告 Section 11.7：
+- 例：`0x20 → +0x22B0`、`0x21 → +0x228C`、`0x44 → +0x22A0`；
+- 同一索引在不同上下文可复用，如 `0x3D` 写入不同字段；
+- `+0x22B8` 在某个状态分支使用动态参数 `0x3C`，否则来自直接公式；
+- `+0x2238` 使用动态高字节参数，不能仅按低字节把它当成固定 `0x12`。
+
+这一步只确认数值数据流落点，不把参数命名成某项角色、属性或 PI/TI。
+- 主报告更新 Commit：`a40db2b6afff8661d35db51ef185134ecf1028d6`
+
+### Run #12 最新状态快照
+
+- Workflow：[Run #12](https://github.com/eslaulau/FM27-Exporter/actions/runs/46127758872)
+- 参数字节/球队系数扫描：success
+- Ghidra 12.2 下载：success
+- Ghidra 热点反编译：in progress
+- Artifact：尚未生成；本轮没有新增数据源结论。
