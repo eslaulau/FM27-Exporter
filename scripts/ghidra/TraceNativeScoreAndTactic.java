@@ -116,6 +116,8 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         seeds.put(0x4873400L, "OOP_CANDIDATE_FILTER_GATE");
         seeds.put(0x4874ac0L, "PHASE_CANDIDATE_STATE_PROCESSOR");
         seeds.put(0x492d060L, "MOVEMENT_DIRECTOR_SPATIAL_ENTRY_TRANSFORM");
+        seeds.put(0x492d840L, "MOVEMENT_DIRECTOR_SPATIAL_POST_TRANSFORM");
+        seeds.put(0x494f820L, "MOVEMENT_CANDIDATE_FINAL_VALIDATOR");
         seeds.put(0x148310L, "CANDIDATE_STATE_UPDATE_CALLER");
         seeds.put(0x2f5bba0L, "TACTICS_MANAGER_CORE");
         seeds.put(0x2f5ba70L, "TACTICS_MANAGER_SECONDARY");
