@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+"""Focused scanner for the per-player 0xD0 candidate/movement record written at MATCH_PLAYER+0x1BB0."""
+from __future__ import annotations
+import scan_native_match_player_fields as scanner
+
+# 0x61660 copies a 0xD0-byte accepted candidate record to MATCH_PLAYER+0x1BB0.
+# These offsets are fields in that record or adjacent state/selector bytes.
+scanner.FIELD_LABELS = {
+    0x1BB0: "MATCH_PLAYER_MOVEMENT_RECORD_BASE",
+    0x1BB8: "MATCH_PLAYER_MOVEMENT_RECORD_VECTOR_QWORD_1",
+    0x1BC0: "MATCH_PLAYER_MOVEMENT_RECORD_VECTOR_QWORD_2",
+    0x1C34: "MATCH_PLAYER_MOVEMENT_RECORD_DISTANCE_FIELD",
+    0x1C3C: "MATCH_PLAYER_MOVEMENT_RECORD_AUX_DISTANCE_FIELD",
+    0x1C44: "MATCH_PLAYER_MOVEMENT_RECORD_CANDIDATE_TIME_INDEX",
+    0x1C60: "MATCH_PLAYER_MOVEMENT_RECORD_DIRECTION_INDEX",
+    0x1C64: "MATCH_PLAYER_MOVEMENT_RECORD_STATE_CODE",
+    0x1C68: "MATCH_PLAYER_MOVEMENT_RECORD_STATE_AUX_1",
+    0x1C6C: "MATCH_PLAYER_MOVEMENT_RECORD_STATE_AUX_2",
+    0x1C70: "MATCH_PLAYER_MOVEMENT_RECORD_STATE_AUX_3",
+    0x1C74: "MATCH_PLAYER_MOVEMENT_RECORD_STATE_AUX_4",
+    0x1C78: "MATCH_PLAYER_MOVEMENT_RECORD_STATE_AUX_5",
+    0x1C7C: "MATCH_PLAYER_MOVEMENT_RECORD_STATE_AUX_6",
+}
+
+if __name__ == "__main__":
+    scanner.main()
