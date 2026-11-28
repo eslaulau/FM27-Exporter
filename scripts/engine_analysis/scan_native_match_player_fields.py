@@ -11,16 +11,29 @@ FIELD_LABELS = {
     0x12B8: "MATCH_PLAYER_TACTIC_FLAGS_MIRROR",
     0x22D8: "MATCH_PLAYER_DERIVED_TACTIC_STATE_A",
     0x22DC: "MATCH_PLAYER_DERIVED_TACTIC_STATE_B",
+    0x22E0: "MATCH_PLAYER_DERIVED_SECONDARY_STATE_A",
+    0x22E4: "MATCH_PLAYER_DERIVED_SECONDARY_STATE_B",
     0x12C0: "MATCH_PLAYER_OOP_RECORD_PRIMARY",
     0x1278: "MATCH_PLAYER_OOP_RECORD_MIRROR",
     0x1398: "MATCH_PLAYER_SECONDARY_RECORD",
     0x1350: "MATCH_PLAYER_SECONDARY_RECORD_MIRROR",
+    0x23CD: "MATCH_PLAYER_DERIVED_SLOT_BYTE",
+    0x23CF: "MATCH_PLAYER_TACTIC_REFRESH_BYTE",
+    0x23A0: "MATCH_PLAYER_SLOT_DERIVED_VALUE",
+    0x23C7: "MATCH_PLAYER_SIDE_ORIENTATION_BYTE",
+    0x16E0: "MATCH_PLAYER_SLOT_AUXILIARY_VALUE",
+    0x1925: "MATCH_PLAYER_STATE_BYTE",
     0x1938: "TEAM_OOP_SLOT_RECORDS",
     0x1C58: "TEAM_OOP_MAPPED_SLOT_RECORDS",
     0x1978: "TEAM_OOP_EXTENDED_SLOT_RECORDS",
     0x1C98: "TEAM_OOP_MAPPED_EXTENDED_RECORDS",
     0x1FBC: "TEAM_OOP_SLOT_REMAP",
+    0x1820: "TEAM_OOP_SLOT_AUXILIARY_RECORDS",
     0x34C4: "TEAM_TACTIC_REVISION",
+    0x1556E: "TEAM_OOP_EXTENDED_MODE_FLAG",
+    0x15575: "TEAM_OOP_EXTENDED_MODE_SELECTOR",
+    0x154EC: "TEAM_OOP_PLAYER_EXTENSION_MODE",
+    0x15340: "TEAM_PLAYER_REVERSE_LOOKUP",
 }
 
 def parse_pe(mm):
@@ -94,6 +107,30 @@ def main():
             if not runtime:
                 raise SystemExit("no valid RUNTIME_FUNCTION entries in Exception Directory")
 
+            # Stage 1: search executable bytes for the exact disp32 encodings.
+            # Stage 2: use Capstone only on functions containing candidate encodings.
+            runtime_starts=[x[0] for x in runtime]
+            runtime_by_start={a:(b,u) for a,b,u in runtime}
+            candidate_fields=defaultdict(set)
+            raw_pattern_hits=0
+            for sec in sections:
+                if not sec["executable"] or sec["raw_size"]<4:
+                    continue
+                lo=sec["raw_ptr"]
+                hi=min(lo+sec["raw_size"],len(mm))
+                for disp in FIELD_LABELS:
+                    pattern=struct.pack("<I",disp)
+                    pos=mm.find(pattern,lo,hi)
+                    while pos!=-1:
+                        rva=sec["va"]+(pos-sec["raw_ptr"])
+                        idx=__import__("bisect").bisect_right(runtime_starts,rva)-1
+                        if idx>=0:
+                            begin,end,unwind=runtime[idx]
+                            if begin<=rva<end:
+                                candidate_fields[begin].add(disp)
+                                raw_pattern_hits+=1
+                        pos=mm.find(pattern,pos+1,hi)
+
             md=Cs(CS_ARCH_X86,CS_MODE_64)
             md.detail=True
             md.skipdata=True
@@ -101,7 +138,8 @@ def main():
             function_fields=defaultdict(set)
             scanned_functions=0
             scanned_bytes=0
-            for begin,end,unwind in runtime:
+            for begin,fields in candidate_fields.items():
+                end,unwind=runtime_by_start[begin]
                 size=end-begin
                 if size<=0 or size>args.max_function_size:
                     continue
@@ -112,9 +150,7 @@ def main():
                 scanned_bytes+=size
                 code=mm[raw:raw+size]
                 for ins in md.disasm(code,image_base+begin):
-                    # Capstone SKIPDATA pseudo-instructions (id 0) have no
-                    # operand detail; reading .operands raises CsError.
-                    if ins.id == 0:
+                    if ins.id==0:
                         continue
                     try:
                         operands=ins.operands
@@ -128,10 +164,9 @@ def main():
                         continue
                     ins_rva=ins.address-image_base
                     for disp in sorted(set(found)):
-                        label=FIELD_LABELS[disp]
                         hits.append({
                             "field_offset":f"0x{disp:X}",
-                            "field_label":label,
+                            "field_label":FIELD_LABELS[disp],
                             "from_rva":f"0x{ins_rva:X}",
                             "function_start_rva":f"0x{begin:X}",
                             "function_end_rva":f"0x{end:X}",
@@ -149,6 +184,8 @@ def main():
                 "exception_directory_rva":f"0x{ex_rva:X}",
                 "exception_directory_size":f"0x{ex_size:X}",
                 "runtime_function_entries":len(runtime),
+                "candidate_functions":len(candidate_fields),
+                "raw_pattern_hits":raw_pattern_hits,
                 "scanned_functions":scanned_functions,
                 "scanned_function_bytes":scanned_bytes,
                 "field_reference_count":len(hits),
