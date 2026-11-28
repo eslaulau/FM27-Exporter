@@ -71,7 +71,9 @@ jobs:
             cat analysis/package-audit-console.log
             exit "$code"
           fi
-          test -s analysis/package-audit/native-rtti/native-rtti-code-xrefs.tsv
+          XREF_TSV="analysis/package-audit/native-rtti/native-rtti-code-xrefs.tsv"
+          test -s "$XREF_TSV"
+          awk -F '\t' 'NR > 1 && $6 != "" { found=1 } END { exit !found }' "$XREF_TSV"
           cat analysis/package-audit-console.log
 
       - name: Set up .NET 10 for IL2CPP metadata decoding
