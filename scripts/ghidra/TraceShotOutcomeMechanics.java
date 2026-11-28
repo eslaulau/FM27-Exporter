@@ -32,10 +32,10 @@ public class TraceShotOutcomeMechanics extends GhidraScript {
         targets.put(0x1691c0L,"XG_SHOT_EVENT_PAYLOAD_FINALIZER");
         targets.put(0x164680L,"SHOT_TARGET_REGION_CLASSIFIER");
         targets.put(0x166400L,"TEAM_STAT_QUEUE_WRITER");
-        targets.put(0x42d2440L,"BALL_KICK_SAMPLE_EVENT_HANDLER");
-        targets.put(0x3e4e0L,"BALL_KICK_SAMPLE_CREATOR_A");
-        targets.put(0x19edd0L,"BALL_KICK_SAMPLE_CREATOR_B");
-        targets.put(0x5dbd0L,"MATCH_BALL_KICK_SAMPLE_CREATOR_C");
+        targets.put(0x42d2440L,"BALL_KICK_SAMPLE_EVENT_OBJECT_RELEASE_CALLBACK");
+        targets.put(0x3e4e0L,"PLAYER_TRAJECTORY_SAMPLE_BUILDER_A");
+        targets.put(0x19edd0L,"PLAYER_DIRECTIONAL_SPACE_PREDICTOR_B");
+        targets.put(0x5dbd0L,"MATCH_TICK_PLAYER_SAMPLE_ORCHESTRATOR");
         targets.put(0x42ddc80L,"SET_PIECE_ATTEMPT_EVENT");
         targets.put(0x28d6e30L,"SET_PIECE_OUTCOME_EVENT");
         targets.put(0x1b6490L,"XG_SHOT_DATA_SLOT_A");
@@ -114,6 +114,63 @@ public class TraceShotOutcomeMechanics extends GhidraScript {
             try { f=currentProgram.getFunctionManager().createFunction(name,entry,body,SourceType.ANALYSIS); }
             catch(Exception ex) { f=currentProgram.getFunctionManager().getFunctionAt(entry); }
         }
+        return f;
+    }
+
+
+    // Some x64 leaf helpers/thunks do not have a .pdata RUNTIME_FUNCTION row.
+    // Decode a short executable range from the exact direct-call target and
+    // stop at the first function terminator instead of silently losing it.
+    private Function ensureLeafWithoutPdata(long rva,String name,PrintWriter summary) throws Exception {
+        Address entry=currentProgram.getImageBase().add(rva);
+        MemoryBlock block=currentProgram.getMemory().getBlock(entry);
+        if(block==null || !block.isExecute()) {
+            summary.println("NO_PDATA_NOT_EXECUTABLE\t"+name+"\tRVA=0x"+Long.toHexString(rva));
+            return null;
+        }
+        Function existing=currentProgram.getFunctionManager().getFunctionAt(entry);
+        if(existing!=null && existing.getBody().getNumAddresses()>1) return existing;
+        long maxBytes=Math.min(0x100L,block.getEnd().subtract(entry)+1);
+        Address probeEnd=entry.add(maxBytes-1);
+        AddressSet probe=new AddressSet(entry,probeEnd);
+        DisassembleCommand cmd=new DisassembleCommand(entry,probe,true);
+        cmd.applyTo(currentProgram,monitor);
+        AddressSet body=new AddressSet();
+        InstructionIterator it=currentProgram.getListing().getInstructions(probe,true);
+        boolean terminated=false;
+        while(it.hasNext() && !terminated) {
+            Instruction ins=it.next();
+            body.add(ins.getMinAddress(),ins.getMaxAddress());
+            String m=ins.getMnemonicString().toUpperCase(Locale.ROOT);
+            if(m.startsWith("RET") || m.equals("IRET") || m.equals("IRETD") ||
+               m.equals("IRETQ") || m.equals("JMP")) terminated=true;
+        }
+        if(!body.contains(entry) || body.getNumAddresses()<2) {
+            summary.println("NO_PDATA_LEAF_DECODE_FAILED\t"+name+
+                "\tRVA=0x"+Long.toHexString(rva)+"\t"+cmd.getStatusMsg());
+            return null;
+        }
+        Iterator<Function> overlaps=currentProgram.getFunctionManager().getFunctionsOverlapping(body);
+        List<Function> remove=new ArrayList<>();
+        while(overlaps.hasNext()) {
+            Function old=overlaps.next();
+            if(!old.getEntryPoint().equals(entry)) remove.add(old);
+        }
+        for(Function old:remove) currentProgram.getFunctionManager().removeFunction(old.getEntryPoint());
+        Function f=existing;
+        if(f!=null) {
+            try { f.setBody(body); }
+            catch(Exception ex) {
+                currentProgram.getFunctionManager().removeFunction(entry);
+                f=null;
+            }
+        }
+        if(f==null) {
+            try { f=currentProgram.getFunctionManager().createFunction(name,entry,body,SourceType.ANALYSIS); }
+            catch(Exception ex) { f=currentProgram.getFunctionManager().getFunctionAt(entry); }
+        }
+        summary.println("NO_PDATA_LEAF_DECODED\t"+name+"\tRVA=0x"+Long.toHexString(rva)+
+            "\tBYTES="+body.getNumAddresses()+"\tTERMINATOR="+terminated);
         return f;
     }
 
@@ -209,9 +266,14 @@ public class TraceShotOutcomeMechanics extends GhidraScript {
                         collectFunction(f,refs);
                     }
                 } else {
+                    f=ensureLeafWithoutPdata(rva,label,summary);
                     asm.println("NO_PDATA_CONTAINING_RANGE\tRVA=0x"+
-                        Long.toHexString(rva)+"\tLABEL="+label);
-                    summary.println("NO_PDATA_CONTAINING_RANGE\t"+label+"\tRVA=0x"+Long.toHexString(rva));
+                        Long.toHexString(rva)+"\tLABEL="+label+
+                        "\tLEAF_DECODE="+(f!=null));
+                    if(f!=null) {
+                        uniqueFunctions.putIfAbsent(rva,f);
+                        collectFunction(f,refs);
+                    }
                 }
                 collectTargetIncoming(rva,label,refs);
             }
