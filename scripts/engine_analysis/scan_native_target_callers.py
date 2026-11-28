@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Find all native call/jump sites targeting selected FM27 engine decision functions."""
 from __future__ import annotations
-import argparse, bisect, json, mmap, struct
+import argparse, bisect, json, mmap, struct, re
 from collections import defaultdict
 from pathlib import Path
 
@@ -90,33 +90,35 @@ def main():
                 lo=sec["raw_ptr"]
                 hi=min(lo+sec["raw_size"],len(mm))
                 blob=mm[lo:hi]
-                for pos in range(len(blob)-6):
-                    b0=blob[pos]
-                    kind=None
-                    size=0
-                    disp=None
-                    if b0 in (0xE8,0xE9):
-                        size=5
-                        disp=struct.unpack_from("<i",blob,pos+1)[0]
-                        kind="CALL_REL32" if b0==0xE8 else "JMP_REL32"
-                    elif b0==0x0F and 0x80<=blob[pos+1]<=0x8F:
-                        size=6
-                        disp=struct.unpack_from("<i",blob,pos+2)[0]
-                        kind="JCC_REL32"
-                    if disp is None:
-                        continue
-                    site_rva=sec["va"]+(pos)
+                def record(pos, size, disp, kind):
+                    site_rva=sec["va"]+pos
                     target_rva=site_rva+size+disp
                     if target_rva not in targets:
-                        continue
+                        return
                     idx=bisect.bisect_right(starts,site_rva)-1
                     if idx<0:
-                        continue
-                    begin,end,unwind=runtime[idx]
-                    if not begin<=site_rva<end or end-begin>args.max_function_size:
-                        continue
+                        return
+                    begin,finish,unwind=runtime[idx]
+                    if not begin<=site_rva<finish or finish-begin>args.max_function_size:
+                        return
                     candidate_by_target[target_rva].add(begin)
-                    raw_hits.append((site_rva,target_rva,kind,begin,end,unwind))
+                    raw_hits.append((site_rva,target_rva,kind,begin,finish,unwind))
+
+                # C-level byte searches are substantially faster than a Python
+                # per-byte loop over the 300+ MB executable image.
+                for opcode,kind in ((b"\xE8","CALL_REL32"),(b"\xE9","JMP_REL32")):
+                    pos=blob.find(opcode)
+                    while pos!=-1:
+                        if pos+5<=len(blob):
+                            disp=struct.unpack_from("<i",blob,pos+1)[0]
+                            record(pos,5,disp,kind)
+                        pos=blob.find(opcode,pos+1)
+
+                for match in re.finditer(rb"\x0F[\x80-\x8F]",blob):
+                    pos=match.start()
+                    if pos+6<=len(blob):
+                        disp=struct.unpack_from("<i",blob,pos+2)[0]
+                        record(pos,6,disp,"JCC_REL32")
 
             # Decode only candidate functions and confirm target operands with Capstone.
             md=Cs(CS_ARCH_X86,CS_MODE_64)
