@@ -14,7 +14,7 @@ public class TraceMovementHandoff extends GhidraScript {
     private static final long EXCEPTION_RVA=0x18176000L;
     private static final long EXCEPTION_SIZE=0x1A8710L;
     private static final int MAX_CALLERS_PER_SEED=60;
-    private final Map<Long,long[]> ranges=new TreeMap<>();
+    private final NavigableMap<Long,long[]> ranges=new TreeMap<>();
     private final Map<Long,Function> functions=new LinkedHashMap<>();
     private final LinkedHashMap<Long,String> seeds=new LinkedHashMap<>();
     private final Map<Long,Function> callers=new LinkedHashMap<>();
