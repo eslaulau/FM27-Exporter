@@ -51,23 +51,60 @@ public class ExportMatchEnginePressingCore extends GhidraScript {
             "\tok=" + ok + "\tdecoded_bytes=" + decoded.getNumAddresses() +
             "\tstatus=" + command.getStatusMsg());
 
-        Function f = currentProgram.getFunctionManager().getFunctionAt(entry);
-        if (f == null) {
-            try {
-                f = createFunction(entry, label);
-            } catch (Exception ex) {
-                log.println("CREATE_FUNCTION_FAILED\t" + label + "\t" + ex);
-                return null;
-            }
+        // Build the function body from the instruction bytes actually decoded.
+        // Do not use createFunction(entry,name) here: in no-analysis imports that
+        // overload may create a one-instruction function and hide the call graph.
+        AddressSet body = new AddressSet();
+        InstructionIterator decodedInstructions =
+            currentProgram.getListing().getInstructions(decoded, true);
+        int instructionCount = 0;
+        while (decodedInstructions.hasNext()) {
+            Instruction ins = decodedInstructions.next();
+            body.add(ins.getMinAddress(), ins.getMaxAddress());
+            instructionCount++;
+        }
+
+        var functionManager = currentProgram.getFunctionManager();
+        Function oldAtEntry = functionManager.getFunctionAt(entry);
+        if (oldAtEntry != null) {
+            functionManager.removeFunction(entry);
+            log.println("REMOVED_STUB_AT_ENTRY\t" + label +
+                "\told_body_bytes=" + oldAtEntry.getBody().getNumAddresses());
+        }
+
+        // Keep pre-existing neighbour functions out of this body, instead of
+        // swallowing them into one giant function or deleting their definitions.
+        java.util.Iterator<Function> overlaps = functionManager.getFunctionsOverlapping(body);
+        java.util.List<Function> overlapList = new java.util.ArrayList<>();
+        while (overlaps.hasNext()) {
+            Function other = overlaps.next();
+            if (!other.getEntryPoint().equals(entry)) overlapList.add(other);
+        }
+        for (Function other : overlapList) {
+            body.delete(other.getBody());
+            log.println("PRESERVED_OVERLAPPING_FUNCTION\t" + other.getEntryPoint() +
+                "\t" + other.getName() + "\tbody_bytes=" + other.getBody().getNumAddresses());
+        }
+
+        if (!body.contains(entry)) {
+            log.println("BODY_MISSING_ENTRY\t" + label + "\tdecoded_instructions=" + instructionCount);
+            return null;
+        }
+        Function f = null;
+        try {
+            f = functionManager.createFunction(label, entry, body,
+                ghidra.program.model.symbol.SourceType.ANALYSIS);
+        } catch (Exception ex) {
+            log.println("CREATE_FUNCTION_FAILED\t" + label +
+                "\tbody_bytes=" + body.getNumAddresses() + "\t" + ex);
         }
         if (f != null) {
             log.println("FUNCTION\t" + label + "\t" + f.getEntryPoint() +
                 "\tbody_bytes=" + f.getBody().getNumAddresses() +
-                "\tname=" + f.getName());
+                "\tinstructions=" + instructionCount + "\tname=" + f.getName());
         }
         return f;
     }
-
     @Override
     protected void run() throws Exception {
         String[] args = getScriptArgs();
