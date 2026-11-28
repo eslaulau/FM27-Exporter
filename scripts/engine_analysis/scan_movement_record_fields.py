@@ -6,6 +6,9 @@ import scan_native_match_player_fields as scanner
 # 0x61660 copies a 0xD0-byte accepted candidate record to MATCH_PLAYER+0x1BB0.
 # These offsets are fields in that record or adjacent state/selector bytes.
 scanner.FIELD_LABELS = {
+    # Candidate current-position fields. These offsets are scanned globally; object identity must be established by caller/dataflow, not by offset alone.
+    0x140: "MATCH_PLAYER_CURRENT_POSITION_X_CANDIDATE",
+    0x144: "MATCH_PLAYER_CURRENT_POSITION_Y_CANDIDATE",
     0x1BB0: "MATCH_PLAYER_MOVEMENT_RECORD_BASE",
     0x1BB8: "MATCH_PLAYER_MOVEMENT_RECORD_VECTOR_QWORD_1",
     0x1BC0: "MATCH_PLAYER_MOVEMENT_RECORD_VECTOR_QWORD_2",
