@@ -236,7 +236,7 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
                 if (rva==0x52ceaa8L && n>=8) {
                     long pointer=currentProgram.getMemory().getLong(a);
                     long imageBase=currentProgram.getImageBase().getOffset();
-                    long imageSize=currentProgram.getImageSize();
+                    long imageSize=currentProgram.getMaxAddress().subtract(currentProgram.getImageBase())+1;
                     refs.println("INDIRECT_POINTER\tDATA_RVA=0x52ceaa8\tRAW=0x"+
                         Long.toHexString(pointer)+"\tIMAGE_BASE=0x"+
                         Long.toHexString(imageBase)+"\tIMAGE_SIZE=0x"+
