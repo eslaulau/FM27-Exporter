@@ -1000,3 +1000,39 @@ vtable 的引用出现在 `0x3E4E0)、`0x19EDD0)、`0x5DBD0)；这三处才是�
 **下一轮只追两个点：**
 1. `0x28C1020) 的真实上游 simulation scheduler/caller。
 2. 在 `0x5DBD0) 中按 player pointer、tick/sample index 对照 `0x61660)、`0x19EDD0)、`0x3E4E0) 的实际数据流，证明候选记录与轨迹样本何处汇合。
+
+
+### Shot Outcome Run #2：已解决 0x498D400，证明它不是 xG 概率值
+
+- Workflow：[Shot Outcome Run #2](https://github.com/eslaulau/FM27-Exporter/actions/runs/46138739934)，success。
+- Artifact：`15260975972`，343,441 bytes；SHA-256 `1fed689e2a3ab78c50d897fb39f024d4f18109c7bd24e649d8cebdb2e7cd0678`。
+- 无 .pdata leaf fallback 成功反编译：
+  - `0x498D400)：83 bytes；
+  - `0x1B6490)：5 bytes；
+  - `0x28D6FB0)：3 bytes。
+
+**0x498D400 的真实语义：**
+- 读取 `MATCH+0x1556A) 比赛阶段/分段、`+0x15500 & 4) stop/error、`+0x1556C) 当前状态、`+0xA38 bit0) 模式位，以及调用者传入的 `MATCH+0x15464) 时间值。
+- stop/error 或 phase 5 时返回 `MATCH+0x15546)；
+- phase >9 通常返回 90，state2 且 `+0xA38 bit0 == 0) 返回120；
+- 其余 phase 依据 time counter 算 bucket 并按相位 cap：
+  - phase1 = 45；
+  - phase2 = 90；
+  - phase3/9 = 106..120；
+  - phase4/5 = state-dependent 90/120；
+  - phase7 = 46..90；
+  - phase8 = 91..105；
+  - default = 1..45。
+- 计算包含 `0x1E00000) 时间单位除数，不读射手属性、射门距离/角度、门将位置或概率输入。
+
+因此 `0x498D400` 是**比赛阶段/时间边界值提供器**，`0x4C01760` 把它写进统计/事件队列不表示它计算 xG。原先 unresolved xG value provider 的标签已纠正。
+
+**XG_SHOT_DATA vtable 三个方法亦非公式：**
+- `0x1B6490)：refcount release/free；
+- `0x28D6F60)：0x38-byte clone/copy constructor，复制六个 qword 并设置 vtable；
+- `0x28D6FB0)：返回 type ID 2。
+- 定位球 attempt/outcome vtable 方法 `0x42DDC80)、`0x28D6E30) 也是 release/pool cleanup callbacks。
+
+详见 ShotEvent_XGBoundary 技术报告 Section 10，报告更新 Commit `e8d69ac6eb5449928036c0e29d0352e08eab44e8`。
+
+**修正后的研究方向：**不再花时间反编译事件析构/复制/type getter 作为计算公式；下一轮从 ball state/ball-slice simulation、踢球速度与轨迹、射手-球接触、门将拦截/扑救、球门线穿越判定和真正 shot-zone numeric scorer 追结果。
