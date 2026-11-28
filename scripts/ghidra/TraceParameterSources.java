@@ -74,8 +74,10 @@ public class TraceParameterSources extends GhidraScript {
             Instruction ins=it.next();
             checked++;
             String mnemonic=ins.getMnemonicString().toLowerCase(Locale.ROOT);
-            String op0=ins.getDefaultOperandRepresentation(0).toLowerCase(Locale.ROOT).replace(" ","");
-            String op1=ins.getDefaultOperandRepresentation(1).toLowerCase(Locale.ROOT).replace(" ","");
+            String op0=ins.getNumOperands()>0 ?
+                ins.getDefaultOperandRepresentation(0).toLowerCase(Locale.ROOT).replace(" ","") : "";
+            String op1=ins.getNumOperands()>1 ?
+                ins.getDefaultOperandRepresentation(1).toLowerCase(Locale.ROOT).replace(" ","") : "";
             if(mnemonic.equals("mov") && op0.equals("rbp") && op1.equals("rsp")) return true;
             if(mnemonic.equals("lea") && op0.equals("rbp") && op1.startsWith("[rsp")) return true;
         }
