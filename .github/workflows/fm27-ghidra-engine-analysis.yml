@@ -1,0 +1,101 @@
+name: FM27 native match-engine reverse engineering
+on:
+  push:
+    paths:
+      - ".github/workflows/fm27-ghidra-engine-analysis.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ghidra:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Download and verify FM27 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://github.com/eslaulau/FM27-Exporter/releases/download/fm27-saves/FM27_Engine_Analysis_Package_20261125.zip" \
+            --output FM27_Engine_Analysis_Package_20261125.zip
+          echo "a9dfd61bb2f9d6110ff92997a86790168d04cfc9c621cf8c2564c616f0fbc10f  FM27_Engine_Analysis_Package_20261125.zip" | sha256sum --check
+      - name: Extract Windows-path archive safely
+        run: |
+          python - <<'PY'
+          import pathlib, zipfile
+          root = pathlib.Path("game").resolve()
+          root.mkdir(exist_ok=True)
+          with zipfile.ZipFile("FM27_Engine_Analysis_Package_20261125.zip") as archive:
+              for item in archive.infolist():
+                  name = item.filename.replace(chr(92), "/")
+                  target = (root / name).resolve()
+                  if target != root and root not in target.parents:
+                      raise SystemExit(f"Unsafe ZIP path: {item.filename!r}")
+                  if item.is_dir() or name.endswith("/"):
+                      target.mkdir(parents=True, exist_ok=True)
+                  else:
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      with archive.open(item) as source, target.open("wb") as destination:
+                          while chunk := source.read(1024 * 1024):
+                              destination.write(chunk)
+          PY
+      - name: Try matching Microsoft PDB symbol server
+        shell: bash
+        run: |
+          set -euo pipefail
+          PLUGIN="game/fm_Data/Plugins/x86_64/game_plugin.dll"
+          PDB="game/fm_Data/Plugins/x86_64/game_plugin.pdb"
+          URL="https://msdl.microsoft.com/download/symbols/game_plugin.pdb/1E6FAFDC7F6D46F6A33119C39C8A49B04/game_plugin.pdb"
+          CODE=$(curl --location --silent --show-error --output "$PDB" --write-out "%{http_code}" "$URL" || true)
+          echo "$CODE" > analysis-pdb-http-status.txt
+          if [ "$CODE" = "200" ] && [ "$(head -c 4 "$PDB")" = "Microsoft" ]; then
+            echo "Matching PDB downloaded from Microsoft symbol server." > pdb-status.txt
+          elif [ "$CODE" = "200" ] && [ "$(head -c 4 "$PDB")" = "MSF " ]; then
+            echo "Matching PDB downloaded from Microsoft symbol server." > pdb-status.txt
+          else
+            rm -f "$PDB"
+            echo "No matching PDB found on Microsoft symbol server (HTTP $CODE)." > pdb-status.txt
+          fi
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Download Ghidra 12.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.2_build/ghidra_12.2_PUBLIC_20261016.zip" \
+            --output ghidra.zip
+          mkdir ghidra
+          unzip -q ghidra.zip -d ghidra
+      - name: Analyze native game_plugin.dll
+        shell: bash
+        run: |
+          set +e
+          mkdir -p analysis
+          GHIDRA_DIR=$(find ghidra -maxdepth 2 -type f -name analyzeHeadless -printf '%h/..\n' | head -n1)
+          if [ -z "$GHIDRA_DIR" ]; then
+            GHIDRA_DIR=$(find ghidra -type f -name analyzeHeadless -printf '%h\n' | head -n1)
+          fi
+          echo "Ghidra directory: $GHIDRA_DIR"
+          chmod +x "$GHIDRA_DIR/analyzeHeadless"
+          "$GHIDRA_DIR/analyzeHeadless" ghidra-project FM27Native \
+            -import "game/fm_Data/Plugins/x86_64/game_plugin.dll" \
+            -overwrite -analysisTimeoutPerFile 1200 -max-cpu 4 \
+            -scriptPath scripts/ghidra -postScript ExportMatchEngine.java "$PWD/analysis" \
+            > analysis/ghidra-console.log 2>&1
+          echo $? > analysis/ghidra-exit-code.txt
+          tail -n 300 analysis/ghidra-console.log || true
+      - name: Upload Ghidra analysis and symbol evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FM27-Ghidra-Native-Engine-Analysis-20261125
+          path: |
+            analysis/
+            pdb-status.txt
+            analysis-pdb-http-status.txt
+          if-no-files-found: warn
+          retention-days: 7
