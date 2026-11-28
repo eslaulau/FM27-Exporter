@@ -70,6 +70,8 @@ public class TraceNativeScoreAndTactic extends GhidraScript {
         seeds.put(0x2b57ba0L, "TEAM_TACTIC_COLLECTION_APPLIER");
         seeds.put(0x4813b90L, "ROLE_PI_CANDIDATE_COMMON_VALIDATOR");
         seeds.put(0x0a8f70L, "ROLE_PI_BEHAVIOR_CANDIDATE_AGGREGATOR");
+        seeds.put(0x0a7280L, "TRACKING_CENTRE_FORWARD_CANDIDATE_BUILDER");
+        seeds.put(0x0a77d0L, "PI_STATE_FILTER_AND_BEHAVIOR_GATE");
         seeds.put(0x036be0L, "HALF_BACK_AND_DROPPING_DM_PHASE_GATE");
         seeds.put(0x0a79a0L, "TAKE_FEWER_RISKS_STOPPER_DUTY_GATE");
         seeds.put(0x0a7d20L, "CROSSING_PI_SPATIAL_GATE");
