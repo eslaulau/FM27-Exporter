@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
+      - name: Check out analysis script
+        uses: actions/checkout@v4
       - name: Download and verify FM27 package
         shell: bash
         run: |
