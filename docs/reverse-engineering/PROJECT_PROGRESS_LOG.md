@@ -747,3 +747,33 @@ action/output buffer
 修复 Ghidra caller 优先级筛选器，将 `MATCH_PLAYER_MOVEMENT_RECORD_AND_POSITION_WRITER`、`MATCH_UPDATE_POST_HANDOFF_STAGE` 和 `MATCH_UPDATE_PRE_HANDOFF_STAGE` 加入最高优先级，Commit `d07e7bbec8dc9f02b063762b024c2f8049881684`。Movement Commit Run #11：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46137041278)，专门反编译以上 caller。
 
 Position writer 专项报告已同步更新，Commit 见报告末尾。
+
+
+### Run #9 行为计算器细化：0x47E44C0 的方向/对手轨迹计算已解码
+
+Movement Handoff Run #9（Workflow `46136889150`，Artifact `15260231729`）对 `0x47E44C0` 的完整反编译进一步确认：
+
+- `0x51820`（match tick post-handoff stage）直接在 CALL site `0x51F6F` 调用 `0x47E44C0`。
+- 函数入口读取 player `+0x1C64/+0x1C6C` 状态以及 match tick `+0x154EC)，以角色/阶段和多个时间窗口决定是否计算。
+- 通过 `0x47F1E70` 取得指定时间样本的二维位置，与 player 当前 `+0x140/+0x144` 比较；按二维差值查询 `0x1858B6748` 方向表。
+- 将当前与候选方向索引做 360 单位环绕差，只有最小差值小于 `0x5B`（91 个方向单位）时，才进入方向偏移计算。
+- 从 `0x185890D98` 方向/距离表取二维偏移，叠加到候选位置；随后遍历对方球队位置槽（容器 `+0x388`、数量 `+0x730`），结合 opponent `+0x1C64/+0x1C6C` 状态、时间，以及 `0x47F1E70` / `0x48A6E20` 的预测数据进行时空冲突检查。
+
+这说明 `0x47E44C0` 是 **match tick 中的 per-player 方向/轨迹空间行为计算器**，包含候选位置计算、方向容差和对手预测位置筛选。UI role/PI/duty 语义及最终输出接收点仍待确认。详见 MovementActionChain 报告 Section 7–8。
+
+### Run #7 对 0x2AFB290 的边界修订
+
+Movement Record Run #7（Workflow `46136889158`，Artifact `15260027793`）再次反编译 `0x2AFB290`：
+- `+0x23C6 == 1` 状态分支主要刷新方向缓存和 movement record；
+- 另一个 `+0x1233 > 0x84` 分支在 player `+0x208` 时间早于当前 match tick 时，把缓存 `+0x150..+0x15F` 应用到活动位置区 `+0x140..+0x14F`；
+- 同函数写入 `+0x1BB0/+0x1BC0` 与 `+0x1C64/+0x1C6C/+0x1C70)。
+
+因此将 `0x2AFB290` 定义为“按状态/时间门控的运动记录更新与缓存位置应用器”，而不是直接宣称是 `0x61660` 的最终候选提交器。它有两个真实 CALL callers（`0x42D3910`、`0x42D58E0`），其上游是否接入 handoff 主线仍待反编译。
+
+### Run #11 caller 反编译优先级修正
+
+Run #11（Workflow `46137041278`，Artifact `15260182294`）扫描成功，确认目标 caller xrefs 仍为：
+- `0x42D3910 → 0x2AFB290`（site `0x42D4C4C`）；
+- `0x42D58E0 → 0x2AFB290`（site `0x42D5BEB`）。
+
+但 Ghidra xref-decompile 的 160 函数上限被大量泛化 `CANDIDATE_POSITION_RECORD_COPY_OR_TRANSFORM` 调用点占满，两个关键 caller 未进入伪代码输出。已把 `MATCH_PLAYER_MOVEMENT_RECORD_AND_POSITION_WRITER` 精确标签升级为优先级 -10（高于普通候选/复制引用），Commit `9e07bcc71b7e8ce6fa50a1d30734bbe2a740fc54`。Movement Commit Run #12：[Actions](https://github.com/eslaulau/FM27-Exporter/actions/runs/46137296905)，将重新专门反编译这两个 caller。
