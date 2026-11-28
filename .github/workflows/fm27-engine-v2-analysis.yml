@@ -59,14 +59,20 @@ jobs:
       - name: Audit all seven files and extract targeted strings
         shell: bash
         run: |
-          set +e
+          set -euo pipefail
           mkdir -p analysis/package-audit
-          python scripts/engine_analysis/fm27_package_audit.py \
+          if python scripts/engine_analysis/fm27_package_audit.py \
             --root game --out analysis/package-audit \
-            > analysis/package-audit-console.log 2>&1
-          echo $? > analysis/package-audit-exit-code.txt
+            > analysis/package-audit-console.log 2>&1; then
+            echo 0 > analysis/package-audit-exit-code.txt
+          else
+            code=$?
+            echo "$code" > analysis/package-audit-exit-code.txt
+            cat analysis/package-audit-console.log
+            exit "$code"
+          fi
+          test -s analysis/package-audit/native-rtti/native-rtti-code-xrefs.tsv
           cat analysis/package-audit-console.log
-          set -e
 
       - name: Set up .NET 10 for IL2CPP metadata decoding
         uses: actions/setup-dotnet@v4
